@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.7.7/handlebars.js"></script>
+    <script src="https://alca.sfo2.cdn.digitaloceanspaces.com/tmijs/1.8.5/tmi.min.js"></script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css" />
+    <link rel="stylesheet" href="./index.css" />
+
+    <title>Chat</title>
+  </head>
+
+  <body>
+    <script id="chat-message-template" type="text/x-handlebars-template">
+      <div class='chat-message'>
+        <span class='leader'>
+          <span class='badges'>{{badges}}</span>
+          <span class='user' style='--userColor: {{userColor}}'>{{user}}</span>:
+        </span>
+        <span class='message' data-splitting data-message-id='{{messageId}}'>{{message}}</span>
+      </div>
+    </script>
+
+    <div id="chat-container"></div>
+
+    <script type="module">
+      import Overlay from './index.js';
+
+      // Start the overlay once DOM has loaded
+      document.addEventListener('DOMContentLoaded', () => {
+        new Overlay().init();
+      });
+    </script>
+  </body>
+</html>

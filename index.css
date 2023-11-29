@@ -1,0 +1,148 @@
+@import url('https://fonts.googleapis.com/css2?family=Dongle:wght@700&display=swap');
+
+:root {
+  --colorRevealText0: #e2e2e2;
+  --colorRevealText1: #ff8a3b;
+  --colorRevealText2: #f23373;
+  --colorRevealText3: transparent;
+
+  --colorBorder: #bc91f8;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  font-family: sans-serif;
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+
+  height: 100vh;
+  width: 100vw;
+}
+
+body {
+  background: #0b0b0b url('./background.jpg') center no-repeat;
+  background-size: cover;
+  color: var(--fg-color);
+  font-family: 'Dongle';
+  font-size: 10vmin;
+  line-height: 8vmin;
+  color: white;
+  display: flex;
+  flex-direction: column;
+}
+
+.word,
+.whitespace {
+  display: inline-flex;
+  height: 6.7vmin;
+}
+
+#chat-container {
+  margin-block: 5vmin;
+  padding: 2vmin;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+  background: #000000cc;
+  border-radius: 1vmin;
+  border: 1vmin solid var(--colorBorder);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  /* prettier-ignore */
+  -webkit-mask-image: 
+    linear-gradient(
+      to bottom,
+      transparent 4.5vmin,
+      black 20vmin
+    );
+}
+
+.chat-message {
+  display: flex;
+  margin-bottom: 2vmin;
+}
+
+.chat-message.removing {
+  position: absolute;
+  z-index: -1;
+  transform-origin: top left;
+  animation: 2s remove-message linear forwards;
+}
+
+.chat-message .message {
+  gap: 0 0.6vmin;
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.chat-message .leader {
+  display: flex;
+  justify-content: flex-end;
+  font-size: 6.1vmin;
+  margin-right: 1vmin;
+  height: 4.9vmin;
+  line-height: 7.1vmin;
+  min-width: 25vmin;
+  max-width: 25vmin;
+}
+
+.chat-message .user {
+  color: var(--userColor);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chat-message .message-emote {
+  width: 5vmin;
+}
+
+[data-splitting] .char {
+  background: linear-gradient(
+    0deg,
+    var(--colorRevealText0) 40%,
+    var(--colorRevealText1) 40%,
+    var(--colorRevealText2) 55%,
+    var(--colorRevealText2) 55%,
+    var(--colorRevealText3) 60%
+  );
+
+  display: inline-block;
+  background-size: 2em 3em;
+  z-index: calc(var(--char-total) - var(--char-index));
+  animation: loading-text 8s cubic-bezier(0.6, 0, 0, 1) forwards;
+  animation-delay: calc((var(--char-index)) * 0.1s);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+@keyframes loading-text {
+  0% {
+    background-position: 0 0;
+  }
+  40%,
+  80%,
+  100% {
+    background-position: -1vmin -17.5vmin;
+  }
+}
+
+@keyframes remove-message {
+  from {
+    top: 0;
+    opacity: 0.75;
+  }
+
+  to {
+    opacity: 0;
+    transform: translate(25vmin, 25vmin) rotate(0.125turn) scale(0.25);
+  }
+}
