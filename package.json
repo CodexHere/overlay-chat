@@ -1,0 +1,29 @@
+{
+  "name": "overlay-chat",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "scripts": {
+    "start": "vite ."
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/splitting": "^1.0.5",
+    "@types/tmi.js": "^1.8.6",
+    "sass": "^1.69.7",
+    "vite": "^5.0.4"
+  },
+  "dependencies": {
+    "@types/events": "^3.0.3",
+    "events": "^3.3.0",
+    "handlebars": "^4.7.8",
+    "install": "^0.13.0",
+    "normalize.css": "^8.0.1",
+    "splitting": "^1.0.6",
+    "tmi-emote-parse": "^2.0.0",
+    "tmi.js": "^1.8.5"
+  }
+}
