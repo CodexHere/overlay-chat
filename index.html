@@ -4,17 +4,28 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.7.7/handlebars.js"></script>
-    <script src="https://alca.sfo2.cdn.digitaloceanspaces.com/tmijs/1.8.5/tmi.min.js"></script>
 
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css" />
-    <link rel="stylesheet" href="./index.css" />
+    <link rel="stylesheet" href="./src/styles/index.scss" />
 
     <title>Chat</title>
   </head>
 
   <body>
-    <script id="chat-message-template" type="text/x-handlebars-template">
+    <script id="template-overlay-settings" type="text/x-handlebars-template">
+      <div id='container-settings'>
+        <h1>Settings</h1>
+        <form id='settings'>
+          {{formElements}}
+        </form>
+
+        <div class='link-results'>
+          <textarea rows='4'></textarea>
+          <button class='load-chat' disabled>Load Chat</button>
+        </div>
+      </div>
+    </script>
+
+    <script id="template-chat-message" type="text/x-handlebars-template">
       <div class='chat-message'>
         <span class='leader'>
           <span class='badges'>{{badges}}</span>
@@ -24,10 +35,10 @@
       </div>
     </script>
 
-    <div id="chat-container"></div>
+    <div id="container-chat"></div>
 
     <script type="module">
-      import Overlay from './index.js';
+      import Overlay from './src/scripts/index.ts';
 
       // Start the overlay once DOM has loaded
       document.addEventListener('DOMContentLoaded', () => {
