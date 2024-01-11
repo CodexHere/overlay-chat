@@ -10,40 +10,33 @@
     <title>Chat</title>
   </head>
 
+  <template id="template-overlay-settings" type="text/x-handlebars-template">
+    <div id="container-settings">
+      <h1>Settings</h1>
+      <form id="settings">{{formElements}}</form>
+
+      <div class="link-results">
+        <textarea rows="4"></textarea>
+        <button class="button-load-overlay" disabled>Load Overlay</button>
+      </div>
+    </div>
+  </template>
+
+  <template id="template-chat-message" type="text/x-handlebars-template">
+    <div class="chat-message">
+      <span class="leader">
+        <span class="badges">{{badges}}</span>
+        <span class="user" style="--userColor: {{userColor}}">{{user}}</span>:
+      </span>
+      <span class="message" data-splitting data-message-id="{{messageId}}">{{message}}</span>
+    </div>
+  </template>
+
   <body>
-    <script id="template-overlay-settings" type="text/x-handlebars-template">
-      <div id='container-settings'>
-        <h1>Settings</h1>
-        <form id='settings'>
-          {{formElements}}
-        </form>
-
-        <div class='link-results'>
-          <textarea rows='4'></textarea>
-          <button class='load-chat' disabled>Load Chat</button>
-        </div>
-      </div>
-    </script>
-
-    <script id="template-chat-message" type="text/x-handlebars-template">
-      <div class='chat-message'>
-        <span class='leader'>
-          <span class='badges'>{{badges}}</span>
-          <span class='user' style='--userColor: {{userColor}}'>{{user}}</span>:
-        </span>
-        <span class='message' data-splitting data-message-id='{{messageId}}'>{{message}}</span>
-      </div>
-    </script>
-
-    <div id="container-chat"></div>
+    <div id="container-overlay"></div>
 
     <script type="module">
-      import Overlay from './src/scripts/index.ts';
-
-      // Start the overlay once DOM has loaded
-      document.addEventListener('DOMContentLoaded', () => {
-        new Overlay().init();
-      });
+      import * as Overlay from './src/scripts/index.ts';
     </script>
   </body>
 </html>

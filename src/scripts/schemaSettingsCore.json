@@ -29,25 +29,5 @@
 
   { "name": "colorLeading", "label": "Leading Color", "inputType": "color", "defaultValue": "#FFFFFF" },
   { "name": "colorMod", "label": "Mod Color", "inputType": "color", "defaultValue": "#00FF00" },
-  { "name": "colorVip", "label": "VIP Color", "inputType": "color", "defaultValue": "#FF00FF" },
-
-  { "name": "colorLeading", "label": "Leading Color", "inputType": "color", "defaultValue": "#FFFFFF" },
-  { "name": "colorMod", "label": "Mod Color", "inputType": "color", "defaultValue": "#00FF00" },
-  { "name": "colorVip", "label": "VIP Color", "inputType": "color", "defaultValue": "#FF00FF" },
-
-  { "name": "colorLeading", "label": "Leading Color", "inputType": "color", "defaultValue": "#FFFFFF" },
-  { "name": "colorMod", "label": "Mod Color", "inputType": "color", "defaultValue": "#00FF00" },
-  { "name": "colorVip", "label": "VIP Color", "inputType": "color", "defaultValue": "#FF00FF" },
-
-  { "name": "colorLeading", "label": "Leading Color", "inputType": "color", "defaultValue": "#FFFFFF" },
-  { "name": "colorMod", "label": "Mod Color", "inputType": "color", "defaultValue": "#00FF00" },
-  { "name": "colorVip", "label": "VIP Color", "inputType": "color", "defaultValue": "#FF00FF" },
-
-  { "name": "colorLeading", "label": "Leading Color", "inputType": "color", "defaultValue": "#FFFFFF" },
-  { "name": "colorMod", "label": "Mod Color", "inputType": "color", "defaultValue": "#00FF00" },
-  { "name": "colorVip", "label": "VIP Color", "inputType": "color", "defaultValue": "#FF00FF" },
-
-  { "name": "colorLeading", "label": "Leading Color", "inputType": "color", "defaultValue": "#FFFFFF" },
-  { "name": "colorMod", "label": "Mod Color", "inputType": "color", "defaultValue": "#00FF00" },
   { "name": "colorVip", "label": "VIP Color", "inputType": "color", "defaultValue": "#FF00FF" }
 ]
