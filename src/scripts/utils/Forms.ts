@@ -55,6 +55,10 @@ export default class Forms {
     for (const [name, value] of Object.entries(entries)) {
       const element = form.elements.namedItem(name) as HTMLInputElement;
 
+      if (!element) {
+        continue;
+      }
+
       switch (value) {
         case 'true':
         case 'false':

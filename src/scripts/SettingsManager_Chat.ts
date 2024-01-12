@@ -1,4 +1,4 @@
-import SettingsManager from './SettingsManager';
+import SettingsManager from './managers/SettingsManager';
 import { OverlaySettings } from './types';
 
 type OverlaySettings_Chat = OverlaySettings & {

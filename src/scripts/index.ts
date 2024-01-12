@@ -1,7 +1,7 @@
 import OverlayBootstrapper from './OverlayBootstrapper';
-import { OverlayRenderer } from './OverlayRenderer';
 import { SettingsManager_Chat } from './SettingsManager_Chat';
-import SettingsRenderer from './SettingsRenderer';
+import { OverlayRenderer } from './renderers/OverlayRenderer';
+import SettingsRenderer from './renderers/SettingsRenderer';
 import { Templating } from './utils/Templating';
 
 // Start the overlay once DOM has loaded

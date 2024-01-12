@@ -1,10 +1,11 @@
 import Splitting from 'splitting';
 import { loadAssets, replaceEmotes } from 'tmi-emote-parse';
 import tmiJs from 'tmi.js';
-import SettingsManager from './SettingsManager';
-import { BootOptions } from './types';
-import { Templating } from './utils/Templating';
-import { GetColorForUsername } from './utils/misc';
+import { PluginManager } from '../managers/PluginManager';
+import SettingsManager from '../managers/SettingsManager';
+import { BootOptions } from '../types';
+import { Templating } from '../utils/Templating';
+import { GetColorForUsername } from '../utils/misc';
 
 type MessagePayload = {
   user: string;
@@ -14,10 +15,15 @@ type MessagePayload = {
 };
 
 export class OverlayRenderer {
-  constructor(private bootOptions: BootOptions, private settingsMgr: SettingsManager) {}
+  constructor(
+    private pluginMgr: PluginManager,
+    private bootOptions: BootOptions,
+    private settingsMgr: SettingsManager
+  ) {}
 
   init() {
     this.initChatListen();
+    this.pluginMgr.plugin?.init_renderer();
   }
 
   initChatListen() {

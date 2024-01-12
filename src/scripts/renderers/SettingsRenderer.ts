@@ -1,13 +1,18 @@
-import { URI } from './utils/URI';
+import { URI } from '../utils/URI';
 
-import SettingsManager from './SettingsManager';
-import schemaSettings from './schemaSettingsCore.json';
-import { BootOptions, RendererInstance } from './types';
-import Forms, { FormEntry } from './utils/Forms';
-import { Templating } from './utils/Templating';
+import SettingsManager from '../managers/SettingsManager';
+import { BootOptions, RendererInstance } from '../types';
+import Forms, { FormEntry } from '../utils/Forms';
+import { Templating } from '../utils/Templating';
+import { PluginManager } from '../managers/PluginManager';
 
 export default class SettingsRenderer implements RendererInstance {
-  constructor(private bootOptions: BootOptions, private settingsMgr: SettingsManager) {}
+  constructor(
+    private pluginMgr: PluginManager,
+    private bootOptions: BootOptions,
+    private settingsMgr: SettingsManager,
+    private schemaSettings?: FormEntry[]
+  ) {}
 
   init() {
     const elems = this.bootOptions.elements!;
@@ -17,10 +22,10 @@ export default class SettingsRenderer implements RendererInstance {
     const body = elems['body'];
     body.innerHTML = '';
 
-    // TODO: Iterate over known plugins, and decorate the `schemaSettings` object
+    this.pluginMgr.plugin?.init_settings();
 
     Templating.RenderTemplate(body, templs['settings'], {
-      formElements: Forms.FromJson(schemaSettings as FormEntry[])
+      formElements: Forms.FromJson(this.schemaSettings!)
     });
 
     // Establish #elements now that the Settings Form has been injected into DOM
@@ -43,8 +48,7 @@ export default class SettingsRenderer implements RendererInstance {
     const form = event.currentTarget as HTMLFormElement;
     const formData = Forms.GetData(form);
 
-    const url = new URL(location.href.replaceAll('#', ''));
-    const baseUrl = `${url.origin}${url.pathname}`;
+    const baseUrl = URI.BaseUrl();
     const queryString = URI.JsonToQueryString(formData);
 
     this.settingsMgr.settings = formData;

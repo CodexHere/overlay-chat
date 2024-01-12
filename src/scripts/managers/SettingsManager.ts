@@ -1,5 +1,5 @@
-import { OverlaySettings } from './types';
-import { URI } from './utils/URI';
+import { OverlaySettings } from '../types';
+import { URI } from '../utils/URI';
 
 export default class SettingsManager {
   settings: OverlaySettings;
