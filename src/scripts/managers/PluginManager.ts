@@ -1,19 +1,18 @@
 import { BootOptions, OverlayPlugin, OverlayPluginConstructor } from '../types';
-import { FormEntry } from '../utils/Forms';
 import { URI } from '../utils/URI';
 import SettingsManager from './SettingsManager';
 
 export class PluginManager {
-  plugin?: OverlayPlugin;
-  settingsSchema: FormEntry[] = [];
+  // TODO: Needs to be an array of Plugins
+  plugins?: OverlayPlugin;
 
   constructor(private bootOptions: BootOptions, private settingsMgr: SettingsManager) {}
 
   private get pluginPath() {
     const baseUrl = URI.BaseUrl();
-    return this.settingsMgr.settings.customTheme
-      ? this.settingsMgr.settings.customTheme
-      : `${baseUrl}/plugins/${this.settingsMgr.settings.theme}`;
+    return this.settingsMgr.settings.customPlugins
+      ? this.settingsMgr.settings.customPlugins
+      : `${baseUrl}/plugins/${this.settingsMgr.settings.plugins}`;
   }
 
   get pluginUrl() {
@@ -25,30 +24,31 @@ export class PluginManager {
   }
 
   async init() {
-    // TODO: This should actually be extracted... Would like to move to settings manager, but might have to be bootstrapper... Test and evaluate!
-    // Load Core Settings Schema
-    this.settingsSchema = await (await fetch('../../schemaSettingsCore.json')).json();
-
-    if (!this.settingsMgr.settings.theme && !this.settingsMgr.settings.customTheme) {
-      return;
+    if (!this.settingsMgr.settings.plugins && !this.settingsMgr.settings.customPlugins) {
+      // Fallback to the Default plugin
+      this.settingsMgr.settings.plugins = 'Default';
     }
 
-    this.plugin = await this.loadPluginInstance();
+    await this.loadPlugins();
+  }
+
+  async loadPlugins() {
+    this.plugins = await this.loadPluginInstance(this.pluginUrl);
     this.loadPluginStyle();
   }
 
-  private async loadPluginInstance() {
+  private async loadPluginInstance(pluginUrl: string) {
     try {
       // If a Custom Theme is supplied, we'll expect it to be a full URL, otherwise we'll formulate a URL.
       // This allows us to ensure vite will not attempt to package the plugin on our behalf, and will truly
       //   import from a remote file.
-      const pluginClass: OverlayPluginConstructor = (await import(this.pluginUrl)).default;
-      const plugin: OverlayPlugin = new pluginClass(this.bootOptions, this.settingsMgr, this.settingsSchema);
+      const pluginClass: OverlayPluginConstructor = (await import(/* @vite-ignore */ pluginUrl)).default;
+      const plugin: OverlayPlugin = new pluginClass(this.bootOptions, this.settingsMgr);
       return plugin;
     } catch (err) {
       console.error(
         `Could not dynamically load theme file: ${
-          this.settingsMgr.settings.theme || this.settingsMgr.settings.customTheme
+          this.settingsMgr.settings.plugins || this.settingsMgr.settings.customPlugins
         }`
       );
     }

@@ -9,6 +9,6 @@ export class SettingsManager_Chat extends SettingsManager {
   declare settings: OverlaySettings_Chat;
 
   get isConfigured() {
-    return !!this.settings['channelName'];
+    return !!this.settings.channelName && !!this.settings.fontSize;
   }
 }

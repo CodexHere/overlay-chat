@@ -1,11 +1,11 @@
 import { PluginManager } from './managers/PluginManager';
 import SettingsManager from './managers/SettingsManager';
-import { FormEntry } from './utils/Forms';
 
 export type OverlaySettings = {
   channelName?: string;
-  theme?: string;
-  customTheme?: string;
+  //TODO: Make an array of plugins
+  plugins?: string;
+  customPlugins?: string;
 };
 
 export type BootOptions = {
@@ -23,19 +23,17 @@ export type RendererInstance = {
 };
 
 export type RendererConstructor = {
-  new (
-    pluginMgr: PluginManager,
-    bootOptions: BootOptions,
-    settingsMgr: SettingsManager,
-    settingsSchema?: FormEntry[]
-  ): RendererInstance;
+  new (pluginMgr: PluginManager, bootOptions: BootOptions, settingsMgr: SettingsManager): RendererInstance;
 };
 
 export type OverlayPlugin = {
-  init_settings(): void;
-  init_renderer(): void;
+  bootOptions?: BootOptions;
+  settingsManager?: SettingsManager;
+  loadSettings(): void;
+  renderSettings(): void;
+  renderOverlay(): void;
 };
 
 export type OverlayPluginConstructor = {
-  new (bootOptions: BootOptions, settingsMgr: SettingsManager, settingsSchema: FormEntry[]): OverlayPlugin;
+  new (bootOptions: BootOptions, settingsMgr: SettingsManager): OverlayPlugin;
 };

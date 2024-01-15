@@ -1,19 +1,27 @@
+import SettingsManager from '../../../src/scripts/managers/SettingsManager';
+
+/**
+ * @typedef {import('../../../src/scripts/types').OverlayPlugin} OverlayPlugin
+ * @typedef {import('../../../src/scripts/types').BootOptions} BootOptions
+ *
+ * @implements {OverlayPlugin}
+ */
 export default class Plugin_HangoutHere {
+  bootOptions;
+  settingsManager;
+
   /**
-   * @param {import('../../../src/scripts/types').BootOptions} bootOptions
-   * @param {import('../../../src/scripts/managers/SettingsManager')} settingsMgr
-   * @param {import('../../../src/scripts/utils/Forms').FormEntry[]} settingsSchema
+   * @param {BootOptions} bootOptions
+   * @param {SettingsManager} settingsMgr
    */
-  constructor(bootOptions, settingsMgr, settingsSchema) {
+  constructor(bootOptions, settingsMgr) {
     this.bootOptions = bootOptions;
-    this.settingsMgr = settingsMgr;
-    this.settingsSchema = settingsSchema;
+    this.settingsManager = settingsMgr;
   }
 
-  init_settings() {
-    debugger;
-    this.settingsSchema.splice(
-      this.settingsSchema.length,
+  loadSettings() {
+    this.settingsManager.settingsSchema.splice(
+      this.settingsManager.settingsSchema.length,
       0,
       /// New Items!
       {
@@ -28,12 +36,14 @@ export default class Plugin_HangoutHere {
       { name: 'colorVip', label: 'VIP Color', inputType: 'color', defaultValue: '#FF00FF' }
     );
 
-    console.log('HangoutHere Plugin [Settings] Initialized!', this.settingsSchema);
+    console.log('HangoutHere Plugin [Settings] Initialized!', this.settingsManager.settingsSchema);
   }
 
-  // TODO: Split into a Overlay vs Settings renderer...
-  // TODO: Assumption - Settings are technically only loaded when the SettingsRenderer is instantiated. It needs to be done well before this, so the plugin on OverlayRenderer has access to the full suite of settings.
-  init_renderer() {
-    console.log('HangoutHere Plugin [Renderer] Initialized!', this.settingsSchema);
+  renderSettings() {
+    console.log('HangoutHere Plugin [renderSettings] Initialized!', this.settingsManager.settingsSchema);
+  }
+
+  renderOverlay() {
+    console.log('HangoutHere Plugin [renderOverlay] Initialized!', this.settingsManager.settingsSchema);
   }
 }

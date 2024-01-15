@@ -7,8 +7,6 @@ import { Templating } from './utils/Templating';
 // Start the overlay once DOM has loaded
 document.addEventListener('DOMContentLoaded', () => {
   const bootstrapper = new OverlayBootstrapper({
-    settingsManager: SettingsManager_Chat,
-
     elements: {
       body: document.getElementsByTagName('body')[0],
       container: document.getElementById('container-overlay') as HTMLElement
@@ -19,7 +17,8 @@ document.addEventListener('DOMContentLoaded', () => {
       'chat-message': Templating.PrepareTemplate('template-chat-message')
     },
 
-    settingsRenderer: SettingsRenderer,
+    settingsManager: SettingsManager_Chat,
+    settingsRenderer: SettingsRenderer, // TODO: Consider if this is necessary to include, or we just always use SettingsRenderer
     overlayRenderer: OverlayRenderer
   });
 

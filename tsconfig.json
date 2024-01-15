@@ -1,5 +1,5 @@
 {
-  "include": ["src"],
+  "include": ["src", "static/plugins"],
   "exclude": ["node_modules"],
 
   "compilerOptions": {

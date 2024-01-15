@@ -1,14 +1,24 @@
 import { OverlaySettings } from '../types';
+import { FormEntry } from '../utils/Forms';
 import { URI } from '../utils/URI';
 
 export default class SettingsManager {
-  settings: OverlaySettings;
+  settingsSchema: FormEntry[] = [];
+  settings: OverlaySettings = {};
 
-  constructor(locationHref: string) {
-    this.settings = URI.QueryStringToJson(locationHref);
-  }
+  private settingsSchemaDefault: FormEntry[] = [];
 
   get isConfigured() {
-    return true;
+    return !!this.settings.channelName;
+  }
+
+  constructor(private locationHref: string) {}
+
+  async init() {
+    // Load Settings from URI (injected from Window HREF)
+    this.settings = URI.QueryStringToJson(this.locationHref);
+    // Load Core Settings Schema
+    this.settingsSchemaDefault = await (await fetch('../../schemaSettingsCore.json')).json();
+    this.settingsSchema = structuredClone(this.settingsSchemaDefault);
   }
 }

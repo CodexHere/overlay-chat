@@ -7,16 +7,16 @@
     "tooltip": "This is the channel you want to display in the overlay!"
   },
   {
-    "name": "theme",
-    "label": "Theme",
+    "name": "plugins",
+    "label": "Plugins",
     "inputType": "select",
-    "values": ["HangoutHere"]
+    "values": ["Default", "HangoutHere"]
   },
   {
-    "name": "customTheme",
-    "label": "Custom Theme",
+    "name": "customPlugins",
+    "label": "Custom Plugins",
     "inputType": "text",
-    "tooltip": "Enter a full URL to a Plugin Theme path of a folder that has both 'plugin.js' and 'plugin.css'.&#10;If this is supplied, the Theme selection will be ignored.&#10;&#10;Example: https://mywebsite.com/pluginFolder/"
+    "tooltip": "Enter a full URL to a Plugin path of a folder that has both 'plugin.js' and 'plugin.css'.&#10;If this is supplied, the Plugins selection will be ignored.&#10;&#10;Example: https://mywebsite.com/pluginFolder/"
   },
 
   {

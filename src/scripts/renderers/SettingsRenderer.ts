@@ -1,20 +1,25 @@
 import { URI } from '../utils/URI';
 
+import { PluginManager } from '../managers/PluginManager';
 import SettingsManager from '../managers/SettingsManager';
 import { BootOptions, RendererInstance } from '../types';
-import Forms, { FormEntry } from '../utils/Forms';
+import Forms from '../utils/Forms';
 import { Templating } from '../utils/Templating';
-import { PluginManager } from '../managers/PluginManager';
 
 export default class SettingsRenderer implements RendererInstance {
   constructor(
     private pluginMgr: PluginManager,
     private bootOptions: BootOptions,
-    private settingsMgr: SettingsManager,
-    private schemaSettings?: FormEntry[]
+    private settingsMgr: SettingsManager
   ) {}
 
   init() {
+    this.renderSettings();
+    //TODO: Iterate plugins
+    this.pluginMgr.plugins?.renderSettings();
+  }
+
+  private renderSettings() {
     const elems = this.bootOptions.elements!;
     const templs = this.bootOptions.templates!;
 
@@ -22,10 +27,8 @@ export default class SettingsRenderer implements RendererInstance {
     const body = elems['body'];
     body.innerHTML = '';
 
-    this.pluginMgr.plugin?.init_settings();
-
     Templating.RenderTemplate(body, templs['settings'], {
-      formElements: Forms.FromJson(this.schemaSettings!)
+      formElements: Forms.FromJson(this.settingsMgr.settingsSchema!)
     });
 
     // Establish #elements now that the Settings Form has been injected into DOM

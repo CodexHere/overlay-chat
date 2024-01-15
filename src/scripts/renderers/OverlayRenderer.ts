@@ -23,11 +23,11 @@ export class OverlayRenderer {
 
   init() {
     this.initChatListen();
-    this.pluginMgr.plugin?.init_renderer();
+    this.pluginMgr.plugins?.renderOverlay();
   }
 
   initChatListen() {
-    const channelName = this.settingsMgr.settings['channelName'];
+    const channelName = this.settingsMgr.settings.channelName;
 
     if (!channelName) {
       return;
