@@ -19,7 +19,7 @@ export default class Plugin_HangoutHere {
     this.settingsManager = settingsMgr;
   }
 
-  loadSettings() {
+  loadSettingsSchema() {
     this.settingsManager.settingsSchema.splice(
       this.settingsManager.settingsSchema.length,
       0,

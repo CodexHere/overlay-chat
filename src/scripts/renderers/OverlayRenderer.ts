@@ -23,7 +23,8 @@ export class OverlayRenderer {
 
   init() {
     this.initChatListen();
-    this.pluginMgr.plugins?.renderOverlay();
+    // Iterate over every loaded plugin, and call `renderOverlay` to manipulate the Overlay view
+    this.pluginMgr.plugins?.forEach(plugin => plugin.renderOverlay());
   }
 
   initChatListen() {
@@ -106,3 +107,5 @@ export class OverlayRenderer {
     }
   }
 }
+
+export class OverlayRenderer_Chat extends OverlayRenderer {}

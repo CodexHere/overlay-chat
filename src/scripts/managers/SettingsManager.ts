@@ -19,6 +19,10 @@ export default class SettingsManager {
     this.settings = URI.QueryStringToJson(this.locationHref);
     // Load Core Settings Schema
     this.settingsSchemaDefault = await (await fetch('../../schemaSettingsCore.json')).json();
+    this.resetSettingsSchema();
+  }
+
+  resetSettingsSchema() {
     this.settingsSchema = structuredClone(this.settingsSchemaDefault);
   }
 }

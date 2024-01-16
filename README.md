@@ -1,5 +1,12 @@
 # HangoutHere Overlay: Chat
 
+## TODO
+* Inject all values as CSS variables
+  * Do we make this a `FormEntry` prop? ie, `injectCssVar`?
+* Do we always include default plugin?
+* Splitting as a plugin?
+* Do we want Plugins to load dependencies?
+
 ## Application Lifecycle
 
 - BootStrap 
@@ -24,3 +31,15 @@
     - Determine if Settings are configured
       - If Configured, `init` the Overlay Renderer
       - If Unconfigured, `init` the Settings Renderer
+
+
+## Plugins
+
+### Ideas
+
+* Chat Animations
+* Sound Effects
+* Link Replacement
+* Emoji Replacments
+* Authentication w/Twitch
+* Administrative Actions? (woudl need auth)

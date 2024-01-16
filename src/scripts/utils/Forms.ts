@@ -4,7 +4,7 @@ export type FormEntry = {
   name: string;
   label?: string;
   tooltip?: string;
-  inputType?: 'text' | 'number' | 'checkbox' | 'select' | 'color';
+  inputType?: 'text' | 'number' | 'checkbox' | 'select' | 'multiselect' | 'color';
   defaultValue?: string | boolean | number;
   isRequired?: boolean;
   values?: string[];
@@ -29,12 +29,15 @@ export default class Forms {
             item.name
           }" ${required}>`;
           break;
+        case 'multiselect':
         case 'select':
           let options = '';
+          const isMulti = 'multiselect' === item.inputType ? 'multiple' : '';
+
           for (let j = 0; j < item.values!.length; j++) {
             options += `<option value="${item.values![j]}">${item.values![j]}</option>`;
           }
-          inputs += `<select value="${defaultData}" name="${item.name}" id="${item.name}" ${required}>${options}</select>`;
+          inputs += `<select value="${defaultData}" name="${item.name}" id="${item.name}" ${isMulti} ${required}>${options}</select>`;
           break;
         case 'number':
         case 'color':
@@ -59,18 +62,21 @@ export default class Forms {
         continue;
       }
 
-      switch (value) {
-        case 'true':
-        case 'false':
-        case 'yes':
-        case 'no':
-        case 'y':
-        case 'n':
+      switch (element.type) {
+        case 'checkbox':
+        case 'radio':
           element.checked = value;
           break;
-        default:
-          element.value = 'color' === element.type ? `#${value}` : value;
+        case 'color':
+          element.value = `#${value.replace('#', '')}`;
           break;
+        case 'select-multiple':
+          const opts = [...(element as unknown as HTMLSelectElement).options];
+          const values = value as string[];
+          opts.forEach(opt => (opt.selected = values.includes(opt.value)));
+          break;
+        default:
+          element.value = value;
       }
     }
   }
@@ -93,6 +99,8 @@ export default class Forms {
           default:
             json[name] = value;
         }
+      } else if (input instanceof HTMLSelectElement) {
+        json[name] = [...input.options].filter(opt => opt.selected).map(opt => opt.value);
       } else {
         json[name] = value;
       }

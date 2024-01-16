@@ -3,8 +3,7 @@ import SettingsManager from './managers/SettingsManager';
 
 export type OverlaySettings = {
   channelName?: string;
-  //TODO: Make an array of plugins
-  plugins?: string;
+  plugins?: string[];
   customPlugins?: string;
 };
 
@@ -29,7 +28,7 @@ export type RendererConstructor = {
 export type OverlayPlugin = {
   bootOptions?: BootOptions;
   settingsManager?: SettingsManager;
-  loadSettings(): void;
+  loadSettingsSchema(): void;
   renderSettings(): void;
   renderOverlay(): void;
 };

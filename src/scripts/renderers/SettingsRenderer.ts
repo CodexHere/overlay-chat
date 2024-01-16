@@ -5,6 +5,9 @@ import SettingsManager from '../managers/SettingsManager';
 import { BootOptions, RendererInstance } from '../types';
 import Forms from '../utils/Forms';
 import { Templating } from '../utils/Templating';
+import { debounce } from '../utils/misc';
+
+const shouldReloadPlugins = ['plugins', 'customPlugins'];
 
 export default class SettingsRenderer implements RendererInstance {
   constructor(
@@ -15,8 +18,11 @@ export default class SettingsRenderer implements RendererInstance {
 
   init() {
     this.renderSettings();
-    //TODO: Iterate plugins
-    this.pluginMgr.plugins?.renderSettings();
+
+    // Iterate over every loaded plugin, and call `renderSettings` to manipulate the Settings view
+    this.pluginMgr.plugins?.forEach(plugin => plugin.renderSettings());
+
+    this.generateUrl();
   }
 
   private renderSettings() {
@@ -38,28 +44,38 @@ export default class SettingsRenderer implements RendererInstance {
 
     Forms.Populate(form, this.settingsMgr.settings!);
 
-    form.addEventListener('input', this.onSettingsChange);
+    form.addEventListener('input', debounce(this.onSettingsChanged, 500));
     btnLoadOverlay.addEventListener('click', this.onClickLoadOverlay);
   }
 
-  private onSettingsChange = (event: Event) => {
-    const elems = this.bootOptions.elements!;
+  private onSettingsChanged = async (event: Event) => {
+    const target = event.target! as HTMLInputElement;
+    const form = target.form!;
 
+    const formData = Forms.GetData(form);
+    this.settingsMgr.settings = formData;
+
+    if (shouldReloadPlugins.includes(target.name)) {
+      this.settingsMgr.resetSettingsSchema();
+      await this.pluginMgr.loadPlugins();
+
+      return this.init();
+    }
+
+    this.generateUrl();
+    form.reportValidity();
+  };
+
+  private generateUrl() {
+    const elems = this.bootOptions.elements!;
     const linkResults: HTMLInputElement = elems['link-results'] as HTMLInputElement;
     const linkButton: HTMLInputElement = elems['button-load-overlay'] as HTMLInputElement;
 
-    const form = event.currentTarget as HTMLFormElement;
-    const formData = Forms.GetData(form);
-
     const baseUrl = URI.BaseUrl();
-    const queryString = URI.JsonToQueryString(formData);
-
-    this.settingsMgr.settings = formData;
+    const queryString = URI.JsonToQueryString(this.settingsMgr.settings);
     linkResults.value = `${baseUrl}?${queryString}`;
-    linkButton.disabled = !form.checkValidity();
-
-    form.reportValidity();
-  };
+    linkButton.disabled = !(elems['form'] as HTMLFormElement).checkValidity();
+  }
 
   private onClickLoadOverlay = (_event: Event) => {
     const linkResults: HTMLInputElement = this.bootOptions.elements!['link-results'] as HTMLInputElement;

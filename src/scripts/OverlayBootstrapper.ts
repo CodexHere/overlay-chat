@@ -17,9 +17,6 @@ export default class OverlayBootstrapper {
     await this.settingsManager.init();
     await this.pluginManager.init();
 
-    // TODO: Needs to iterate Plugins
-    this.pluginManager.plugins?.loadSettings();
-
     // Unconfigured, and has SettingsRenderer specified
     if (false === this.settingsManager?.isConfigured && this.bootSettings.settingsRenderer) {
       rendererClass = this.bootSettings.settingsRenderer;
@@ -33,4 +30,5 @@ export default class OverlayBootstrapper {
       new rendererClass(this.pluginManager, this.bootSettings, this.settingsManager).init();
     }
   }
+
 }

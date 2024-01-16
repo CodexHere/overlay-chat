@@ -6,10 +6,11 @@
     "isRequired": true,
     "tooltip": "This is the channel you want to display in the overlay!"
   },
+
   {
     "name": "plugins",
     "label": "Plugins",
-    "inputType": "select",
+    "inputType": "multiselect",
     "values": ["Default", "HangoutHere"]
   },
   {

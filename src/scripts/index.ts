@@ -1,6 +1,6 @@
 import OverlayBootstrapper from './OverlayBootstrapper';
 import { SettingsManager_Chat } from './SettingsManager_Chat';
-import { OverlayRenderer } from './renderers/OverlayRenderer';
+import { OverlayRenderer_Chat } from './renderers/OverlayRenderer';
 import SettingsRenderer from './renderers/SettingsRenderer';
 import { Templating } from './utils/Templating';
 
@@ -18,8 +18,9 @@ document.addEventListener('DOMContentLoaded', () => {
     },
 
     settingsManager: SettingsManager_Chat,
-    settingsRenderer: SettingsRenderer, // TODO: Consider if this is necessary to include, or we just always use SettingsRenderer
-    overlayRenderer: OverlayRenderer
+    // TODO: Consider if this is necessary to include, or we just always use SettingsRenderer
+    settingsRenderer: SettingsRenderer,
+    overlayRenderer: OverlayRenderer_Chat
   });
 
   bootstrapper.init();
