@@ -1,7 +1,10 @@
-import SettingsManager from './SettingsManager';
+import { PluginManager } from './managers/PluginManager';
+import SettingsManager from './managers/SettingsManager';
 
 export type OverlaySettings = {
   channelName?: string;
+  plugins?: string[];
+  customPlugins?: string;
 };
 
 export type BootOptions = {
@@ -19,5 +22,17 @@ export type RendererInstance = {
 };
 
 export type RendererConstructor = {
-  new (bootOptions: BootOptions, settingsMgr: SettingsManager): RendererInstance;
+  new (pluginMgr: PluginManager, bootOptions: BootOptions, settingsMgr: SettingsManager): RendererInstance;
+};
+
+export type OverlayPlugin = {
+  bootOptions?: BootOptions;
+  settingsManager?: SettingsManager;
+  loadSettingsSchema(): void;
+  renderSettings(): void;
+  renderOverlay(): void;
+};
+
+export type OverlayPluginConstructor = {
+  new (bootOptions: BootOptions, settingsMgr: SettingsManager): OverlayPlugin;
 };

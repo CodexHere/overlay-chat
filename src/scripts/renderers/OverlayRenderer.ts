@@ -1,10 +1,11 @@
 import Splitting from 'splitting';
 import { loadAssets, replaceEmotes } from 'tmi-emote-parse';
 import tmiJs from 'tmi.js';
-import SettingsManager from './SettingsManager';
-import { BootOptions } from './types';
-import { Templating } from './utils/Templating';
-import { GetColorForUsername } from './utils/misc';
+import { PluginManager } from '../managers/PluginManager';
+import SettingsManager from '../managers/SettingsManager';
+import { BootOptions } from '../types';
+import { Templating } from '../utils/Templating';
+import { GetColorForUsername } from '../utils/misc';
 
 type MessagePayload = {
   user: string;
@@ -14,14 +15,20 @@ type MessagePayload = {
 };
 
 export class OverlayRenderer {
-  constructor(private bootOptions: BootOptions, private settingsMgr: SettingsManager) {}
+  constructor(
+    private pluginMgr: PluginManager,
+    private bootOptions: BootOptions,
+    private settingsMgr: SettingsManager
+  ) {}
 
   init() {
     this.initChatListen();
+    // Iterate over every loaded plugin, and call `renderOverlay` to manipulate the Overlay view
+    this.pluginMgr.plugins?.forEach(plugin => plugin.renderOverlay());
   }
 
   initChatListen() {
-    const channelName = this.settingsMgr.settings['channelName'];
+    const channelName = this.settingsMgr.settings.channelName;
 
     if (!channelName) {
       return;
@@ -100,3 +107,5 @@ export class OverlayRenderer {
     }
   }
 }
+
+export class OverlayRenderer_Chat extends OverlayRenderer {}

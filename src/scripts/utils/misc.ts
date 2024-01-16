@@ -20,3 +20,14 @@ export const HashCode = (str: string) => str.split('').reduce((s, c) => (Math.im
 
 export const GetColorForUsername = (userName: string) =>
   DEFAULT_COLORS[Math.abs(HashCode(userName)) % (DEFAULT_COLORS.length - 1)];
+
+export function debounce<T extends (...args: any[]) => any>(callback: T, wait: number) {
+  let timeoutId: number;
+
+  const callable = (...args: any) => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => callback(...args), wait);
+  };
+
+  return <T>(<any>callable);
+}

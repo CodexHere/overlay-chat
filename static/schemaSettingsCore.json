@@ -1,0 +1,31 @@
+[
+  {
+    "name": "channelName",
+    "label": "Channel Name",
+    "inputType": "text",
+    "isRequired": true,
+    "tooltip": "This is the channel you want to display in the overlay!"
+  },
+
+  {
+    "name": "plugins",
+    "label": "Plugins",
+    "inputType": "multiselect",
+    "values": ["Default", "HangoutHere"]
+  },
+  {
+    "name": "customPlugins",
+    "label": "Custom Plugins",
+    "inputType": "text",
+    "tooltip": "Enter a full URL to a Plugin path of a folder that has both 'plugin.js' and 'plugin.css'.&#10;If this is supplied, the Plugins selection will be ignored.&#10;&#10;Example: https://mywebsite.com/pluginFolder/"
+  },
+
+  {
+    "name": "colorText",
+    "label": "Text Color",
+    "inputType": "color",
+    "defaultValue": "#FFFFFF"
+  },
+
+  { "name": "fontSize", "label": "Font Size", "inputType": "number", "defaultValue": 16, "isRequired": true }
+]

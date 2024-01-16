@@ -1,5 +1,4 @@
 @import url('normalize.css');
-@import url('https://fonts.googleapis.com/css2?family=Dongle:wght@700&display=swap');
 
 :root {
   --fg-color: white;
@@ -27,7 +26,7 @@ body {
 }
 
 body {
-  background: #0b0b0b url('../../background.jpg') center no-repeat;
+  background: #0b0b0b;
   background-size: cover;
 
   display: flex;
@@ -48,6 +47,8 @@ body {
     flex: 1;
     overflow-y: auto;
     margin-bottom: 1rem;
+    background: #000000aa;
+    padding: 2rem;
 
     input:invalid,
     input:focus:invalid {
@@ -55,6 +56,20 @@ body {
       border-width: 2px;
       outline: none;
       background-color: #f7a8a8;
+    }
+
+    select {
+      max-width: 20rem;
+    }
+
+    div {
+      display: flex;
+      padding: 2px;
+
+      @media only screen and (max-width: 768px) {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
     }
 
     label[title]:after {
@@ -68,7 +83,7 @@ body {
       height: 0.6rem;
       justify-content: center;
       position: relative;
-      top: -0.3rem;
+      top: -0.25rem;
       left: 0.25rem;
       cursor: help;
     }
@@ -100,7 +115,6 @@ body {
   border-radius: 1vmin;
   border: 1vmin solid var(--colorBorder);
   display: flex;
-  font-family: 'Dongle';
   font-size: 10vmin;
   line-height: 8vmin;
   flex-direction: column;

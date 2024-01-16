@@ -1,4 +1,4 @@
-import SettingsManager from './SettingsManager';
+import SettingsManager from './managers/SettingsManager';
 import { OverlaySettings } from './types';
 
 type OverlaySettings_Chat = OverlaySettings & {
@@ -9,6 +9,6 @@ export class SettingsManager_Chat extends SettingsManager {
   declare settings: OverlaySettings_Chat;
 
   get isConfigured() {
-    return !!this.settings['channelName'];
+    return !!this.settings.channelName && !!this.settings.fontSize;
   }
 }
