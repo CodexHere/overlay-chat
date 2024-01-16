@@ -1,0 +1,78 @@
+details {
+  margin-bottom: 1rem;
+  padding-bottom: 0;
+  border-bottom: none;
+
+  // The Rotating Marker
+  summary {
+    --size: 1.5rem;
+    position: relative;
+    border: 4px solid transparent;
+    display: block;
+    background: rgba(49, 49, 49, 0.749);
+    color: white;
+    padding-left: 1.5rem;
+    cursor: pointer;
+    font-size: var(--size);
+    line-height: var(--size);
+
+    &::-webkit-details-marker {
+      display: none;
+    }
+
+    &::before {
+      content: '›';
+      position: absolute;
+      transition: 0.2s transform ease;
+      font-size: 2.5rem;
+      line-height: 1rem;
+      top: 1.1rem;
+      left: 0;
+      margin: -0.5rem -0.5rem 0 0.5rem;
+      transform-origin: center center;
+      transition: transform 0.25s, left 0.25s;
+    }
+
+    &::after {
+      display: none;
+    }
+
+    &:focus,
+    &:focus:not([role='button']) {
+      color: inherit;
+    }
+
+    .summary-wrapper {
+      padding: 0.5rem;
+    }
+  }
+
+  &[open] {
+    summary {
+      margin-bottom: 0;
+
+      &:not([role]):not(:focus) {
+        color: inherit;
+      }
+    }
+
+    & > summary::before {
+      top: 1.25rem;
+      left: 0.3rem;
+      transform: rotate(90deg);
+    }
+  }
+
+  .content {
+    position: relative;
+
+    padding: 0.5rem;
+    border: 1px solid var(--card-border-color);
+    border-top: 0;
+    background: var(--card-background-color);
+
+    & > details {
+      margin-left: 2rem;
+    }
+  }
+}

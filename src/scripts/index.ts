@@ -18,7 +18,6 @@ document.addEventListener('DOMContentLoaded', () => {
     },
 
     settingsManager: SettingsManager_Chat,
-    // TODO: Consider if this is necessary to include, or we just always use SettingsRenderer
     settingsRenderer: SettingsRenderer,
     overlayRenderer: OverlayRenderer_Chat
   });

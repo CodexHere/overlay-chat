@@ -1,12 +1,12 @@
-import SettingsManager from '../../../src/scripts/managers/SettingsManager';
-
 /**
  * @typedef {import('../../../src/scripts/types').OverlayPlugin} OverlayPlugin
  * @typedef {import('../../../src/scripts/types').BootOptions} BootOptions
+ * @typedef {import('../../../src/scripts/managers/SettingsManager').default} SettingsManager
  *
  * @implements {OverlayPlugin}
  */
 export default class Plugin_HangoutHere {
+  name = 'Hangout Here Theme';
   bootOptions;
   settingsManager;
 
@@ -20,21 +20,23 @@ export default class Plugin_HangoutHere {
   }
 
   loadSettingsSchema() {
-    this.settingsManager.settingsSchema.splice(
-      this.settingsManager.settingsSchema.length,
-      0,
-      /// New Items!
-      {
-        name: 'showBadges',
-        label: 'Show Badges',
-        inputType: 'checkbox',
-        tooltip: 'Toggles whether to show leading Badges (i.e., Mod, VIP, etc)'
-      },
+    this.settingsManager.addPluginSettings({
+      inputType: 'fieldgroup',
+      label: this.name,
+      name: this.name.toLocaleLowerCase().replaceAll(' ', '_'),
+      values: [
+        {
+          name: 'showBadges',
+          label: 'Show Badges',
+          inputType: 'checkbox',
+          tooltip: 'Toggles whether to show leading Badges (i.e., Mod, VIP, etc)'
+        },
 
-      { name: 'colorLeading', label: 'Leading Color', inputType: 'color', defaultValue: '#FFFFFF' },
-      { name: 'colorMod', label: 'Mod Color', inputType: 'color', defaultValue: '#00FF00' },
-      { name: 'colorVip', label: 'VIP Color', inputType: 'color', defaultValue: '#FF00FF' }
-    );
+        { name: 'colorLeading', label: 'Leading Color', inputType: 'color', defaultValue: '#FFFFFF' },
+        { name: 'colorMod', label: 'Mod Color', inputType: 'color', defaultValue: '#00FF00' },
+        { name: 'colorVip', label: 'VIP Color', inputType: 'color', defaultValue: '#FF00FF' }
+      ]
+    });
 
     console.log('HangoutHere Plugin [Settings] Initialized!', this.settingsManager.settingsSchema);
   }
@@ -46,4 +48,7 @@ export default class Plugin_HangoutHere {
   renderOverlay() {
     console.log('HangoutHere Plugin [renderOverlay] Initialized!', this.settingsManager.settingsSchema);
   }
+
+  // TODO: implement this concept
+  middleware(context, next) {}
 }

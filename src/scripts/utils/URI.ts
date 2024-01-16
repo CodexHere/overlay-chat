@@ -1,7 +1,8 @@
 export class URI {
   static BaseUrl() {
     const url = new URL(location.href.replaceAll('#', ''));
-    return `${url.origin}${url.pathname}`;
+    // Combined URL with path, without traliing slash
+    return `${url.origin}${url.pathname}`.replace(/\/+$/, '');
   }
 
   static QueryStringToJson = <SettingsType, SettingsKey extends keyof SettingsType>(urlHref: string): SettingsType => {

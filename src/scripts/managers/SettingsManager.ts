@@ -1,12 +1,15 @@
 import { OverlaySettings } from '../types';
-import { FormEntry } from '../utils/Forms';
+import { FormEntry, FormEntryFieldGroup } from '../utils/Forms';
 import { URI } from '../utils/URI';
 
 export default class SettingsManager {
-  settingsSchema: FormEntry[] = [];
   settings: OverlaySettings = {};
-
+  private _settingsSchema: FormEntry[] = [];
   private settingsSchemaDefault: FormEntry[] = [];
+
+  get settingsSchema(): Readonly<FormEntry[]> {
+    return structuredClone(this._settingsSchema);
+  }
 
   get isConfigured() {
     return !!this.settings.channelName;
@@ -23,6 +26,10 @@ export default class SettingsManager {
   }
 
   resetSettingsSchema() {
-    this.settingsSchema = structuredClone(this.settingsSchemaDefault);
+    this._settingsSchema = structuredClone(this.settingsSchemaDefault);
+  }
+
+  addPluginSettings(fieldGroup: FormEntryFieldGroup) {
+    this._settingsSchema.push(fieldGroup);
   }
 }

@@ -1,12 +1,12 @@
-import SettingsManager from '../../../src/scripts/managers/SettingsManager';
-
 /**
  * @typedef {import('../../../src/scripts/types').OverlayPlugin} OverlayPlugin
  * @typedef {import('../../../src/scripts/types').BootOptions} BootOptions
+ * @typedef {import('../../../src/scripts/managers/SettingsManager').default} SettingsManager
  *
  * @implements {OverlayPlugin}
  */
 export default class Plugin_Default {
+  name = 'Default Plugin';
   bootOptions;
   settingsManager;
 
@@ -20,25 +20,30 @@ export default class Plugin_Default {
   }
 
   loadSettingsSchema() {
-    this.settingsManager.settingsSchema.splice(
-      this.settingsManager.settingsSchema.length,
-      0,
-      /// New Items!
-      {
-        name: 'default',
-        label: 'Default Plugin',
-        inputType: 'text'
-      }
-    );
+    this.settingsManager.addPluginSettings({
+      inputType: 'fieldgroup',
+      label: this.name,
+      name: this.name.toLocaleLowerCase().replaceAll(' ', '_'),
+      values: [
+        {
+          name: 'default',
+          label: 'Default Plugin',
+          inputType: 'text'
+        }
+      ]
+    });
 
-    console.log('Default [Settings] Initialized!', this.settingsManager.settingsSchema);
+    console.log(`${this.name} [Settings] Initialized!`, this.settingsManager.settingsSchema);
   }
 
   renderSettings() {
-    console.log('Default Plugin [renderSettings] Initialized!', this.settingsManager.settingsSchema);
+    console.log(`${this.name} Plugin [renderSettings] Initialized!`, this.settingsManager.settingsSchema);
   }
 
   renderOverlay() {
-    console.log('Default Plugin [renderOverlay] Initialized!', this.settingsManager.settingsSchema);
+    console.log(`${this.name} Plugin [renderOverlay] Initialized!`, this.settingsManager.settingsSchema);
   }
+
+  // TODO: implement this concept
+  middleware(context, next) {}
 }

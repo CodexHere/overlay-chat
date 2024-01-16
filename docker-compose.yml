@@ -11,3 +11,13 @@ services:
       - 5173:5173
     volumes:
       - .:/app
+
+  overlay-chat-build:
+    image: node:21-alpine
+    container_name: overlay-chat-build
+    profiles: ['build']
+    command: npm run build
+    working_dir: /app
+    user: '1000'
+    volumes:
+      - .:/app

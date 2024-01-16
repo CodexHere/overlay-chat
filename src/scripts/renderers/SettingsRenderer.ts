@@ -2,14 +2,14 @@ import { URI } from '../utils/URI';
 
 import { PluginManager } from '../managers/PluginManager';
 import SettingsManager from '../managers/SettingsManager';
-import { BootOptions, RendererInstance } from '../types';
+import { BootOptions } from '../types';
 import Forms from '../utils/Forms';
 import { Templating } from '../utils/Templating';
 import { debounce } from '../utils/misc';
 
 const shouldReloadPlugins = ['plugins', 'customPlugins'];
 
-export default class SettingsRenderer implements RendererInstance {
+export default class SettingsRenderer {
   constructor(
     private pluginMgr: PluginManager,
     private bootOptions: BootOptions,
@@ -34,18 +34,21 @@ export default class SettingsRenderer implements RendererInstance {
     body.innerHTML = '';
 
     Templating.RenderTemplate(body, templs['settings'], {
-      formElements: Forms.FromJson(this.settingsMgr.settingsSchema!)
+      formElements: Forms.FromJson(this.settingsMgr.settingsSchema)
     });
 
     // Establish #elements now that the Settings Form has been injected into DOM
     const form = (elems['form'] = body.querySelector('form')!);
     const btnLoadOverlay = (elems['button-load-overlay'] = body.querySelector('.link-results .button-load-overlay')!);
     elems['link-results'] = body.querySelector('.link-results textarea')!;
+    elems['first-details'] = body.querySelector('details')!;
 
     Forms.Populate(form, this.settingsMgr.settings!);
 
     form.addEventListener('input', debounce(this.onSettingsChanged, 500));
     btnLoadOverlay.addEventListener('click', this.onClickLoadOverlay);
+
+    elems['first-details']?.setAttribute('open', '');
   }
 
   private onSettingsChanged = async (event: Event) => {
@@ -59,11 +62,12 @@ export default class SettingsRenderer implements RendererInstance {
       this.settingsMgr.resetSettingsSchema();
       await this.pluginMgr.loadPlugins();
 
-      return this.init();
+      this.init();
+    } else {
+      form.reportValidity();
     }
 
     this.generateUrl();
-    form.reportValidity();
   };
 
   private generateUrl() {
@@ -73,7 +77,7 @@ export default class SettingsRenderer implements RendererInstance {
 
     const baseUrl = URI.BaseUrl();
     const queryString = URI.JsonToQueryString(this.settingsMgr.settings);
-    linkResults.value = `${baseUrl}?${queryString}`;
+    linkResults.value = queryString ? `${baseUrl}?${queryString}`.replace(/\?+$/, '') : '';
     linkButton.disabled = !(elems['form'] as HTMLFormElement).checkValidity();
   }
 

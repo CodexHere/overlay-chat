@@ -4,7 +4,8 @@
   "description": "",
   "main": "dist/index.js",
   "scripts": {
-    "start": "vite ."
+    "start": "vite .",
+    "build": "vite build"
   },
   "keywords": [],
   "author": "",
@@ -17,11 +18,10 @@
     "vite": "^5.0.4"
   },
   "dependencies": {
+    "@picocss/pico": "^1.5.11",
     "@types/events": "^3.0.3",
     "events": "^3.3.0",
     "handlebars": "^4.7.8",
-    "install": "^0.13.0",
-    "normalize.css": "^8.0.1",
     "splitting": "^1.0.6",
     "tmi-emote-parse": "^2.0.0",
     "tmi.js": "^1.8.5"

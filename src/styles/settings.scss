@@ -1,0 +1,102 @@
+#container-settings {
+  display: flex;
+  flex-direction: column;
+  padding: 3rem;
+  padding-top: 1rem;
+  height: 100%;
+
+  [data-input-type] {
+    display: flex;
+    flex-direction: column;
+  }
+
+  [data-input-type='switch'],
+  [data-input-type='checkbox'] {
+    flex-direction: row-reverse;
+    justify-content: flex-end;
+    margin-bottom: calc(var(--spacing) * 0.25);
+
+    input {
+      margin-block: 0;
+    }
+
+    label {
+      margin-bottom: 0;
+    }
+  }
+
+  .container-title {
+    margin-bottom: 1rem;
+  }
+
+  form {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow-y: auto;
+    margin-bottom: 1rem;
+    background: var(--card-background-color);
+    border: 1px solid var(--card-border-color);
+    border-top-left-radius: 0.5rem;
+    border-bottom-left-radius: 0.5rem;
+    padding: 1rem;
+
+    input:not([type='submit'], [type='button'], [type='reset'], [type='range'], [type='file'], [readonly]):focus,
+    select:focus,
+    textarea:focus {
+      --box-shadow: 0 0 var(--outline-width) var(--outline-width) var(--form-element-focus-color);
+    }
+
+    input:invalid,
+    input:focus:invalid {
+      --border-color: var(--form-element-invalid-focus-color);
+      --background-color: #f4bc1e55;
+      border-width: 2px;
+      outline: none;
+      background-position: center right 0.75rem;
+      background-image: var(--icon-invalid);
+    }
+
+    input:focus:invalid {
+      --border-color: var(--form-element-invalid-border-color);
+      --box-shadow: 0 0 var(--outline-width) var(--outline-width) var(--form-element-invalid-border-color);
+    }
+
+    label {
+      display: inline-block;
+    }
+  }
+
+  .link-results {
+    display: flex;
+    gap: 1rem;
+
+    textarea {
+      flex: 1;
+      resize: none;
+    }
+
+    button {
+      width: auto;
+    }
+  }
+
+  [title]:after {
+    --size: 0.75rem;
+    display: inline-flex;
+    content: 'i';
+    background: var(--primary);
+    border-radius: 50%;
+    border: 1px solid #fff;
+    font-size: var(--size);
+    width: var(--size);
+    height: var(--size);
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    top: -0.55em;
+    left: 0.25em;
+    opacity: 0.5;
+    cursor: help;
+  }
+}

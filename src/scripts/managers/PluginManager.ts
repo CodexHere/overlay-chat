@@ -8,78 +8,73 @@ export class PluginManager {
 
   constructor(private bootOptions: BootOptions, private settingsMgr: SettingsManager) {}
 
-  private getPluginPath(pluginName: string) {
+  private getPluginPath = (pluginName: string) => {
     return pluginName.startsWith('http') ? pluginName : `${URI.BaseUrl()}/plugins/${pluginName}`;
-  }
+  };
 
-  private getPluginUrl(pluginName: string) {
-    return `${this.getPluginPath(pluginName)}/plugin.js`;
-  }
+  private pluginBaseUrls() {
+    let pluginUrls: string[];
 
-  private getStyleUrl(pluginName: string) {
-    return `${this.getPluginPath(pluginName)}/plugin.css`;
+    if (this.settingsMgr.settings.customPlugins) {
+      pluginUrls = this.settingsMgr.settings.customPlugins.split(';');
+    } else if (this.settingsMgr.settings.plugins) {
+      // At runtime, `settings.plugins` may actually be a single string due to deserializing
+      // URLSearchParams that only had one specified plugin
+      pluginUrls = Array.isArray(this.settingsMgr.settings.plugins)
+        ? this.settingsMgr.settings.plugins
+        : ([this.settingsMgr.settings.plugins] as unknown as string[]);
+
+      pluginUrls = pluginUrls.map(this.getPluginPath);
+    } else {
+      // No Plugins were defined, fall back to Default
+      pluginUrls = [this.getPluginPath('Default')];
+    }
+
+    return pluginUrls;
   }
 
   async init() {
-    if (!this.settingsMgr.settings.plugins && !this.settingsMgr.settings.customPlugins) {
-      // Fallback to the Default plugin
-      this.settingsMgr.settings.plugins = ['Default'];
-    }
-
     await this.loadPlugins();
   }
 
   async loadPlugins() {
-    const hasPlugins = !!(!!this.settingsMgr.settings.plugins || this.settingsMgr.settings.customPlugins);
+    const pluginBaseUrls = this.pluginBaseUrls();
 
-    if (false === hasPlugins) {
-      return;
-    }
-
-    await this.importModules();
-    this.loadPluginStyles();
+    await this.importModules(pluginBaseUrls);
+    this.loadPluginStyles(pluginBaseUrls);
 
     // Iterate over every loaded plugin, and call `loadSettings` to manipulate the Settings Schema
     this.plugins?.forEach(plugin => plugin.loadSettingsSchema());
   }
 
-  private async importModules() {
-    const chosenPlugins = this.settingsMgr.settings.customPlugins
-      ? this.settingsMgr.settings.customPlugins?.split(';')
-      : this.settingsMgr.settings.plugins;
-
-    const promises = chosenPlugins!.map(async pluginName => await this.loadPluginInstance(pluginName));
-
+  private async importModules(pluginBaseUrls: string[]) {
+    // TODO Need to test a single plugin breaking, how it's handled as a chain...
+    const promises = pluginBaseUrls.map(async pluginUrl => await this.loadPluginInstance(pluginUrl));
     this.plugins = (await Promise.all(promises)).filter(plugin => !!plugin) as OverlayPlugin[];
   }
 
-  private async loadPluginInstance(pluginName: string) {
-    const pluginUrl = this.getPluginUrl(pluginName);
-
+  private async loadPluginInstance(pluginBaseUrl: string) {
     try {
       // If a Custom Theme is supplied, we'll expect it to be a full URL, otherwise we'll formulate a URL.
       // This allows us to ensure vite will not attempt to package the plugin on our behalf, and will truly
       //   import from a remote file.
-      const pluginClass: OverlayPluginConstructor = (await import(/* @vite-ignore */ pluginUrl)).default;
-      const plugin: OverlayPlugin = new pluginClass(this.bootOptions, this.settingsMgr);
+      const pluginLoad = await import(/* @vite-ignore */ `${pluginBaseUrl}/plugin.js`);
+      const pluginClass: OverlayPluginConstructor = pluginLoad.default;
+      const pluginInstance: OverlayPlugin = new pluginClass(this.bootOptions, this.settingsMgr);
 
-      return plugin;
+      return pluginInstance;
     } catch (err) {
-      console.error(
-        `Could not dynamically load Plugin: ${
-          this.settingsMgr.settings.plugins || this.settingsMgr.settings.customPlugins
-        }`
-      );
+      console.error(`Could not dynamically load Plugin: ${pluginBaseUrl}`);
     }
   }
 
-  private loadPluginStyles() {
-    this.settingsMgr.settings.plugins?.forEach(pluginName => {
+  private loadPluginStyles(pluginBaseUrls: string[]) {
+    pluginBaseUrls.forEach(pluginBaseUrl => {
       const head = document.getElementsByTagName('head')[0];
       const link = document.createElement('link');
       link.rel = 'stylesheet';
       link.type = 'text/css';
-      link.href = this.getStyleUrl(pluginName);
+      link.href = `${pluginBaseUrl}/plugin.css`;
 
       head.appendChild(link);
     });

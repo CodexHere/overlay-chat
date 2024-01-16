@@ -1,13 +1,93 @@
 @import url('https://fonts.googleapis.com/css2?family=Dongle:wght@700&display=swap');
+@import url('@picocss/pico');
+
+:root {
+  --colorRevealText0: #e2e2e2;
+  --colorRevealText1: #ff8a3b;
+  --colorRevealText2: #f23373;
+  --colorRevealText3: transparent;
+  --colorBorder: #bc91f8;
+}
 
 body {
   background: #0b0b0b url('../../../images/bg_wood.jpg') center/cover no-repeat;
-  font-family: 'Dongle';
-  color: white;
+}
 
-  #container-settings {
-    form {
-      font-size: 2rem;
-    }
+#container-overlay {
+  font-family: 'Dongle';
+
+  background: #000000cc;
+  border-radius: 1vmin;
+  border: 1vmin solid var(--colorBorder);
+  font-size: 10vmin;
+  line-height: 8vmin;
+  mask-image: linear-gradient(to bottom, transparent 4.5vmin, black 20vmin);
+}
+
+#container-overlay .chat-message {
+  margin-bottom: 2vmin;
+}
+
+#container-overlay .chat-message.removing {
+  transform-origin: top left;
+}
+
+#container-overlay .chat-message .leader {
+  font-size: 6.1vmin;
+  margin-right: 1vmin;
+  height: 4.9vmin;
+  line-height: 6.1vmin;
+  width: 25vmin;
+}
+
+#container-overlay .chat-message .message {
+  gap: 0 0.6vmin;
+}
+
+#container-overlay .chat-message .word,
+#container-overlay .chat-message .whitespace {
+  height: 6.7vmin;
+}
+
+#container-overlay .chat-message [data-splitting] .char {
+  background: linear-gradient(
+    0deg,
+    var(--colorRevealText0) 40%,
+    var(--colorRevealText1) 40%,
+    var(--colorRevealText2) 55%,
+    var(--colorRevealText2) 55%,
+    var(--colorRevealText3) 60%
+  );
+  background-size: 2em 3em;
+  z-index: calc(var(--char-total) - var(--char-index));
+  animation: loading-text 8s cubic-bezier(0.6, 0, 0, 1) forwards;
+  animation-delay: calc((var(--char-index)) * 0.1s);
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+#container-overlay .chat-message .message-emote {
+  width: 5vmin;
+}
+
+@keyframes loading-text {
+  0% {
+    background-position: 0 0;
+  }
+  40%,
+  80%,
+  100% {
+    background-position: -1vmin -17.5vmin;
+  }
+}
+
+@keyframes remove-message {
+  from {
+    top: 0;
+    opacity: 0.75;
+  }
+  to {
+    opacity: 0;
+    transform: translate(25vmin, 25vmin) rotate(0.125turn) scale(0.25);
   }
 }

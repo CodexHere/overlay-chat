@@ -1,14 +1,8 @@
-@import url('normalize.css');
-
-:root {
-  --fg-color: white;
-
-  --colorRevealText0: #e2e2e2;
-  --colorRevealText1: #ff8a3b;
-  --colorRevealText2: #f23373;
-  --colorRevealText3: transparent;
-  --colorBorder: #bc91f8;
-}
+@import url('@picocss/pico');
+@import url('./variables.scss');
+@import url('./details.scss');
+@import url('./settings.scss');
+@import url('./overlay.scss');
 
 * {
   box-sizing: border-box;
@@ -16,13 +10,12 @@
 
 html,
 body {
-  font-family: sans-serif;
   padding: 0;
   margin: 0;
   overflow: hidden;
-  color: var(--fg-color);
   height: 100vh;
   width: 100vw;
+  font-family: sans-serif;
 }
 
 body {
@@ -31,189 +24,4 @@ body {
 
   display: flex;
   flex-direction: column;
-}
-
-#container-settings {
-  display: flex;
-  flex-direction: column;
-  padding: 3rem;
-  padding-top: 0;
-  height: 100%;
-
-  form {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    flex: 1;
-    overflow-y: auto;
-    margin-bottom: 1rem;
-    background: #000000aa;
-    padding: 2rem;
-
-    input:invalid,
-    input:focus:invalid {
-      border-color: red;
-      border-width: 2px;
-      outline: none;
-      background-color: #f7a8a8;
-    }
-
-    select {
-      max-width: 20rem;
-    }
-
-    div {
-      display: flex;
-      padding: 2px;
-
-      @media only screen and (max-width: 768px) {
-        flex-direction: column;
-        gap: 0.5rem;
-      }
-    }
-
-    label[title]:after {
-      display: inline-flex;
-      content: 'i';
-      font-size: 0.6rem;
-      background: #1616dd;
-      border-radius: 50%;
-      border: 1px solid #fff;
-      width: 0.6rem;
-      height: 0.6rem;
-      justify-content: center;
-      position: relative;
-      top: -0.25rem;
-      left: 0.25rem;
-      cursor: help;
-    }
-  }
-
-  label {
-    display: inline-block;
-    width: 12rem;
-  }
-
-  .link-results {
-    display: flex;
-    gap: 1rem;
-
-    textarea {
-      flex: 1;
-      resize: none;
-    }
-  }
-}
-
-#container-overlay {
-  margin-block: 5vmin;
-  padding: 2vmin;
-  height: 100%;
-  overflow: hidden;
-  position: relative;
-  background: #000000cc;
-  border-radius: 1vmin;
-  border: 1vmin solid var(--colorBorder);
-  display: flex;
-  font-size: 10vmin;
-  line-height: 8vmin;
-  flex-direction: column;
-  justify-content: flex-end;
-  /* prettier-ignore */
-  mask-image: 
-    linear-gradient(
-      to bottom,
-      transparent 4.5vmin,
-      black 20vmin
-    );
-}
-
-.chat-message {
-  display: flex;
-  margin-bottom: 2vmin;
-
-  &.removing {
-    position: absolute;
-    z-index: -1;
-    transform-origin: top left;
-    animation: 2s remove-message linear forwards;
-  }
-
-  .message {
-    gap: 0 0.6vmin;
-    display: inline-flex;
-    flex-wrap: wrap;
-    align-items: center;
-  }
-
-  .leader {
-    display: flex;
-    justify-content: flex-end;
-    font-size: 6.1vmin;
-    margin-right: 1vmin;
-    height: 4.9vmin;
-    line-height: 7.1vmin;
-    min-width: 25vmin;
-    max-width: 25vmin;
-  }
-
-  .user {
-    color: var(--userColor);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .message-emote {
-    width: 5vmin;
-  }
-
-  .word,
-  .whitespace {
-    display: inline-flex;
-    height: 6.7vmin;
-  }
-
-  [data-splitting] .char {
-    background: linear-gradient(
-      0deg,
-      var(--colorRevealText0) 40%,
-      var(--colorRevealText1) 40%,
-      var(--colorRevealText2) 55%,
-      var(--colorRevealText2) 55%,
-      var(--colorRevealText3) 60%
-    );
-
-    display: inline-block;
-    background-size: 2em 3em;
-    z-index: calc(var(--char-total) - var(--char-index));
-    animation: loading-text 8s cubic-bezier(0.6, 0, 0, 1) forwards;
-    animation-delay: calc((var(--char-index)) * 0.1s);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
-}
-
-@keyframes loading-text {
-  0% {
-    background-position: 0 0;
-  }
-  40%,
-  80%,
-  100% {
-    background-position: -1vmin -17.5vmin;
-  }
-}
-
-@keyframes remove-message {
-  from {
-    top: 0;
-    opacity: 0.75;
-  }
-
-  to {
-    opacity: 0;
-    transform: translate(25vmin, 25vmin) rotate(0.125turn) scale(0.25);
-  }
 }

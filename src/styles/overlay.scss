@@ -1,0 +1,67 @@
+#container-overlay {
+  margin-block: 5vmin;
+  padding: 2vmin;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+  background: #000000cc;
+  display: flex;
+  font-size: 7vmin;
+  line-height: 8vmin;
+  flex-direction: column;
+  justify-content: flex-end;
+
+  .chat-message {
+    display: flex;
+    margin-bottom: 2vmin;
+
+    &.removing {
+      position: absolute;
+      z-index: -1;
+      animation: 2s remove-message linear forwards;
+    }
+
+    .leader {
+      display: flex;
+      justify-content: flex-end;
+      font-size: 5.1vmin;
+      margin-right: 1vmin;
+      line-height: 6.1vmin;
+      width: 25vmin;
+      height: 6.9vmin;
+    }
+
+    .user {
+      color: var(--userColor);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .message {
+      gap: 0 1.25vmin;
+      display: inline-flex;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .word,
+    .whitespace {
+      display: inline-flex;
+      height: 6.7vmin;
+    }
+
+    .message-emote {
+      width: 5vmin;
+    }
+  }
+}
+
+@keyframes remove-message {
+  from {
+    opacity: 0.75;
+  }
+  to {
+    opacity: 0;
+  }
+}

@@ -1,6 +1,8 @@
 import { PluginManager } from './managers/PluginManager';
 import SettingsManager from './managers/SettingsManager';
-import { BootOptions, RendererConstructor } from './types';
+import { OverlayRenderer } from './renderers/OverlayRenderer';
+import SettingsRenderer from './renderers/SettingsRenderer';
+import { BootOptions } from './types';
 
 export default class OverlayBootstrapper {
   private settingsManager: SettingsManager;
@@ -12,7 +14,7 @@ export default class OverlayBootstrapper {
   }
 
   async init() {
-    let rendererClass: RendererConstructor | null = null;
+    let rendererClass: typeof OverlayRenderer | typeof SettingsRenderer | undefined;
 
     await this.settingsManager.init();
     await this.pluginManager.init();
@@ -30,5 +32,4 @@ export default class OverlayBootstrapper {
       new rendererClass(this.pluginManager, this.bootSettings, this.settingsManager).init();
     }
   }
-
 }

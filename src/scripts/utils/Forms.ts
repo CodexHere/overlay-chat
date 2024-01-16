@@ -1,55 +1,104 @@
+// TODO: Change to Map?
 export type FormData = Record<string, any>;
 
-export type FormEntry = {
+type FormEntryBase = {
   name: string;
   label?: string;
   tooltip?: string;
-  inputType?: 'text' | 'number' | 'checkbox' | 'select' | 'multiselect' | 'color';
   defaultValue?: string | boolean | number;
   isRequired?: boolean;
-  values?: string[];
 };
 
+//TODO: need to implement:
+// checkbox-multiple
+// radio
+
+export type FormEntryInput = FormEntryBase & {
+  inputType: 'text' | 'number' | 'checkbox' | 'switch' | 'color';
+};
+
+export type FormEntryFieldGroup = FormEntryBase & {
+  inputType: 'fieldgroup';
+  label: string;
+  values: FormEntry[];
+};
+
+export type FormEntrySelection = FormEntryBase & {
+  inputType: 'select' | 'select-multiple' | 'checkbox-multiple';
+  values: string[];
+};
+
+export type FormEntry = FormEntrySelection | FormEntryInput | FormEntryFieldGroup;
+
 export default class Forms {
-  static FromJson(entries: FormEntry[]) {
+  static FromJson(entries: Readonly<FormEntry[]>) {
     let inputs = '';
 
-    for (let i = 0; i < entries.length; i++) {
-      const item = entries[i];
-      const chosenLabel = item.label ?? item.name;
-      const defaultData = item.defaultValue ?? '';
-      const required = item.isRequired ? 'required' : '';
-      const tooltip = item.tooltip ? `title="${item.tooltip}"` : '';
+    entries.forEach(entry => {
+      let input = '';
+      const chosenLabel = entry.label ?? entry.name;
+      const defaultData = entry.defaultValue ?? '';
+      const required = entry.isRequired ? 'required' : '';
+      const tooltip = entry.tooltip ? `title="${entry.tooltip}"` : '';
 
-      inputs += `<div><label for="${item.name}" ${tooltip}>${chosenLabel}</label>`;
+      switch (entry.inputType) {
+        case 'fieldgroup':
+          input += `
+          <details>
+            <summary><div class="summary-wrapper" ${tooltip}>${chosenLabel}</div></summary>
+            <div class="content">
+              ${this.FromJson(entry.values)}
+            </div>
+          </details>
+          `;
+          break;
 
-      switch (item.inputType) {
+        case 'switch':
         case 'checkbox':
-          inputs += `<input type="checkbox" ${defaultData ? 'checked' : ''} name="${item.name}" id="${
-            item.name
-          }" ${required}>`;
+          const switchAttr = entry.inputType === 'switch' ? 'role="switch"' : '';
+          input += `
+            <input 
+              type="checkbox" 
+              id="${entry.name}" ${required}
+              name="${entry.name}" 
+              ${switchAttr}
+              ${defaultData ? 'checked' : ''} 
+            >`;
           break;
-        case 'multiselect':
-        case 'select':
-          let options = '';
-          const isMulti = 'multiselect' === item.inputType ? 'multiple' : '';
 
-          for (let j = 0; j < item.values!.length; j++) {
-            options += `<option value="${item.values![j]}">${item.values![j]}</option>`;
-          }
-          inputs += `<select value="${defaultData}" name="${item.name}" id="${item.name}" ${isMulti} ${required}>${options}</select>`;
-          break;
-        case 'number':
         case 'color':
+        case 'number':
         case 'text':
-          inputs += `<input type="${item.inputType}" value="${defaultData}" name="${item.name}" id="${item.name}" placeholder="${chosenLabel}" ${required}>`;
+          input += `<input type="${entry.inputType}" value="${defaultData}" name="${entry.name}" id="${entry.name}" placeholder="${chosenLabel}" ${required}>`;
           break;
+
+        case 'select':
+        case 'select-multiple':
+          let options = '';
+          const isMulti = 'select-multiple' === entry.inputType ? 'multiple' : '';
+
+          for (let j = 0; j < entry.values.length; j++) {
+            options += `<option value="${entry.values[j]}">${entry.values![j]}</option>`;
+          }
+          input += `<select value="${defaultData}" name="${entry.name}" id="${entry.name}" ${isMulti} ${required}>${options}</select>`;
+          break;
+
         default:
-          throw new Error(`Invalid Form Type in Schema for "${item.name}": ${item.inputType}`);
+          const brokenItem = entry as any;
+          throw new Error(`Invalid Form Type in Schema for "${brokenItem.name}": ${brokenItem.inputType}`);
       }
 
-      inputs += '</div>';
-    }
+      if ('fieldgroup' !== entry.inputType) {
+        input = `
+          <div data-input-type="${entry.inputType}">
+            <label for="${entry.name}" ${tooltip}>${chosenLabel}</label>
+            ${input}
+          </div>
+        `;
+      }
+
+      inputs += input;
+    });
 
     return inputs;
   }
