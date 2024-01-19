@@ -1,9 +1,7 @@
 import Splitting from 'splitting';
 import { loadAssets, replaceEmotes } from 'tmi-emote-parse';
 import tmiJs from 'tmi.js';
-import { PluginManager } from '../managers/PluginManager';
-import SettingsManager from '../managers/SettingsManager';
-import { BootOptions } from '../types';
+import OverlayBootstrapper from '../OverlayBootstrapper';
 import { Templating } from '../utils/Templating';
 import { GetColorForUsername } from '../utils/misc';
 
@@ -15,20 +13,16 @@ type MessagePayload = {
 };
 
 export class OverlayRenderer {
-  constructor(
-    private pluginMgr: PluginManager,
-    private bootOptions: BootOptions,
-    private settingsMgr: SettingsManager
-  ) {}
+  constructor(private bootMgr: OverlayBootstrapper) {}
 
-  init() {
-    this.initChatListen();
+  async init() {
+    await this.initChatListen();
     // Iterate over every loaded plugin, and call `renderOverlay` to manipulate the Overlay view
-    this.pluginMgr.plugins?.forEach(plugin => plugin.renderOverlay());
+    this.bootMgr.pluginManager.plugins?.forEach(plugin => plugin.renderOverlay());
   }
 
-  initChatListen() {
-    const channelName = this.settingsMgr.settings.channelName;
+  async initChatListen() {
+    const channelName = this.bootMgr.settingsManager.settings.channelName;
 
     if (!channelName) {
       return;
@@ -38,11 +32,16 @@ export class OverlayRenderer {
       channels: [channelName]
     });
 
-    client.connect().catch(console.error);
-    client.on('message', this.handleMessage);
+    try {
+      await client.connect();
+      client.on('message', this.handleMessage);
 
-    loadAssets('twitch');
-    loadAssets(channelName);
+      loadAssets('twitch');
+      loadAssets(channelName);
+    } catch (err) {
+      const myError = err as Error;
+      throw new Error('Could not connect to chat: ' + myError.message);
+    }
   }
 
   private handleMessage = (channel: string, userstate: tmiJs.ChatUserstate, message: string, _self: boolean) => {
@@ -64,8 +63,8 @@ export class OverlayRenderer {
 
   renderMessage(data: MessagePayload) {
     Templating.RenderTemplate(
-      this.bootOptions.elements!['container'],
-      this.bootOptions.templates!['chat-message'],
+      this.bootMgr.bootOptions.elements!['container'],
+      this.bootMgr.bootOptions.templates!['chat-message'],
       data
     );
 
@@ -73,7 +72,7 @@ export class OverlayRenderer {
   }
 
   removeOutOfBoundsMessages() {
-    const container = this.bootOptions.elements!['container'];
+    const container = this.bootMgr.bootOptions.elements!['container'];
 
     if (!container) {
       return;

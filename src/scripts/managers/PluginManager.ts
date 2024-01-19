@@ -1,13 +1,13 @@
-import { BootOptions, OverlayPlugin, OverlayPluginConstructor } from '../types';
+import OverlayBootstrapper from '../OverlayBootstrapper';
+import { OverlayPlugin, OverlayPluginConstructor } from '../types';
 import { BOOLEAN_TRUES } from '../utils/Forms';
 import { URI } from '../utils/URI';
-import SettingsManager from './SettingsManager';
 
 export class PluginManager {
   // TODO: Needs to be an array of Plugins
   plugins: OverlayPlugin[] = [];
 
-  constructor(private bootOptions: BootOptions, private settingsMgr: SettingsManager) {}
+  constructor(private bootMgr: OverlayBootstrapper) {}
 
   private getPluginPath = (pluginName: string) => {
     return pluginName.startsWith('http') ? pluginName : `${URI.BaseUrl()}/plugins/${pluginName}`;
@@ -16,14 +16,14 @@ export class PluginManager {
   private pluginBaseUrls() {
     let pluginUrls: string[];
 
-    if (this.settingsMgr.settings.customPlugins) {
-      pluginUrls = this.settingsMgr.settings.customPlugins.split(';');
-    } else if (this.settingsMgr.settings.plugins) {
+    if (this.bootMgr.settingsManager.settings.customPlugins) {
+      pluginUrls = this.bootMgr.settingsManager.settings.customPlugins.split(';');
+    } else if (this.bootMgr.settingsManager.settings.plugins) {
       // At runtime, `settings.plugins` may actually be a single string due to deserializing
       // URLSearchParams that only had one specified plugin
-      pluginUrls = Array.isArray(this.settingsMgr.settings.plugins)
-        ? this.settingsMgr.settings.plugins
-        : ([this.settingsMgr.settings.plugins] as unknown as string[]);
+      pluginUrls = Array.isArray(this.bootMgr.settingsManager.settings.plugins)
+        ? this.bootMgr.settingsManager.settings.plugins
+        : ([this.bootMgr.settingsManager.settings.plugins] as unknown as string[]);
 
       pluginUrls = pluginUrls
         // Convert `true:SomePluginName` -> `SomePluginName`
@@ -66,11 +66,11 @@ export class PluginManager {
       //   import from a remote file.
       const pluginLoad = await import(/* @vite-ignore */ `${pluginBaseUrl}/plugin.js`);
       const pluginClass: OverlayPluginConstructor = pluginLoad.default;
-      const pluginInstance: OverlayPlugin = new pluginClass(this.bootOptions, this.settingsMgr);
+      const pluginInstance: OverlayPlugin = new pluginClass(this.bootMgr);
 
       return pluginInstance;
     } catch (err) {
-      console.error(`Could not dynamically load Plugin: ${pluginBaseUrl}`);
+      throw new Error(`Could not dynamically load Plugin: ${pluginBaseUrl}`);
     }
   }
 

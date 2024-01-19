@@ -2,25 +2,23 @@
  * @typedef {import('../../../src/scripts/types').OverlayPlugin} OverlayPlugin
  * @typedef {import('../../../src/scripts/types').BootOptions} BootOptions
  * @typedef {import('../../../src/scripts/managers/SettingsManager').default} SettingsManager
+ * @typedef {import('../../../src/scripts/OverlayBootstrapper').default} OverlayBootstrapper
  *
  * @implements {OverlayPlugin}
  */
 export default class Plugin_HangoutHere {
   name = 'Hangout Here Theme';
-  bootOptions;
-  settingsManager;
+  bootManager;
 
   /**
-   * @param {BootOptions} bootOptions
-   * @param {SettingsManager} settingsMgr
+   * @param {OverlayBootstrapper} bootManager
    */
-  constructor(bootOptions, settingsMgr) {
-    this.bootOptions = bootOptions;
-    this.settingsManager = settingsMgr;
+  constructor(bootManager) {
+    this.bootManager = bootManager;
   }
 
   loadSettingsSchema() {
-    this.settingsManager.addPluginSettings({
+    this.bootManager.settingsManager.addPluginSettings({
       inputType: 'fieldgroup',
       label: this.name,
       name: this.name.toLocaleLowerCase().replaceAll(' ', '_'),
@@ -38,15 +36,15 @@ export default class Plugin_HangoutHere {
       ]
     });
 
-    console.log('HangoutHere Plugin [Settings] Initialized!', this.settingsManager.settingsSchema);
+    console.log('HangoutHere Plugin [Settings] Initialized!', this.bootManager.settingsManager.settingsSchema);
   }
 
   renderSettings() {
-    console.log('HangoutHere Plugin [renderSettings] Initialized!', this.settingsManager.settingsSchema);
+    console.log('HangoutHere Plugin [renderSettings] Initialized!', this.bootManager.settingsManager.settingsSchema);
   }
 
   renderOverlay() {
-    console.log('HangoutHere Plugin [renderOverlay] Initialized!', this.settingsManager.settingsSchema);
+    console.log('HangoutHere Plugin [renderOverlay] Initialized!', this.bootManager.settingsManager.settingsSchema);
   }
 
   // TODO: implement this concept

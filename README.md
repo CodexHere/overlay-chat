@@ -2,10 +2,6 @@
 
 ## TODO
 
-* Build a dropdown to jump to a plugins' settings
-  * Plugin will need more contextual data:
-    * Name
-    * Priority for load order. This could be dangerous depending on the author of the plugin, as it can mess up priority order for loading, and thus cause issues.
 * Create `middleware()` functiona for Plugins
   * https://github.com/Digibear-io/middleware
   * `PluginManager` needs to sort Plugins in `Priority` order
@@ -15,7 +11,6 @@
 		* Auto registers plugin to listen for "${event.name}-response" which will call the callback on response
 	        * Customizable timeout in case a plugin doesn't exist to listen to "event.name"
   * Needs a way to break out of middleware, ie ignoring a chatter shouldn't continue any processing
-* Needs a param detection in bootstrap layer to show errors. Avoids forcing the user to do any console checking, and possible to see while as an overlay
 * Rename to Default Plugin to Example with some cool examples
 * Do we move core functionality to a `Core` plugin that is always loaded? This lets the framework be more agnostic?
 	* Include Authentication w/Twitch
@@ -54,6 +49,10 @@
      * Options to auto convert to array per key
   * URI Serialize/Deserialize
      * Options to auto convert to array per key
+* Build a dropdown to jump to a plugins' settings
+  * Plugin will need more contextual data:
+    * Name
+    * Priority for load order. This could be dangerous depending on the author of the plugin, as it can mess up priority order for loading, and thus cause issues.
 
 ## Application Lifecycle
 

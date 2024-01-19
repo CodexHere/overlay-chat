@@ -1,8 +1,6 @@
 import { URI } from '../utils/URI';
 
-import { PluginManager } from '../managers/PluginManager';
-import SettingsManager from '../managers/SettingsManager';
-import { BootOptions } from '../types';
+import OverlayBootstrapper from '../OverlayBootstrapper';
 import Forms from '../utils/Forms';
 import { Templating } from '../utils/Templating';
 import { debounce } from '../utils/misc';
@@ -10,31 +8,27 @@ import { debounce } from '../utils/misc';
 const shouldReloadPlugins = ['plugins', 'customPlugins'];
 
 export default class SettingsRenderer {
-  constructor(
-    private pluginMgr: PluginManager,
-    private bootOptions: BootOptions,
-    private settingsMgr: SettingsManager
-  ) {}
+  constructor(private bootMgr: OverlayBootstrapper) {}
 
   init() {
     this.renderSettings();
 
     // Iterate over every loaded plugin, and call `renderSettings` to manipulate the Settings view
-    this.pluginMgr.plugins?.forEach(plugin => plugin.renderSettings());
+    this.bootMgr.pluginManager.plugins?.forEach(plugin => plugin.renderSettings());
 
     this.generateUrl();
   }
 
   private renderSettings() {
-    const elems = this.bootOptions.elements!;
-    const templs = this.bootOptions.templates!;
+    const elems = this.bootMgr.bootOptions.elements!;
+    const templs = this.bootMgr.bootOptions.templates!;
 
     // Ensure no elements in the body so we can display settings
     const body = elems['body'];
     body.innerHTML = '';
 
     Templating.RenderTemplate(body, templs['settings'], {
-      formElements: Forms.FromJson(this.settingsMgr.settingsSchema)
+      formElements: Forms.FromJson(this.bootMgr.settingsManager.settingsSchema)
     });
 
     // Establish #elements now that the Settings Form has been injected into DOM
@@ -43,7 +37,7 @@ export default class SettingsRenderer {
     elems['link-results'] = body.querySelector('.link-results textarea')!;
     elems['first-details'] = body.querySelector('details')!;
 
-    Forms.Populate(form, this.settingsMgr.settings!);
+    Forms.Populate(form, this.bootMgr.settingsManager.settings!);
 
     form.addEventListener('input', debounce(this.onSettingsChanged, 500));
     btnLoadOverlay.addEventListener('click', this.onClickLoadOverlay);
@@ -56,13 +50,17 @@ export default class SettingsRenderer {
     const form = target.form!;
 
     const formData = Forms.GetData(form);
-    this.settingsMgr.settings = formData;
+    this.bootMgr.settingsManager.settings = formData;
 
     if (shouldReloadPlugins.includes(target.name)) {
-      this.settingsMgr.resetSettingsSchema();
-      await this.pluginMgr.loadPlugins();
+      this.bootMgr.settingsManager.resetSettingsSchema();
 
-      this.init();
+      try {
+        await this.bootMgr.pluginManager.loadPlugins();
+        this.init();
+      } catch (err) {
+        this.bootMgr.showError(err as Error);
+      }
     } else {
       form.reportValidity();
     }
@@ -71,18 +69,18 @@ export default class SettingsRenderer {
   };
 
   private generateUrl() {
-    const elems = this.bootOptions.elements!;
+    const elems = this.bootMgr.bootOptions.elements!;
     const linkResults: HTMLInputElement = elems['link-results'] as HTMLInputElement;
     const linkButton: HTMLInputElement = elems['button-load-overlay'] as HTMLInputElement;
 
     const baseUrl = URI.BaseUrl();
-    const queryString = URI.JsonToQueryString(this.settingsMgr.settings);
+    const queryString = URI.JsonToQueryString(this.bootMgr.settingsManager.settings);
     linkResults.value = queryString ? `${baseUrl}?${queryString}`.replace(/\?+$/, '') : '';
     linkButton.disabled = !(elems['form'] as HTMLFormElement).checkValidity();
   }
 
   private onClickLoadOverlay = (_event: Event) => {
-    const linkResults: HTMLInputElement = this.bootOptions.elements!['link-results'] as HTMLInputElement;
+    const linkResults: HTMLInputElement = this.bootMgr.bootOptions.elements!['link-results'] as HTMLInputElement;
     window.location.href = linkResults.value;
   };
 }

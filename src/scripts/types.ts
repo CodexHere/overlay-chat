@@ -1,3 +1,4 @@
+import OverlayBootstrapper from './OverlayBootstrapper';
 import SettingsManager from './managers/SettingsManager';
 import { OverlayRenderer } from './renderers/OverlayRenderer';
 import SettingsRenderer from './renderers/SettingsRenderer';
@@ -19,8 +20,7 @@ export type BootOptions = {
 
 export type OverlayPlugin = {
   name: string;
-  bootOptions?: BootOptions;
-  settingsManager?: SettingsManager;
+  bootManager: OverlayBootstrapper;
   loadSettingsSchema(): void;
   renderSettings(): void;
   renderOverlay(): void;
@@ -28,5 +28,5 @@ export type OverlayPlugin = {
 };
 
 export type OverlayPluginConstructor = {
-  new (bootOptions: BootOptions, settingsMgr: SettingsManager): OverlayPlugin;
+  new (bootManager: OverlayBootstrapper): OverlayPlugin;
 };
