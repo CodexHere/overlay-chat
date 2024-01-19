@@ -28,7 +28,7 @@ export default class Plugin_HangoutHere {
         {
           name: 'showBadges',
           label: 'Show Badges',
-          inputType: 'checkbox',
+          inputType: 'switch',
           tooltip: 'Toggles whether to show leading Badges (i.e., Mod, VIP, etc)'
         },
 

@@ -1,4 +1,5 @@
 import { BootOptions, OverlayPlugin, OverlayPluginConstructor } from '../types';
+import { BOOLEAN_TRUES } from '../utils/Forms';
 import { URI } from '../utils/URI';
 import SettingsManager from './SettingsManager';
 
@@ -24,7 +25,12 @@ export class PluginManager {
         ? this.settingsMgr.settings.plugins
         : ([this.settingsMgr.settings.plugins] as unknown as string[]);
 
-      pluginUrls = pluginUrls.map(this.getPluginPath);
+      pluginUrls = pluginUrls
+        // Convert `true:SomePluginName` -> `SomePluginName`
+        .filter(invalidPluginData => BOOLEAN_TRUES.includes(invalidPluginData.split(':')[0]))
+        .map(invalidPluginData => invalidPluginData.split(':')[1])
+        // Iterate getting the full plugin path
+        .map(this.getPluginPath);
     } else {
       // No Plugins were defined, fall back to Default
       pluginUrls = [this.getPluginPath('Default')];

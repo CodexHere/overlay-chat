@@ -1,5 +1,5 @@
 details {
-  margin-bottom: 1rem;
+  margin-bottom: var(--spacing);
   padding-bottom: 0;
   border-bottom: none;
 
@@ -72,7 +72,7 @@ details {
     background: var(--card-background-color);
 
     & > details {
-      margin-left: 2rem;
+      margin-left: calc(var(--spacing) * 2);
     }
   }
 }

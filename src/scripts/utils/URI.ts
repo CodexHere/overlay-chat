@@ -37,7 +37,9 @@ export class URI {
       .reduce<string[]>((kvp, key) => {
         const values = Array.isArray(json[key]) ? (json[key] as []) : [json[key]];
         values.forEach(value => {
-          value && kvp.push(key + '=' + encodeURIComponent(value));
+          if (undefined !== value && null !== value && '' !== value) {
+            kvp.push(key + '=' + encodeURIComponent(value));
+          }
         });
         return kvp;
       }, [])

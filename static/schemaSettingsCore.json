@@ -20,7 +20,7 @@
           {
             "name": "plugins",
             "label": "Built-In Plugins",
-            "inputType": "select-multiple",
+            "inputType": "switch-multiple",
             "values": ["Default", "HangoutHere"]
           },
           {

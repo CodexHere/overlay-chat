@@ -2,9 +2,6 @@
 
 ## TODO
 
-* A build will not load plugins correctly with the `import`, might need explicit interface defined for adhoc typing. Right now as it stands it tries to import live via ESM which won't work since the base class is compiled into the bundle.
-* Support `multi-checkbox`/`multi-switch` in the same vain as multi-select... Should be a list of checkboxes
-  * Also `radio`
 * Build a dropdown to jump to a plugins' settings
   * Plugin will need more contextual data:
     * Name
@@ -12,12 +9,26 @@
 * Create `middleware()` functiona for Plugins
   * https://github.com/Digibear-io/middleware
   * `PluginManager` needs to sort Plugins in `Priority` order
+  * `PluginManager` needs an event bus for plugins to communicate through
+	* emit - send and forget
+	* call - send and receive, takes response callback
+		* Auto registers plugin to listen for "${event.name}-response" which will call the callback on response
+	        * Customizable timeout in case a plugin doesn't exist to listen to "event.name"
+  * Needs a way to break out of middleware, ie ignoring a chatter shouldn't continue any processing
+* Needs a param detection in bootstrap layer to show errors. Avoids forcing the user to do any console checking, and possible to see while as an overlay
 * Rename to Default Plugin to Example with some cool examples
 * Do we move core functionality to a `Core` plugin that is always loaded? This lets the framework be more agnostic?
+	* Include Authentication w/Twitch
+	* Event:SendMessage (if auth'd properly) - Sends a simple message to chat
+	* Event:HasAuth - returns bool if auth'd
 * Figure out debouncing on Settings... There's some annoyance with UX and jumping to a required input
 * Bootstrapper should load HTML Template file
 * Inject all values as CSS variables?
   * Do we make this a `FormEntry` prop? ie, `injectCssVar`?
+* New FormEntry type: array
+	* Similar to a field group, but the children are repeated n-times
+	* The user is given +/- buttons, and possibly re-ordering? 
+		* https://github.com/lukasoppermann/html5sortable#examples
 * CI/CD
   * https://vitejs.dev/guide/static-deploy
   ```yaml
@@ -37,6 +48,12 @@
 * Ability to compress (`lz-string`) url params
   * `&compressed=true&data=<data_here>`
   * Will need to decompress in settings as well
+* Librarify:
+  * Overlay Architecture
+  * Form Utils
+     * Options to auto convert to array per key
+  * URI Serialize/Deserialize
+     * Options to auto convert to array per key
 
 ## Application Lifecycle
 
@@ -74,18 +91,26 @@
   * Reveal animation
     * Per Word vs Per Character
   * Remove animation
+* Ignore Chatter
 * Sound Effects - Sound on Message
 * Sound Effects - User Entrance
 * Link Replacement
 * Word replacement
 * Emoji Replacments (7TV, BTTV)
   * Emoji Themes
-* Authentication w/Twitch
 * Administrative Actions? (needs auth)
 * Chat Box (send as user, needs auth)
-* Follower Stuff
-	* Border/glow animations?
-	* Confetti around follow message in chat?
+* Role Style Adjustments:
+	* VIP/Mod/etc get style treatments?
+	* This is basically a theme with minimal purpose
+	* Might have multiple versions of this theme
+* Ad Detection
+	* Sends Message
+	* Needs Auth
 * Top Chatter
 	* Special Badge?
 	* Some kind of color/etc treatment
+* Follower Stuff
+	* Border/glow animations?
+	* Confetti around follow message in chat?
+	* Send message welcoming viewer
