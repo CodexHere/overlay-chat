@@ -8,8 +8,8 @@ import { Templating } from './utils/Templating';
 document.addEventListener('DOMContentLoaded', () => {
   const bootstrapper = new OverlayBootstrapper({
     elements: {
-      body: document.getElementsByTagName('body')[0],
-      container: document.getElementById('container-overlay') as HTMLElement
+      root: document.getElementById('root')!,
+      container: document.getElementById('container-overlay')!
     },
 
     templates: {

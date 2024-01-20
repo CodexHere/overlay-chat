@@ -2,14 +2,16 @@
 
 ## TODO
 
+* Bug with Custom Plugins
 * Create `middleware()` functiona for Plugins
   * https://github.com/Digibear-io/middleware
   * `PluginManager` needs to sort Plugins in `Priority` order
   * `PluginManager` needs an event bus for plugins to communicate through
 	* emit - send and forget
 	* call - send and receive, takes response callback
-		* Auto registers plugin to listen for "${event.name}-response" which will call the callback on response
-	        * Customizable timeout in case a plugin doesn't exist to listen to "event.name"
+  	* `pluginManger.bus.call('someeventname', (data: any) => {})`
+		* Auto registers plugin to listen for `${event.name}-response` which will call the callback on response
+       * Customizable timeout in case a plugin doesn't exist to listen to "event.name"
   * Needs a way to break out of middleware, ie ignoring a chatter shouldn't continue any processing
 * Rename to Default Plugin to Example with some cool examples
 * Do we move core functionality to a `Core` plugin that is always loaded? This lets the framework be more agnostic?
@@ -24,22 +26,6 @@
 	* Similar to a field group, but the children are repeated n-times
 	* The user is given +/- buttons, and possibly re-ordering? 
 		* https://github.com/lukasoppermann/html5sortable#examples
-* CI/CD
-  * https://vitejs.dev/guide/static-deploy
-  ```yaml
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Set up Node
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
-          cache: 'npm'
-      - name: Install dependencies
-        run: npm install
-      - name: Build
-        run: npm run build
-  ```
 * Ability to compress (`lz-string`) url params
   * `&compressed=true&data=<data_here>`
   * Will need to decompress in settings as well
@@ -78,7 +64,6 @@
     - Determine if Settings are configured
       - If Configured, `init` the Overlay Renderer
       - If Unconfigured, `init` the Settings Renderer
-
 
 ## Plugins
 

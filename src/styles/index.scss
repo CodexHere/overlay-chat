@@ -24,6 +24,10 @@ body {
 
   display: flex;
   flex-direction: column;
+
+  #root {
+    height: 100%;
+  }
 }
 
 dialog {

@@ -23,19 +23,19 @@ export default class SettingsRenderer {
     const elems = this.bootMgr.bootOptions.elements!;
     const templs = this.bootMgr.bootOptions.templates!;
 
-    // Ensure no elements in the body so we can display settings
-    const body = elems['body'];
-    body.innerHTML = '';
+    // Ensure no elements in the Root so we can display settings
+    const root = elems['root'];
+    root.innerHTML = '';
 
-    Templating.RenderTemplate(body, templs['settings'], {
+    Templating.RenderTemplate(root, templs['settings'], {
       formElements: Forms.FromJson(this.bootMgr.settingsManager.settingsSchema)
     });
 
     // Establish #elements now that the Settings Form has been injected into DOM
-    const form = (elems['form'] = body.querySelector('form')!);
-    const btnLoadOverlay = (elems['button-load-overlay'] = body.querySelector('.link-results .button-load-overlay')!);
-    elems['link-results'] = body.querySelector('.link-results textarea')!;
-    elems['first-details'] = body.querySelector('details')!;
+    const form = (elems['form'] = root.querySelector('form')!);
+    const btnLoadOverlay = (elems['button-load-overlay'] = root.querySelector('.link-results .button-load-overlay')!);
+    elems['link-results'] = root.querySelector('.link-results textarea')!;
+    elems['first-details'] = root.querySelector('details')!;
 
     Forms.Populate(form, this.bootMgr.settingsManager.settings!);
 

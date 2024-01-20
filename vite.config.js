@@ -1,14 +1,15 @@
 import { resolve } from 'path';
+import version from 'vite-plugin-package-version';
 
 const PROJECT_DIR = resolve(__dirname);
 const SRC_DIR = resolve(PROJECT_DIR, '.');
-const DIST_DIR = resolve(PROJECT_DIR, 'build');
 
 export default {
   publicDir: resolve(SRC_DIR, 'static'),
 
+  plugins: [version()],
+
   build: {
-    outDir: DIST_DIR,
     emptyOutDir: true
   },
 

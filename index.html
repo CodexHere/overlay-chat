@@ -19,6 +19,8 @@
         <textarea rows="4"></textarea>
         <button class="button-load-overlay" disabled>Load Overlay</button>
       </div>
+
+      <footer class="version">%PACKAGE_VERSION%</footer>
     </div>
   </template>
 
@@ -33,7 +35,9 @@
   </template>
 
   <body>
-    <div id="container-overlay"></div>
+    <div id="root">
+      <div id="container-overlay"></div>
+    </div>
 
     <script type="module">
       import * as Overlay from './src/scripts/index.ts';

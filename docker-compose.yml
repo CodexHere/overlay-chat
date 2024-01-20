@@ -1,9 +1,9 @@
 version: '3.9'
 
 services:
-  overlay-chat-dev:
+  overlay-dev:
     image: node:21-alpine
-    container_name: overlay-chat-dev
+    container_name: overlay-dev
     profiles: ['dev']
     command: npm run start
     working_dir: /app
@@ -12,12 +12,23 @@ services:
     volumes:
       - .:/app
 
-  overlay-chat-build:
+  overlay-build:
     image: node:21-alpine
-    container_name: overlay-chat-build
+    container_name: overlay-build
     profiles: ['build']
     command: npm run build
     working_dir: /app
     user: '1000'
     volumes:
       - .:/app
+
+  overlay-deploy:
+    image: local/act
+    build:
+      dockerfile: .docker/images/act.Dockerfile
+    profiles: ['deploy']
+    working_dir: /act
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - .:/act
+      - .docker/.actrc:/root/.actrc

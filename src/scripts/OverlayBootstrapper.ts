@@ -49,9 +49,9 @@ export default class OverlayBootstrapper {
   }
 
   showError = (err: Error) => {
-    const body = this.bootOptions.elements!['body']!;
+    const root = this.bootOptions.elements!['root']!;
 
-    body.insertAdjacentHTML(
+    root.insertAdjacentHTML(
       'beforeend',
       `
         <dialog open>
