@@ -1,24 +1,26 @@
 /**
- * @typedef {import('../../../src/scripts/types').OverlayPlugin} OverlayPlugin
- * @typedef {import('../../../src/scripts/types').BootOptions} BootOptions
- * @typedef {import('../../../src/scripts/managers/SettingsManager').default} SettingsManager
- * @typedef {import('../../../src/scripts/OverlayBootstrapper').default} OverlayBootstrapper
+ * @typedef {import('../../../src/scripts/types.js').OverlayPlugin} OverlayPlugin
+ * @typedef {import('../../../src/scripts/types.js').Managers} Managers
+ * @typedef {import('../../../src/scripts/types.js').RenderOptions} NewType
  *
  * @implements {OverlayPlugin}
  */
 export default class Plugin_HangoutHere {
   name = 'Hangout Here Theme';
-  bootManager;
+  managers;
+  renderOptions;
 
   /**
-   * @param {OverlayBootstrapper} bootManager
+   * @param {Managers} managers
+   * @param {NewType} renderOptions
    */
-  constructor(bootManager) {
-    this.bootManager = bootManager;
+  constructor(managers, renderOptions) {
+    this.managers = managers;
+    this.renderOptions = renderOptions;
   }
 
   loadSettingsSchema() {
-    this.bootManager.settingsManager.addPluginSettings({
+    this.managers.settingsManager.addPluginSettings({
       inputType: 'fieldgroup',
       label: this.name,
       name: this.name.toLocaleLowerCase().replaceAll(' ', '_'),
@@ -36,15 +38,15 @@ export default class Plugin_HangoutHere {
       ]
     });
 
-    console.log('HangoutHere Plugin [Settings] Initialized!', this.bootManager.settingsManager.settingsSchema);
+    console.log('HangoutHere Plugin [Settings] Initialized!', this.managers.settingsManager.settingsSchema);
   }
 
   renderSettings() {
-    console.log('HangoutHere Plugin [renderSettings] Initialized!', this.bootManager.settingsManager.settingsSchema);
+    console.log('HangoutHere Plugin [renderSettings] Initialized!', this.managers.settingsManager.settingsSchema);
   }
 
   renderOverlay() {
-    console.log('HangoutHere Plugin [renderOverlay] Initialized!', this.bootManager.settingsManager.settingsSchema);
+    console.log('HangoutHere Plugin [renderOverlay] Initialized!', this.managers.settingsManager.settingsSchema);
   }
 
   // TODO: implement this concept

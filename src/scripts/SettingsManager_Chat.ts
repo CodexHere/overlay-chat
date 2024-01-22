@@ -1,5 +1,5 @@
-import SettingsManager from './managers/SettingsManager';
-import { OverlaySettings } from './types';
+import SettingsManager from './managers/SettingsManager.js';
+import { OverlaySettings } from './types.js';
 
 type OverlaySettings_Chat = OverlaySettings & {
   fontSize: number;

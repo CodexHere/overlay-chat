@@ -1,21 +1,27 @@
-import { PluginManager } from './managers/PluginManager';
-import SettingsManager from './managers/SettingsManager';
-import { OverlayRenderer } from './renderers/OverlayRenderer';
-import SettingsRenderer from './renderers/SettingsRenderer';
-import { BootOptions } from './types';
+import PluginManager from './managers/PluginManager.js';
+import SettingsManager from './managers/SettingsManager.js';
+import { BootstrapOptions, ErrorManager, RendererConstructor } from './types.js';
 
-export default class OverlayBootstrapper {
+export default class OverlayBootstrapper implements ErrorManager {
   public settingsManager: SettingsManager;
   public pluginManager: PluginManager;
 
   private _initialized: boolean = false;
 
-  constructor(public bootOptions: BootOptions) {
-    this.settingsManager = new bootOptions.settingsManager(globalThis.location.href);
-    this.pluginManager = new PluginManager(this);
+  constructor(public bootstrapOptions: BootstrapOptions) {
+    this.settingsManager = new bootstrapOptions.constructorOptions.settingsManager(globalThis.location.href);
+    this.pluginManager = new PluginManager(
+      {
+        settingsManager: this.settingsManager,
+        errorManager: this
+      },
+      bootstrapOptions.renderOptions
+    );
   }
 
   async init() {
+    const ctors = this.bootstrapOptions.constructorOptions;
+
     try {
       // Don't allow multiple initializations.
       // Generally this shouldnt happen, but since this is a public method, a plugin technically could
@@ -24,22 +30,29 @@ export default class OverlayBootstrapper {
         throw new Error('Bootstrapper is already initialized');
       }
 
-      let rendererClass: typeof OverlayRenderer | typeof SettingsRenderer | undefined;
+      let rendererClass: RendererConstructor | undefined;
 
       await this.settingsManager.init();
       await this.pluginManager.init();
 
       // Unconfigured, and has SettingsRenderer specified
-      if (false === this.settingsManager?.isConfigured && this.bootOptions.settingsRenderer) {
-        rendererClass = this.bootOptions.settingsRenderer;
-      } else if (this.bootOptions.overlayRenderer) {
+      if (false === this.settingsManager?.isConfigured && ctors.settingsRenderer) {
+        rendererClass = ctors.settingsRenderer;
+      } else if (ctors.overlayRenderer) {
         // Configured, and has OverlayRenderer specified
-        rendererClass = this.bootOptions.overlayRenderer;
+        rendererClass = ctors.overlayRenderer;
       }
 
       // Any Renderer selected and existing, init to perform Render
       if (rendererClass) {
-        new rendererClass(this).init();
+        new rendererClass(
+          {
+            pluginManager: this.pluginManager,
+            settingsManager: this.settingsManager,
+            errorManager: this
+          },
+          this.bootstrapOptions.renderOptions
+        ).init();
       }
 
       this._initialized = true;
@@ -49,7 +62,11 @@ export default class OverlayBootstrapper {
   }
 
   showError = (err: Error) => {
-    const root = this.bootOptions.elements!['root']!;
+    const root = this.bootstrapOptions.renderOptions.elements!['root']!;
+
+    console.error(err);
+
+    // TODO: Should be converted to a template!
 
     root.insertAdjacentHTML(
       'beforeend',

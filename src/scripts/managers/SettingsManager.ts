@@ -1,6 +1,6 @@
-import { OverlaySettings } from '../types';
-import { FormEntry, FormEntryFieldGroup } from '../utils/Forms';
-import { URI } from '../utils/URI';
+import { OverlaySettings } from '../types.js';
+import { FormEntry, FormEntryFieldGroup } from '../utils/Forms.js';
+import * as URI from '../utils/URI.js';
 
 export default class SettingsManager {
   settings: OverlaySettings = {};

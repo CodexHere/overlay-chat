@@ -2,33 +2,40 @@
 
 ## TODO
 
-* Bug with Custom Plugins
+* Don't be lazy, ya bum! Properly inject the shit into the things...
+  * Bootstrapper
+    * Think of a way to handle errors without this thing... 
+  * SettingsManager
+  * PluginManager
+* Bug with Custom Plugins?
 * Create `middleware()` functiona for Plugins
   * https://github.com/Digibear-io/middleware
+  * Core app registers itself as first middleware to kick off pipeline
   * `PluginManager` needs to sort Plugins in `Priority` order
   * `PluginManager` needs an event bus for plugins to communicate through
-	* emit - send and forget
-	* call - send and receive, takes response callback
-  	* `pluginManger.bus.call('someeventname', (data: any) => {})`
-		* Auto registers plugin to listen for `${event.name}-response` which will call the callback on response
-       * Customizable timeout in case a plugin doesn't exist to listen to "event.name"
+    * emit - send and forget
+    * call - send and receive, takes response callback
+      * `pluginManger.bus.call('someeventname', (data: any) => {})`
+      * Auto registers plugin to listen for `${event.name}-response` which will call the callback on response
+         * Customizable timeout in case a plugin doesn't exist to listen to "event.name"
   * Needs a way to break out of middleware, ie ignoring a chatter shouldn't continue any processing
 * Rename to Default Plugin to Example with some cool examples
 * Do we move core functionality to a `Core` plugin that is always loaded? This lets the framework be more agnostic?
-	* Include Authentication w/Twitch
-	* Event:SendMessage (if auth'd properly) - Sends a simple message to chat
-	* Event:HasAuth - returns bool if auth'd
+  * Include Authentication w/Twitch
+  * Event:SendMessage (if auth'd properly) - Sends a simple message to chat
+  * Event:HasAuth - returns bool if auth'd
 * Figure out debouncing on Settings... There's some annoyance with UX and jumping to a required input
 * Bootstrapper should load HTML Template file
 * Inject all values as CSS variables?
   * Do we make this a `FormEntry` prop? ie, `injectCssVar`?
 * New FormEntry type: array
-	* Similar to a field group, but the children are repeated n-times
-	* The user is given +/- buttons, and possibly re-ordering? 
-		* https://github.com/lukasoppermann/html5sortable#examples
+  * Similar to a field group, but the children are repeated n-times
+  * The user is given +/- buttons, and possibly re-ordering? 
+    * https://github.com/lukasoppermann/html5sortable#examples
 * Ability to compress (`lz-string`) url params
   * `&compressed=true&data=<data_here>`
   * Will need to decompress in settings as well
+* Heavily Document everything
 * Librarify:
   * Overlay Architecture
   * Form Utils
@@ -39,6 +46,8 @@
   * Plugin will need more contextual data:
     * Name
     * Priority for load order. This could be dangerous depending on the author of the plugin, as it can mess up priority order for loading, and thus cause issues.
+* Convert to use `hh-util`
+  * `hh-util` needs proper publishing
 
 ## Application Lifecycle
 
@@ -85,16 +94,18 @@
 * Administrative Actions? (needs auth)
 * Chat Box (send as user, needs auth)
 * Role Style Adjustments:
-	* VIP/Mod/etc get style treatments?
-	* This is basically a theme with minimal purpose
-	* Might have multiple versions of this theme
+  * VIP/Mod/etc get style treatments?
+  * This is basically a theme with minimal purpose
+  * Might have multiple versions of this theme
 * Ad Detection
-	* Sends Message
-	* Needs Auth
+  * Sends Message
+  * Needs Auth
 * Top Chatter
-	* Special Badge?
-	* Some kind of color/etc treatment
+  * Special Badge?
+  * Some kind of color/etc treatment
 * Follower Stuff
-	* Border/glow animations?
-	* Confetti around follow message in chat?
-	* Send message welcoming viewer
+  * Border/glow animations?
+  * Confetti around follow message in chat?
+  * Send message welcoming viewer
+* History Plugin:
+  * Stores chats in localStorage to be retrieved on load, so chat isn't empty on first load

@@ -28,40 +28,39 @@ export type FormEntry = FormEntrySelection | FormEntryInput | FormEntryFieldGrou
 
 export const BOOLEAN_TRUES = ['true', 'yes', 't', 'y', 'on', 'enable', 'enabled'];
 
-export default class Forms {
-  static labelId = 0;
+let labelId = 0;
 
-  static FromJson(entries: Readonly<FormEntry[]>) {
-    let inputs = '';
+export const FromJson = (entries: Readonly<FormEntry[]>) => {
+  let inputs = '';
 
-    entries.forEach(entry => {
-      let input = '';
-      const chosenLabel = entry.label ?? entry.name;
-      const defaultData = entry.defaultValue ?? '';
-      const required = entry.isRequired ? 'required' : '';
-      const tooltip = entry.tooltip ? `title="${entry.tooltip}"` : '';
-      const id = `${entry.name}-${this.labelId++}`; // unique ID for labels
+  entries.forEach(entry => {
+    let input = '';
+    const chosenLabel = entry.label ?? entry.name;
+    const defaultData = entry.defaultValue ?? '';
+    const required = entry.isRequired ? 'required' : '';
+    const tooltip = entry.tooltip ? `title="${entry.tooltip}"` : '';
+    const id = `${entry.name}-${labelId++}`; // unique ID for labels
 
-      let inputType = '';
+    let inputType = '';
 
-      switch (entry.inputType) {
-        case 'fieldgroup':
-          input += `
+    switch (entry.inputType) {
+      case 'fieldgroup':
+        input += `
           <details id="${entry.name}">
             <summary><div class="summary-wrapper" ${tooltip}>${chosenLabel}</div></summary>
             <div class="content">
-              ${this.FromJson(entry.values)}
+              ${FromJson(entry.values)}
             </div>
           </details>
           `;
-          break;
+        break;
 
-        case 'radio-option':
-        case 'switch':
-        case 'checkbox':
-          const switchAttr = entry.inputType === 'switch' ? 'role="switch"' : '';
-          inputType = entry.inputType === 'radio-option' ? 'radio' : 'checkbox';
-          input += `
+      case 'radio-option':
+      case 'switch':
+      case 'checkbox':
+        const switchAttr = entry.inputType === 'switch' ? 'role="switch"' : '';
+        inputType = entry.inputType === 'radio-option' ? 'radio' : 'checkbox';
+        input += `
             <input
               type="${inputType}"
               id="${id}"
@@ -70,35 +69,35 @@ export default class Forms {
               ${switchAttr}
               ${defaultData ? 'checked' : ''}
             >`;
-          break;
+        break;
 
-        case 'radio':
-        case 'checkbox-multiple':
-        case 'switch-multiple':
-          inputType =
-            'radio' === entry.inputType
-              ? 'radio-option'
-              : (entry.inputType.replace('-multiple', '') as FormEntry['inputType']);
+      case 'radio':
+      case 'checkbox-multiple':
+      case 'switch-multiple':
+        inputType =
+          'radio' === entry.inputType
+            ? 'radio-option'
+            : (entry.inputType.replace('-multiple', '') as FormEntry['inputType']);
 
-          input += '<div class="input-group">';
+        input += '<div class="input-group">';
 
-          entry.values.forEach(value => {
-            input += this.FromJson([
-              {
-                name: entry.name,
-                label: value,
-                inputType
-              } as FormEntryInput
-            ]);
-          });
+        entry.values.forEach(value => {
+          input += FromJson([
+            {
+              name: entry.name,
+              label: value,
+              inputType
+            } as FormEntryInput
+          ]);
+        });
 
-          input += '</div>';
-          break;
+        input += '</div>';
+        break;
 
-        case 'color':
-        case 'number':
-        case 'text':
-          input += `
+      case 'color':
+      case 'number':
+      case 'text':
+        input += `
             <input
               type="${entry.inputType}"
               value="${defaultData}"
@@ -107,17 +106,17 @@ export default class Forms {
               placeholder="${chosenLabel}"
               ${required}
             >`;
-          break;
+        break;
 
-        case 'select':
-        case 'select-multiple':
-          let options = '';
-          const isMulti = 'select-multiple' === entry.inputType ? 'multiple' : '';
+      case 'select':
+      case 'select-multiple':
+        let options = '';
+        const isMulti = 'select-multiple' === entry.inputType ? 'multiple' : '';
 
-          for (let j = 0; j < entry.values.length; j++) {
-            options += `<option value="${entry.values[j]}">${entry.values![j]}</option>`;
-          }
-          input += `
+        for (let j = 0; j < entry.values.length; j++) {
+          options += `<option value="${entry.values[j]}">${entry.values![j]}</option>`;
+        }
+        input += `
             <select
               value="${defaultData}"
               id="${id}"
@@ -127,103 +126,102 @@ export default class Forms {
             >
               ${options}
             </select>`;
-          break;
+        break;
 
-        default:
-          const brokenItem = entry as any;
-          throw new Error(
-            `Invalid Form Type in Schema for "${brokenItem.name ?? brokenItem.label}": ${brokenItem.inputType}`
-          );
-      }
+      default:
+        const brokenItem = entry as any;
+        throw new Error(
+          `Invalid Form Type in Schema for "${brokenItem.name ?? brokenItem.label}": ${brokenItem.inputType}`
+        );
+    }
 
-      switch (entry.inputType) {
-        case 'fieldgroup':
-          // noop
-          break;
+    switch (entry.inputType) {
+      case 'fieldgroup':
+        // noop
+        break;
 
-        default:
-          const skipForAttr = ['checkbox-multiple', 'switch-multiple', 'radio'];
-          const forAttr = skipForAttr.includes(entry.inputType) ? '' : `for="${id}"`;
+      default:
+        const skipForAttr = ['checkbox-multiple', 'switch-multiple', 'radio'];
+        const forAttr = skipForAttr.includes(entry.inputType) ? '' : `for="${id}"`;
 
-          input = `
+        input = `
               <div data-input-type="${entry.inputType}">
                 <label ${forAttr} ${tooltip}>${chosenLabel}</label>
                 ${input}
               </div>
             `;
+        break;
+    }
+
+    inputs += input;
+  });
+
+  return inputs;
+};
+
+export const Populate = (form: HTMLFormElement, entries: FormData) => {
+  for (const [name, value] of Object.entries(entries)) {
+    const element = form.elements.namedItem(name);
+
+    if (!element) {
+      continue;
+    }
+
+    if (element instanceof HTMLInputElement) {
+      switch (element.type) {
+        case 'checkbox':
+          element.checked = value;
           break;
+        case 'color':
+          element.value = `#${value.replace('#', '')}`;
+          break;
+        case 'select-multiple':
+          const opts = [...(element as unknown as HTMLSelectElement).options];
+          const values = value as string[];
+          opts.forEach(opt => (opt.selected = values.includes(opt.value)));
+          break;
+        default:
+          element.value = value;
       }
-
-      inputs += input;
-    });
-
-    return inputs;
-  }
-
-  static Populate(form: HTMLFormElement, entries: FormData) {
-    for (const [name, value] of Object.entries(entries)) {
-      const element = form.elements.namedItem(name);
-
-      if (!element) {
-        continue;
-      }
-
-      if (element instanceof HTMLInputElement) {
-        switch (element.type) {
-          case 'checkbox':
-            element.checked = value;
-            break;
-          case 'color':
-            element.value = `#${value.replace('#', '')}`;
-            break;
-          case 'select-multiple':
-            const opts = [...(element as unknown as HTMLSelectElement).options];
-            const values = value as string[];
-            opts.forEach(opt => (opt.selected = values.includes(opt.value)));
-            break;
-          default:
-            element.value = value;
+    } else if (element instanceof RadioNodeList) {
+      [...element.entries()].forEach(([idx, input]) => {
+        if (input instanceof HTMLInputElement) {
+          const [checked, _inputValue] = value[idx].split(':');
+          input.checked = BOOLEAN_TRUES.includes(checked);
+        } else {
+          console.error('Invalid Input Type: ${input}');
         }
-      } else if (element instanceof RadioNodeList) {
-        [...element.entries()].forEach(([idx, input]) => {
-          if (input instanceof HTMLInputElement) {
-            const [checked, _inputValue] = value[idx].split(':');
-            input.checked = BOOLEAN_TRUES.includes(checked);
-          } else {
-            console.error('Invalid Input Type: ${input}');
-          }
-        });
+      });
+    }
+  }
+};
+
+export const GetData = (formElement: HTMLFormElement) => {
+  const formData = new FormData(formElement);
+  const json: any = {};
+
+  for (let [name, value] of formData.entries()) {
+    const input = formElement.elements.namedItem(name);
+
+    if (input instanceof HTMLInputElement) {
+      switch (input.type) {
+        case 'number':
+          json[name] = parseFloat(value as string);
+          break;
+        case 'checkbox':
+          json[name] = input.checked;
+          break;
+        default:
+          json[name] = value;
       }
+    } else if (input instanceof HTMLSelectElement) {
+      json[name] = [...input.options].filter(opt => opt.selected).map(opt => opt.value);
+    } else if (input instanceof RadioNodeList) {
+      json[name] = ([...input] as HTMLInputElement[]).map(opt => `${opt.checked}:${opt.value}`);
+    } else {
+      json[name] = value;
     }
   }
 
-  static GetData(formElement: HTMLFormElement) {
-    const formData = new FormData(formElement);
-    const json: any = {};
-
-    for (let [name, value] of formData.entries()) {
-      const input = formElement.elements.namedItem(name);
-
-      if (input instanceof HTMLInputElement) {
-        switch (input.type) {
-          case 'number':
-            json[name] = parseFloat(value as string);
-            break;
-          case 'checkbox':
-            json[name] = input.checked;
-            break;
-          default:
-            json[name] = value;
-        }
-      } else if (input instanceof HTMLSelectElement) {
-        json[name] = [...input.options].filter(opt => opt.selected).map(opt => opt.value);
-      } else if (input instanceof RadioNodeList) {
-        json[name] = ([...input] as HTMLInputElement[]).map(opt => `${opt.checked}:${opt.value}`);
-      } else {
-        json[name] = value;
-      }
-    }
-
-    return json;
-  }
-}
+  return json;
+};

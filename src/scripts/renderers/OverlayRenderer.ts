@@ -1,9 +1,9 @@
 import Splitting from 'splitting';
 import { loadAssets, replaceEmotes } from 'tmi-emote-parse';
 import tmiJs from 'tmi.js';
-import OverlayBootstrapper from '../OverlayBootstrapper';
-import { Templating } from '../utils/Templating';
-import { GetColorForUsername } from '../utils/misc';
+import { Managers, RenderOptions, RendererInstance } from '../types.js';
+import { RenderTemplate } from '../utils/Templating.js';
+import { GetColorForUsername } from '../utils/misc.js';
 
 type MessagePayload = {
   user: string;
@@ -12,17 +12,17 @@ type MessagePayload = {
   message: string;
 };
 
-export class OverlayRenderer {
-  constructor(private bootMgr: OverlayBootstrapper) {}
+export default class OverlayRenderer implements RendererInstance {
+  constructor(private managers: Managers, private renderOptions: RenderOptions) {}
 
   async init() {
     await this.initChatListen();
     // Iterate over every loaded plugin, and call `renderOverlay` to manipulate the Overlay view
-    this.bootMgr.pluginManager.plugins?.forEach(plugin => plugin.renderOverlay());
+    this.managers.pluginManager?.plugins?.forEach(plugin => plugin.renderOverlay?.());
   }
 
   async initChatListen() {
-    const channelName = this.bootMgr.settingsManager.settings.channelName;
+    const channelName = this.managers.settingsManager.settings.channelName;
 
     if (!channelName) {
       return;
@@ -62,17 +62,13 @@ export class OverlayRenderer {
   };
 
   renderMessage(data: MessagePayload) {
-    Templating.RenderTemplate(
-      this.bootMgr.bootOptions.elements!['container'],
-      this.bootMgr.bootOptions.templates!['chat-message'],
-      data
-    );
+    RenderTemplate(this.renderOptions.elements!['container'], this.renderOptions.templates!['chat-message'], data);
 
     Splitting({ target: `[data-message-id="${data.messageId}"]` });
   }
 
   removeOutOfBoundsMessages() {
-    const container = this.bootMgr.bootOptions.elements!['container'];
+    const container = this.renderOptions.elements!['container'];
 
     if (!container) {
       return;
