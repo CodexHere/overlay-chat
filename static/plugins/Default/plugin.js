@@ -1,9 +1,9 @@
 /**
- * @typedef {import('../../../src/scripts/types.js').OverlayPlugin} OverlayPlugin
+ * @typedef {import('../../../src/scripts/types.js').OverlayPluginInstance} OverlayPluginInstance
  * @typedef {import('../../../src/scripts/types.js').Managers} Managers
  * @typedef {import('../../../src/scripts/types.js').RenderOptions} NewType
  *
- * @implements {OverlayPlugin}
+ * @implements {OverlayPluginInstance}
  */
 export default class Plugin_Default {
   name = 'Default Plugin';
@@ -17,6 +17,22 @@ export default class Plugin_Default {
   constructor(managers, renderOptions) {
     this.managers = managers;
     this.renderOptions = renderOptions;
+
+    console.log(`${this.name} instantiated`);
+
+    this.managers.pluginManager?.bus.addListener('test', this.test);
+  }
+
+  /**
+   * @param {any[]} args
+   */
+  test = (...args) => {
+    return `${this.name} TEST return call successfully`;
+  };
+
+  unregister() {
+    console.log(`${this.name} Unregistering`);
+    this.managers.pluginManager?.bus.removeListener('test', this.test);
   }
 
   loadSettingsSchema() {
@@ -37,11 +53,15 @@ export default class Plugin_Default {
   }
 
   renderSettings() {
-    console.log(`${this.name} Plugin [renderSettings] Initialized!`, this.managers.settingsManager.settingsSchema);
+    console.log(`${this.name} [renderSettings] Initialized!`, this.managers.settingsManager.settingsSchema);
+
+    this.managers.pluginManager?.bus.emit('test', ['Some Test Value'], { foo: true, bar: false });
+    const val = this.managers.pluginManager?.bus.call('test', ['Some Test Value'], { foo: true, bar: false });
+    console.log('FINAL:', val);
   }
 
   renderOverlay() {
-    console.log(`${this.name} Plugin [renderOverlay] Initialized!`, this.managers.settingsManager.settingsSchema);
+    console.log(`${this.name} [renderOverlay] Initialized!`, this.managers.settingsManager.settingsSchema);
   }
 
   // TODO: implement this concept

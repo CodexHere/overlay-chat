@@ -2,22 +2,9 @@
 
 ## TODO
 
-* Don't be lazy, ya bum! Properly inject the shit into the things...
-  * Bootstrapper
-    * Think of a way to handle errors without this thing... 
-  * SettingsManager
-  * PluginManager
-* Bug with Custom Plugins?
-* Create `middleware()` functiona for Plugins
+* Create `middleware()` functions for Plugins
   * https://github.com/Digibear-io/middleware
   * Core app registers itself as first middleware to kick off pipeline
-  * `PluginManager` needs to sort Plugins in `Priority` order
-  * `PluginManager` needs an event bus for plugins to communicate through
-    * emit - send and forget
-    * call - send and receive, takes response callback
-      * `pluginManger.bus.call('someeventname', (data: any) => {})`
-      * Auto registers plugin to listen for `${event.name}-response` which will call the callback on response
-         * Customizable timeout in case a plugin doesn't exist to listen to "event.name"
   * Needs a way to break out of middleware, ie ignoring a chatter shouldn't continue any processing
 * Rename to Default Plugin to Example with some cool examples
 * Do we move core functionality to a `Core` plugin that is always loaded? This lets the framework be more agnostic?

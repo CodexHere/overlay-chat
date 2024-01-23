@@ -1,9 +1,9 @@
 /**
- * @typedef {import('../../../src/scripts/types.js').OverlayPlugin} OverlayPlugin
+ * @typedef {import('../../../src/scripts/types.js').OverlayPluginInstance} OverlayPluginInstance
  * @typedef {import('../../../src/scripts/types.js').Managers} Managers
  * @typedef {import('../../../src/scripts/types.js').RenderOptions} NewType
  *
- * @implements {OverlayPlugin}
+ * @implements {OverlayPluginInstance}
  */
 export default class Plugin_HangoutHere {
   name = 'Hangout Here Theme';
@@ -17,6 +17,22 @@ export default class Plugin_HangoutHere {
   constructor(managers, renderOptions) {
     this.managers = managers;
     this.renderOptions = renderOptions;
+
+    console.log(`${this.name} instantiated`);
+
+    this.managers.pluginManager?.bus.addListener('test', this.test);
+  }
+
+  /**
+   * @param {any[]} args
+   */
+  test = (...args) => {
+    return `${this.name} TEST return call successfully`;
+  };
+
+  unregister() {
+    console.log(`${this.name} Unregistering`);
+    this.managers.pluginManager?.bus.removeListener('test', this.test);
   }
 
   loadSettingsSchema() {
@@ -38,15 +54,15 @@ export default class Plugin_HangoutHere {
       ]
     });
 
-    console.log('HangoutHere Plugin [Settings] Initialized!', this.managers.settingsManager.settingsSchema);
+    console.log(`${this.name} [Settings] Initialized!`);
   }
 
   renderSettings() {
-    console.log('HangoutHere Plugin [renderSettings] Initialized!', this.managers.settingsManager.settingsSchema);
+    console.log(`${this.name} [renderSettings] Initialized!`);
   }
 
   renderOverlay() {
-    console.log('HangoutHere Plugin [renderOverlay] Initialized!', this.managers.settingsManager.settingsSchema);
+    console.log(`${this.name} [renderOverlay] Initialized!`);
   }
 
   // TODO: implement this concept

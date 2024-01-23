@@ -48,10 +48,14 @@ export type RendererConstructor = {
   new (managers: Managers, renderOptions: RenderOptions): RendererInstance;
 };
 
-export type OverlayPlugin = {
+// Plugins
+
+export type OverlayPluginInstance = {
   name: string;
   managers: Managers;
   renderOptions: RenderOptions;
+  priority?: number;
+  unregister?(): void;
   loadSettingsSchema?(): void;
   renderSettings?(): void;
   renderOverlay?(): void;
@@ -59,5 +63,5 @@ export type OverlayPlugin = {
 };
 
 export type OverlayPluginConstructor = {
-  new (managers: Managers, renderOptions: RenderOptions): OverlayPlugin;
+  new (managers: Managers, renderOptions: RenderOptions): OverlayPluginInstance;
 };

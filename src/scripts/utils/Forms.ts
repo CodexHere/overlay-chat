@@ -46,7 +46,7 @@ export const FromJson = (entries: Readonly<FormEntry[]>) => {
     switch (entry.inputType) {
       case 'fieldgroup':
         input += `
-          <details id="${entry.name}">
+          <details id="${entry.name ?? entry.label.toLocaleLowerCase().replaceAll(' ', '_')}">
             <summary><div class="summary-wrapper" ${tooltip}>${chosenLabel}</div></summary>
             <div class="content">
               ${FromJson(entry.values)}
