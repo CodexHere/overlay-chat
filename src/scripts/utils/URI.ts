@@ -1,3 +1,5 @@
+import { BOOLEAN_FALSES, BOOLEAN_TRUES } from '../types.js';
+
 export const BaseUrl = () => {
   const url = new URL(location.href.replaceAll('#', ''));
   // Combined URL with path, without traliing slash
@@ -10,24 +12,37 @@ export const QueryStringToJson = <SettingsType, SettingsKey extends keyof Settin
   const options: SettingsType = {} as SettingsType;
   const params = new URL(urlHref.replaceAll('#', '')).searchParams;
 
+  const buildParam = (paramValue: SettingsType[SettingsKey]): SettingsType[SettingsKey] => {
+    const isTrue = BOOLEAN_TRUES.includes(paramValue as string);
+    const isFalse = BOOLEAN_FALSES.includes(paramValue as string);
+
+    if (isTrue || isFalse) {
+      paramValue = ((isTrue && !isFalse) || !(!isTrue && isFalse)) as SettingsType[SettingsKey];
+    }
+
+    return paramValue;
+  };
+
   params.forEach((param, paramName) => {
-    let paramValue = options[paramName as SettingsKey];
+    let existingValue = options[paramName as SettingsKey];
+
+    const builtParam = buildParam(param as SettingsType[SettingsKey]);
 
     // If we have an existing value...
     //  and it's an array, append to it
-    if (paramValue) {
-      if (Array.isArray(paramValue)) {
-        paramValue.push(param);
+    if (undefined !== existingValue) {
+      if (Array.isArray(existingValue)) {
+        existingValue.push(builtParam);
       } else {
         // Exists, but not an array, turn it into one
-        paramValue = [paramValue, param] as SettingsType[SettingsKey];
+        existingValue = [existingValue, builtParam] as SettingsType[SettingsKey];
       }
     } else {
       // Never existed, assume single item parameter
-      paramValue = param as SettingsType[SettingsKey];
+      existingValue = builtParam as SettingsType[SettingsKey];
     }
 
-    options[paramName as SettingsKey] = paramValue;
+    options[paramName as SettingsKey] = existingValue;
   });
 
   return options;

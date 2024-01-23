@@ -1,4 +1,4 @@
-import { OverlaySettings, RendererInstance, RendererInstanceOptions } from '../types.js';
+import { ContextBase, OverlaySettings, RendererInstance, RendererInstanceOptions } from '../types.js';
 import * as Forms from '../utils/Forms.js';
 import { RenderTemplate } from '../utils/Templating.js';
 import * as URI from '../utils/URI.js';
@@ -6,14 +6,14 @@ import { debounce } from '../utils/misc.js';
 
 const shouldReloadPlugins = ['plugins', 'customPlugins'];
 
-export class SettingsRenderer<OS extends OverlaySettings, CS extends object> implements RendererInstance<CS> {
-  constructor(private options: RendererInstanceOptions<OS, CS>) {}
+export class SettingsRenderer<OS extends OverlaySettings, Context extends ContextBase> implements RendererInstance {
+  constructor(private options: RendererInstanceOptions<OS, Context>) {}
 
   async init() {
     this.renderSettings();
 
     // Iterate over every loaded plugin, and call `renderSettings` to manipulate the Settings view
-    this.options.pluginManager.plugins.forEach(plugin => {
+    this.options.pluginManager.getPlugins().forEach(plugin => {
       try {
         plugin.renderSettings?.(this.options.renderOptions);
       } catch (err) {
@@ -27,7 +27,9 @@ export class SettingsRenderer<OS extends OverlaySettings, CS extends object> imp
 
     this.bindFormEvents();
 
-    this.generateUrl();
+    this.options.settingsManager.toggleMaskSettings(true);
+    const url = this.generateUrl();
+    this.updateLinkResults(url);
   }
 
   private renderSettings() {
@@ -39,15 +41,15 @@ export class SettingsRenderer<OS extends OverlaySettings, CS extends object> imp
     root.innerHTML = '';
 
     RenderTemplate(root, templs['settings'], {
-      formElements: Forms.FromJson(this.options.settingsManager.settingsSchema)
+      formElements: this.options.settingsManager.parsedJsonResults!.results
     });
 
-    // Establish #elements now that the Settings Form has been injected into DOM
+    // Establish `elements` now that the Settings Form has been injected into DOM
     const form = (elems['form'] = root.querySelector('form')!);
     elems['link-results'] = root.querySelector('.link-results textarea')!;
     elems['first-details'] = root.querySelector('details')!;
 
-    Forms.Populate(form, this.options.settingsManager.settings!);
+    Forms.Populate(form, this.options.settingsManager.getSettings()!);
 
     elems['first-details']?.setAttribute('open', '');
   }
@@ -57,6 +59,8 @@ export class SettingsRenderer<OS extends OverlaySettings, CS extends object> imp
     const root = elems['root'];
     const form = (elems['form'] = root.querySelector('form')!);
     const btnLoadOverlay = (elems['button-load-overlay'] = root.querySelector('.link-results .button-load-overlay')!);
+
+    elems['new-window-checkbox'] = root.querySelector('.link-results .load-option-new')!;
 
     form.addEventListener('input', debounce(this.onSettingsChanged, 500));
     form.addEventListener('click', this.onFormClicked);
@@ -74,6 +78,9 @@ export class SettingsRenderer<OS extends OverlaySettings, CS extends object> imp
       return;
     }
 
+    event.preventDefault();
+    event.stopImmediatePropagation();
+
     const name = btn.name.replace('password-view-', '');
     const input = btn.closest('div.password-wrapper')?.querySelector(`input[name=${name}]`) as HTMLInputElement;
 
@@ -87,14 +94,14 @@ export class SettingsRenderer<OS extends OverlaySettings, CS extends object> imp
     const form = target.form!;
 
     const formData = Forms.GetData(form);
-    this.options.settingsManager.settings = formData;
+    this.options.settingsManager.setSettings(formData);
 
     if (shouldReloadPlugins.includes(target.name)) {
       this.options.settingsManager.resetSettingsSchema();
 
       try {
         await this.options.pluginManager.loadPlugins();
-        this.init();
+        await this.init();
       } catch (err) {
         this.options.errorManager.showError(err as Error);
       }
@@ -102,22 +109,47 @@ export class SettingsRenderer<OS extends OverlaySettings, CS extends object> imp
       form.reportValidity();
     }
 
-    this.generateUrl();
+    // Masked Items are replaced with base64 encoded value to obfuscate
+    this.options.settingsManager.toggleMaskSettings(true);
+    const url = this.generateUrl();
+    this.updateLinkResults(url);
   };
 
-  private generateUrl() {
+  private generateUrl(forceShowSettings = false) {
+    const baseUrl = URI.BaseUrl();
+    const settings = this.options.settingsManager.getSettings();
+
+    if (forceShowSettings) {
+      settings.forceShowSettings = true;
+    } else {
+      delete settings['forceShowSettings'];
+    }
+
+    const querystring = URI.JsonToQuerystring(settings);
+
+    return querystring ? `${baseUrl}?${querystring}`.replace(/\?+$/, '') : '';
+  }
+
+  private updateLinkResults(url: string) {
     const elems = this.options.renderOptions.elements!;
     const linkResults: HTMLInputElement = elems['link-results'] as HTMLInputElement;
     const linkButton: HTMLInputElement = elems['button-load-overlay'] as HTMLInputElement;
 
-    const baseUrl = URI.BaseUrl();
-    const querystring = URI.JsonToQuerystring(this.options.settingsManager.settings);
-    linkResults.value = querystring ? `${baseUrl}?${querystring}`.replace(/\?+$/, '') : '';
-    linkButton.disabled = !(elems['form'] as HTMLFormElement).checkValidity();
+    linkResults.value = url;
+    linkButton.disabled = !this.options.settingsManager.isConfigured;
   }
 
   private onClickLoadOverlay = (_event: Event) => {
-    const linkResults: HTMLInputElement = this.options.renderOptions.elements!['link-results'] as HTMLInputElement;
-    window.location.href = linkResults.value;
+    const newWindowCheck = this.options.renderOptions.elements!['new-window-checkbox'] as HTMLInputElement;
+
+    let url = this.generateUrl(false);
+
+    if (newWindowCheck && newWindowCheck.checked) {
+      window.open(url, 'overlay');
+      url = this.generateUrl(true);
+      history.replaceState(null, '', url);
+    } else {
+      window.location.href = url;
+    }
   };
 }

@@ -1,3 +1,5 @@
+import { BOOLEAN_TRUES } from '../types.js';
+
 // TODO: Change to Map?
 export type FormData = Record<string, any>;
 
@@ -32,12 +34,18 @@ export type FormEntrySelection = FormEntryBase & {
 
 export type FormEntry = FormEntryButton | FormEntrySelection | FormEntryInput | FormEntryFieldGroup;
 
-export const BOOLEAN_TRUES = ['true', 'yes', 't', 'y', 'on', 'enable', 'enabled'];
-
 let labelId = 0;
 
-export const FromJson = (entries: Readonly<FormEntry[]>) => {
-  let inputs = '';
+export type ParsedJsonResults = {
+  results: string;
+  mapping: Partial<Record<FormEntry['inputType'], Record<string, FormEntry>>>;
+};
+
+type ParsedJsonMap = ParsedJsonResults['mapping'];
+
+export const FromJson = (entries: Readonly<FormEntry[]>): ParsedJsonResults => {
+  let mapping: ParsedJsonMap = {};
+  let results = '';
 
   entries.forEach(entry => {
     let input = '';
@@ -50,14 +58,20 @@ export const FromJson = (entries: Readonly<FormEntry[]>) => {
     const id = `${entry.name}-${labelId++}`; // unique ID for labels
 
     let inputType = '';
+    let recursedCall: ParsedJsonResults | undefined;
 
+    /**
+     * Input-level Generation
+     */
     switch (entry.inputType) {
       case 'fieldgroup':
+        recursedCall = FromJson(entry.values);
+        mapping = { ...mapping, ...recursedCall.mapping };
         input += `
           <details id="${entry.name ?? entry.label.toLocaleLowerCase().replaceAll(' ', '_')}">
             <summary><div class="summary-wrapper" ${tooltip}>${chosenLabel}</div></summary>
             <div class="content">
-              ${FromJson(entry.values)}
+              ${recursedCall.results}
             </div>
           </details>
           `;
@@ -96,13 +110,16 @@ export const FromJson = (entries: Readonly<FormEntry[]>) => {
         input += '<div class="input-group">';
 
         entry.values.forEach(value => {
-          input += FromJson([
+          recursedCall = FromJson([
             {
               name: entry.name,
               label: value,
               inputType
             } as FormEntryInput
           ]);
+
+          input += recursedCall.results;
+          mapping = { ...mapping, ...recursedCall.mapping };
         });
 
         input += '</div>';
@@ -125,13 +142,16 @@ export const FromJson = (entries: Readonly<FormEntry[]>) => {
         `;
 
         if ('password' === entry.inputType) {
-          input += FromJson([
+          recursedCall = FromJson([
             {
               inputType: 'button',
               label: '👁',
               name: `password-view-${entry.name}`
             }
           ]);
+
+          input += recursedCall.results;
+          mapping = { ...mapping, ...recursedCall.mapping };
         }
 
         input += '</div>';
@@ -165,6 +185,9 @@ export const FromJson = (entries: Readonly<FormEntry[]>) => {
         );
     }
 
+    /**
+     * Label Wrapping
+     */
     switch (entry.inputType) {
       case 'button':
       case 'fieldgroup':
@@ -184,10 +207,16 @@ export const FromJson = (entries: Readonly<FormEntry[]>) => {
         break;
     }
 
-    inputs += input;
+    results += input;
+
+    mapping[entry.inputType] = mapping[entry.inputType] || {};
+    mapping[entry.inputType]![entry.name] = entry;
   });
 
-  return inputs;
+  return {
+    results,
+    mapping
+  };
 };
 
 export const Populate = (form: HTMLFormElement, entries: FormData) => {

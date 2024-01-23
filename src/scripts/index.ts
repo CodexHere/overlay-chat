@@ -1,18 +1,11 @@
 import { OverlayBootstrapper } from './OverlayBootstrapper.js';
+import Plugin_Core, { MiddewareContext_Chat, OverlaySettings_Chat } from './Plugin_Core.js';
 import * as Managers from './managers/index.js';
 import * as Renderers from './renderers/index.js';
-import { OverlayPluginInstance, OverlaySettings } from './types.js';
-import { EnhancedEventEmitter } from './utils/EnhancedEventEmitter.js';
 import * as Utils from './utils/index.js';
 
 // Lib Exports
 export { Managers, Renderers, Utils };
-
-type OverlaySettings_Chat = OverlaySettings & {
-  fontSize: number;
-};
-
-type MiddewareContext_Chat = {};
 
 // Start the overlay once DOM has loaded
 document.addEventListener('DOMContentLoaded', () => {
@@ -32,15 +25,12 @@ document.addEventListener('DOMContentLoaded', () => {
     needsOverlayRenderer: true,
     needsSettingsRenderer: true,
     settingsValidator: settings => {
-      return !!settings.channelName && !!settings.fontSize;
+      const userDefined = !!settings.nameStreamer && (!!settings.tokenStreamer || true);
+      const botDefined = (!settings.nameBot && !settings.tokenBot) || (!!settings.nameBot && !!settings.tokenBot);
+      return !!settings.fontSize && userDefined && botDefined;
     },
 
-    defaultPlugin: class CorePlugin implements OverlayPluginInstance<MiddewareContext_Chat> {
-      name = 'Core Plugin';
-      constructor(public bus: EnhancedEventEmitter) {}
-
-      
-    }
+    defaultPlugin: Plugin_Core
   });
 
   bootstrapper.init();

@@ -10,8 +10,8 @@
         "inputType": "fieldgroup",
         "values": [
           {
-            "name": "channelName",
-            "label": "Channel Name",
+            "name": "nameStreamer",
+            "label": "Channel Name (Streamer)",
             "inputType": "text",
             "isRequired": true,
             "tooltip": "This is the channel you want to display in the overlay!"
@@ -20,6 +20,12 @@
             "name": "tokenStreamer",
             "label": "Chat Token (Streamer)",
             "inputType": "password"
+          },
+          {
+            "name": "nameBot",
+            "label": "Channel Name (Bot)",
+            "inputType": "text",
+            "tooltip": "This is the channel you want to display in the overlay!"
           },
           {
             "name": "tokenBot",

@@ -1,3 +1,7 @@
+body:has(#container-settings) {
+  background: #0b0b0b url('../../../images/bg_stone.jpg') center/cover no-repeat;
+}
+
 #container-settings {
   display: flex;
   flex-direction: column;
@@ -109,10 +113,17 @@
     textarea {
       flex: 1;
       resize: none;
+      margin: 0;
+    }
+
+    .load-options {
+      display: flex;
+      flex-direction: column;
     }
 
     button {
       width: auto;
+      flex: 1;
     }
   }
 

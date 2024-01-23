@@ -1,26 +1,32 @@
-import { Pipe, pipeline } from '@digibear/middleware';
+import { Middleware, Pipe, pipeline } from '@digibear/middleware';
 import {
+  BOOLEAN_TRUES,
+  ContextBase,
   OverlayPluginConstructor,
   OverlayPluginInstance,
   OverlaySettings,
   PluginImports,
+  PluginInstances,
+  PluginLoaders,
+  PluginManagerBus,
+  PluginManagerEvents,
   PluginManagerOptions
 } from '../types.js';
 import { EnhancedEventEmitter } from '../utils/EnhancedEventEmitter.js';
-import { BOOLEAN_TRUES } from '../utils/Forms.js';
 import * as URI from '../utils/URI.js';
 
-type PluginLoaders<CS extends object> = Array<string | OverlayPluginConstructor<CS>>;
-type PluginInstances<CS extends object> = OverlayPluginInstance<CS>[];
+export class PluginManager<OS extends OverlaySettings, Context extends ContextBase> {
+  private bus: PluginManagerBus;
+  private pipeline: Pipe<Context>;
+  private plugins: PluginInstances<Context> = [];
 
-export class PluginManager<OS extends OverlaySettings, CS extends object> {
-  bus: EnhancedEventEmitter;
-  plugins: PluginInstances<CS> = [];
-  pipeline: Pipe<CS>;
-
-  constructor(private options: PluginManagerOptions<OS, CS>) {
+  constructor(private options: PluginManagerOptions<OS, Context>) {
     this.bus = new EnhancedEventEmitter();
-    this.pipeline = pipeline<CS>();
+    this.pipeline = pipeline<Context>();
+  }
+
+  getPlugins(): PluginInstances<Context> {
+    return this.plugins;
   }
 
   private getPluginPath = (pluginName: string) => {
@@ -30,7 +36,7 @@ export class PluginManager<OS extends OverlaySettings, CS extends object> {
   private pluginBaseUrls() {
     let pluginUrls: string[] = [];
 
-    const { customPlugins, plugins } = this.options.settingsManager.settings;
+    const { customPlugins, plugins } = this.options.settingsManager.getSettings();
 
     if (customPlugins) {
       pluginUrls = customPlugins.split(';');
@@ -52,6 +58,8 @@ export class PluginManager<OS extends OverlaySettings, CS extends object> {
   }
 
   async init() {
+    // Register "Middleware Execute" event to execute pipeline
+    this.bus.on(PluginManagerEvents.MIDDLEWARE_EXECUTE, this.startMiddleware);
     // Load and register new plugin
     await this.loadPlugins();
   }
@@ -65,6 +73,10 @@ export class PluginManager<OS extends OverlaySettings, CS extends object> {
       plugin.unregister?.(this.options.renderOptions);
       this.plugins.splice(idx, 1);
     }
+
+    // Delete all link[data-plugin] nodes
+    const links = globalThis.document.querySelectorAll('head link[data-plugin]');
+    links.forEach(link => link.remove());
   }
 
   async loadPlugins() {
@@ -72,7 +84,7 @@ export class PluginManager<OS extends OverlaySettings, CS extends object> {
     this.unregisterPlugins();
 
     // Load all URLs for desired plugins
-    const pluginLoaders: PluginLoaders<CS> = this.pluginBaseUrls() as PluginLoaders<CS>;
+    const pluginLoaders: PluginLoaders<OS, Context> = this.pluginBaseUrls() as PluginLoaders<OS, Context>;
     // Prepend Default plugin to instantiate/import
     pluginLoaders.unshift(this.options.defaultPlugin);
     // Perform Imports/Intantiations
@@ -83,16 +95,18 @@ export class PluginManager<OS extends OverlaySettings, CS extends object> {
     // Sort Plugins by Priority
     this.plugins.sort(this.sortPlugins);
     // Load Settings for Plugins
-    this.loadPluginSettings(imports);
+    this.options.settingsManager.loadPluginSettings(this.plugins, imports);
     // Load Style for Plugin
     this.loadPluginStyles(pluginLoaders);
+    // Bind Middleware
+    this.bindPluginMiddleware();
 
     if (0 !== imports.bad.length) {
       throw new Error(imports.bad.join('<br /><br />'));
     }
   }
 
-  private sortPlugins(a: OverlayPluginInstance<CS>, b: OverlayPluginInstance<CS>) {
+  private sortPlugins(a: OverlayPluginInstance<Context>, b: OverlayPluginInstance<Context>) {
     if (!a.priority) {
       return 1;
     }
@@ -109,7 +123,7 @@ export class PluginManager<OS extends OverlaySettings, CS extends object> {
     return sortval;
   }
 
-  private async importModules(pluginLoaders: PluginLoaders<CS>) {
+  private async importModules(pluginLoaders: PluginLoaders<OS, Context>) {
     const promises = pluginLoaders.map(async pluginUrl => await this.loadPluginInstance(pluginUrl));
 
     return (
@@ -130,23 +144,29 @@ export class PluginManager<OS extends OverlaySettings, CS extends object> {
           {
             good: [],
             bad: []
-          } as PluginImports<CS>
+          } as PluginImports<Context>
         )
     );
   }
 
-  private async loadPluginInstance(pluginLoadValue: string | OverlayPluginConstructor<CS>) {
-    let pluginClass: OverlayPluginConstructor<CS> | undefined;
+  private async loadPluginInstance(pluginLoadValue: string | OverlayPluginConstructor<OS, Context>) {
+    let pluginClass: OverlayPluginConstructor<OS, Context> | undefined;
 
     if (typeof pluginLoadValue === 'string') {
       pluginClass = await this.importPlugin(pluginLoadValue as string);
     } else {
-      pluginClass = pluginLoadValue as OverlayPluginConstructor<CS>;
+      pluginClass = pluginLoadValue as OverlayPluginConstructor<OS, Context>;
     }
 
     // Instantiate Plugin
     try {
-      const pluginInstance: OverlayPluginInstance<CS> = new pluginClass!(this.bus);
+      // prettier-ignore
+      const pluginInstance: OverlayPluginInstance<Context> = 
+        new pluginClass!(
+          this.bus, 
+          this.options.settingsManager.getSettings
+        );
+
       return pluginInstance;
     } catch (err) {
       if (err instanceof Error) {
@@ -157,7 +177,7 @@ export class PluginManager<OS extends OverlaySettings, CS extends object> {
 
   private async importPlugin(pluginBaseUrl: string) {
     try {
-      let pluginClass: OverlayPluginConstructor<CS> | undefined;
+      let pluginClass: OverlayPluginConstructor<OS, Context> | undefined;
 
       // If a Custom Theme is supplied, we'll expect it to be a full URL, otherwise we'll formulate a URL.
       // This allows us to ensure vite will not attempt to package the plugin on our behalf, and will truly
@@ -181,7 +201,7 @@ export class PluginManager<OS extends OverlaySettings, CS extends object> {
     }
   }
 
-  private loadPluginStyles(pluginLoaders: PluginLoaders<CS>) {
+  private loadPluginStyles(pluginLoaders: PluginLoaders<OS, Context>) {
     for (let idx = 0; idx < pluginLoaders.length; idx++) {
       const pluginLoader = pluginLoaders[idx];
 
@@ -189,24 +209,37 @@ export class PluginManager<OS extends OverlaySettings, CS extends object> {
         continue;
       }
 
-      const head = document.getElementsByTagName('head')[0];
-      const link = document.createElement('link');
+      const head = globalThis.document.getElementsByTagName('head')[0];
+      const link = globalThis.document.createElement('link');
       link.rel = 'stylesheet';
       link.type = 'text/css';
       link.href = `${pluginLoader}/plugin.css`;
+      link.setAttribute('data-plugin', 'true');
 
       head.appendChild(link);
     }
   }
 
-  private loadPluginSettings(imports: PluginImports<CS>) {
-    // Iterate over every loaded plugin, and call `loadSettings` to manipulate the Settings Schema
+  private bindPluginMiddleware() {
     this.plugins.forEach(plugin => {
-      try {
-        plugin.injectSettingsSchema?.(this.options.settingsManager.addPluginSettings);
-      } catch (err) {
-        imports.bad.push(new Error(`Could not inject Settings Schema for Plugin: ${plugin.name}`));
+      if (plugin.middleware) {
+        this.pipeline.use(plugin.middleware);
       }
     });
+
+    // Add Error Middleware at the end of the pipeline as per spec
+    this.pipeline.use(this.errorMiddleware);
   }
+
+  private startMiddleware = async (ctx: Context) => {
+    await this.pipeline.execute(ctx);
+  };
+
+  private errorMiddleware: Middleware<Context> = async (_ctx, next, err) => {
+    if (err || _ctx.errors.length > 0) {
+      this.options.errorManager.showError(err || _ctx.errors);
+    }
+
+    await next();
+  };
 }

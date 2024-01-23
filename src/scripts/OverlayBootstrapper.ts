@@ -2,22 +2,30 @@ import { PluginManager } from './managers/PluginManager.js';
 import { SettingsManager } from './managers/SettingsManager.js';
 import { OverlayRenderer } from './renderers/OverlayRenderer.js';
 import { SettingsRenderer } from './renderers/SettingsRenderer.js';
-import { BootstrapOptions, ErrorManager, OverlaySettings, RendererConstructor, RendererInstance } from './types.js';
+import {
+  BootstrapOptions,
+  ContextBase,
+  ErrorManager,
+  OverlaySettings,
+  RendererConstructor,
+  RendererInstance
+} from './types.js';
 
-export class OverlayBootstrapper<OS extends OverlaySettings, CS extends object> implements ErrorManager {
-  settingsManager: SettingsManager<OS>;
-  pluginManager: PluginManager<OS, CS>;
+export class OverlayBootstrapper<OS extends OverlaySettings, Context extends ContextBase> implements ErrorManager {
+  settingsManager: SettingsManager<OS, Context>;
+  pluginManager: PluginManager<OS, Context>;
 
-  constructor(public bootstrapOptions: BootstrapOptions<OS, CS>) {
-    this.settingsManager = new SettingsManager<OS>({
+  constructor(public bootstrapOptions: BootstrapOptions<OS, Context>) {
+    this.settingsManager = new SettingsManager<OS, Context>({
       locationHref: globalThis.location.href,
       settingsValidator: bootstrapOptions.settingsValidator
     });
 
     this.pluginManager = new PluginManager({
-      settingsManager: this.settingsManager,
+      defaultPlugin: bootstrapOptions.defaultPlugin,
       renderOptions: bootstrapOptions.renderOptions,
-      defaultPlugin: bootstrapOptions.defaultPlugin
+      settingsManager: this.settingsManager,
+      errorManager: this
     });
   }
 
@@ -33,21 +41,22 @@ export class OverlayBootstrapper<OS extends OverlaySettings, CS extends object> 
     }
 
     // Determine if `SettingsManager` is configured by way of `SettingsValidator`
-    const isConfigured = this.settingsManager?.isConfigured || false;
+    const isConfigured =
+      (!this.settingsManager.getSettings().forceShowSettings && this.settingsManager?.isConfigured) || false;
     // Wants a `SettingsRenderer`, and `SettingsManager::isConfigured()` returns `false`
     const shouldRenderSettings = false === isConfigured && needsSettingsRenderer;
     // Wants an `OverlayRenderer`, and `SettingsManager::isConfigured()` returns `true`
     const shouldRenderOverlay = true === isConfigured && needsOverlayRenderer;
 
     // Select which Renderer to load...
-    let rendererClass: RendererConstructor<OS, CS> | undefined =
+    let rendererClass: RendererConstructor<OS, Context> | undefined =
       shouldRenderSettings ? SettingsRenderer
       : shouldRenderOverlay ? OverlayRenderer
       : undefined;
 
     // Any Renderer selected and existing, init to perform Render
     if (rendererClass) {
-      const renderer: RendererInstance<CS> = new rendererClass({
+      const renderer: RendererInstance = new rendererClass({
         renderOptions: this.bootstrapOptions.renderOptions,
         pluginManager: this.pluginManager,
         settingsManager: this.settingsManager,
@@ -66,12 +75,17 @@ export class OverlayBootstrapper<OS extends OverlaySettings, CS extends object> 
     }
   }
 
-  showError = (err: Error) => {
+  showError = (err: Error | Error[]) => {
     const root = this.bootstrapOptions.renderOptions.elements!['root']!;
 
     console.error(err);
 
     root.querySelector('dialog')?.remove();
+
+    const msg =
+      err instanceof Error ? err.message
+      : Array.isArray(err) ? err.map(e => e.message).join('<br> <br>')
+      : '';
 
     // TODO: Should be converted to a template!
 
@@ -83,7 +97,7 @@ export class OverlayBootstrapper<OS extends OverlaySettings, CS extends object> 
           <header>
             There was an Error
           </header>
-          <p>${err.message}</p>
+          <p>${msg}</p>
 
           <footer>
             <form method="dialog">

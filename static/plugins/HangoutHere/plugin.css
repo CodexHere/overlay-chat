@@ -2,15 +2,18 @@
 @import url('@picocss/pico');
 
 :root {
-  --colorRevealText0: #e2e2e2;
-  --colorRevealText1: #ff8a3b;
-  --colorRevealText2: #f23373;
-  --colorRevealText3: transparent;
-  --colorBorder: #bc91f8;
+  --hhtheme-colorRevealText0: #e2e2e2;
+  --hhtheme-colorRevealText1: #ff8a3b;
+  --hhtheme-colorRevealText2: #f23373;
+  --hhtheme-colorRevealText3: transparent;
+  --hhtheme-colorBorder: #bc91f8;
+
+  --hhtheme-background: url('../../../images/bg_wood.jpg');
 }
 
-body {
-  background: #0b0b0b url('../../../images/bg_wood.jpg') center/cover no-repeat;
+body,
+body:has(#container-settings) {
+  background: #0b0b0b var(--hhtheme-background) center/cover no-repeat;
 }
 
 #container-overlay {
@@ -18,7 +21,7 @@ body {
 
   background: #000000cc;
   border-radius: 1vmin;
-  border: 1vmin solid var(--colorBorder);
+  border: 1vmin solid var(--hhtheme-colorBorder);
   font-size: 10vmin;
   line-height: 8vmin;
   mask-image: linear-gradient(to bottom, transparent 4.5vmin, black 20vmin);
@@ -52,11 +55,11 @@ body {
 #container-overlay .chat-message [data-splitting] .char {
   background: linear-gradient(
     0deg,
-    var(--colorRevealText0) 40%,
-    var(--colorRevealText1) 40%,
-    var(--colorRevealText2) 55%,
-    var(--colorRevealText2) 55%,
-    var(--colorRevealText3) 60%
+    var(--hhtheme-colorRevealText0) 40%,
+    var(--hhtheme-colorRevealText1) 40%,
+    var(--hhtheme-colorRevealText2) 55%,
+    var(--hhtheme-colorRevealText2) 55%,
+    var(--hhtheme-colorRevealText3) 60%
   );
   background-size: 2em 3em;
   z-index: calc(var(--char-total) - var(--char-index));
