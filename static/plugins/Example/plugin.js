@@ -11,6 +11,7 @@
 export default class Plugin_Example {
   name = 'Example Plugin';
   bus;
+  priority = 30;
 
   /**
    * @param {EnhancedEventEmitter} bus

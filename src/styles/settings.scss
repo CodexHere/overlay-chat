@@ -9,6 +9,25 @@
     flex-direction: column;
   }
 
+  [data-input-type='password'] {
+    .password-wrapper {
+      display: flex;
+
+      input {
+        flex: 1;
+      }
+
+      button {
+        width: auto;
+        background-color: transparent;
+        border: none;
+        right: 1rem;
+        display: inline-block;
+        position: absolute;
+      }
+    }
+  }
+
   [data-input-type='radio-option'],
   [data-input-type='switch'],
   [data-input-type='checkbox'] {

@@ -60,7 +60,7 @@ export type RendererInstanceOptions<OS extends OverlaySettings, CS extends objec
 
 export type RendererInstance<CS extends object> = {
   init(): Promise<void>;
-  middleware?(): Promise<CS> | CS;
+  middleware?(ctx: CS): Promise<CS> | CS;
 };
 
 export type RendererConstructor<OS extends OverlaySettings, CS extends object> = {

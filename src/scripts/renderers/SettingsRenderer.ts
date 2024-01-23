@@ -25,6 +25,8 @@ export class SettingsRenderer<OS extends OverlaySettings, CS extends object> imp
       }
     });
 
+    this.bindFormEvents();
+
     this.generateUrl();
   }
 
@@ -42,17 +44,43 @@ export class SettingsRenderer<OS extends OverlaySettings, CS extends object> imp
 
     // Establish #elements now that the Settings Form has been injected into DOM
     const form = (elems['form'] = root.querySelector('form')!);
-    const btnLoadOverlay = (elems['button-load-overlay'] = root.querySelector('.link-results .button-load-overlay')!);
     elems['link-results'] = root.querySelector('.link-results textarea')!;
     elems['first-details'] = root.querySelector('details')!;
 
     Forms.Populate(form, this.options.settingsManager.settings!);
 
-    form.addEventListener('input', debounce(this.onSettingsChanged, 500));
-    btnLoadOverlay.addEventListener('click', this.onClickLoadOverlay);
-
     elems['first-details']?.setAttribute('open', '');
   }
+
+  private bindFormEvents() {
+    const elems = this.options.renderOptions.elements!;
+    const root = elems['root'];
+    const form = (elems['form'] = root.querySelector('form')!);
+    const btnLoadOverlay = (elems['button-load-overlay'] = root.querySelector('.link-results .button-load-overlay')!);
+
+    form.addEventListener('input', debounce(this.onSettingsChanged, 500));
+    form.addEventListener('click', this.onFormClicked);
+    btnLoadOverlay.addEventListener('click', this.onClickLoadOverlay);
+  }
+
+  private onFormClicked = (event: MouseEvent) => {
+    if (false === event.target instanceof HTMLButtonElement) {
+      return;
+    }
+
+    const btn = event.target;
+
+    if (false === btn.name.startsWith('password-view')) {
+      return;
+    }
+
+    const name = btn.name.replace('password-view-', '');
+    const input = btn.closest('div.password-wrapper')?.querySelector(`input[name=${name}]`) as HTMLInputElement;
+
+    if (input) {
+      input.type = 'text' === input.type ? 'password' : 'text';
+    }
+  };
 
   private onSettingsChanged = async (event: Event) => {
     const target = event.target! as HTMLInputElement;

@@ -19,12 +19,12 @@
           {
             "name": "tokenStreamer",
             "label": "Chat Token (Streamer)",
-            "inputType": "text"
+            "inputType": "password"
           },
           {
             "name": "tokenBot",
             "label": "Chat Token (Bot)",
-            "inputType": "text"
+            "inputType": "password"
           }
         ]
       },

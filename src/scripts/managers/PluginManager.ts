@@ -85,11 +85,12 @@ export class PluginManager<OS extends OverlaySettings, CS extends Object> {
       return -1;
     }
 
-    return (
-      b.priority < a.priority ? -1
-      : b.priority > a.priority ? 1
-      : 0
-    );
+    const sortval =
+      b.priority < a.priority ? 1
+      : b.priority > a.priority ? -1
+      : 0;
+
+    return sortval;
   }
 
   private async importModules(pluginBaseUrls: string[]) {

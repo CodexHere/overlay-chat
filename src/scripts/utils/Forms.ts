@@ -9,8 +9,14 @@ type FormEntryBase = {
   isRequired?: boolean;
 };
 
+export type FormEntryButton = {
+  inputType: 'button';
+  name: string;
+  label: string;
+};
+
 export type FormEntryInput = FormEntryBase & {
-  inputType: 'text' | 'number' | 'checkbox' | 'switch' | 'radio-option' | 'color';
+  inputType: 'text' | 'password' | 'number' | 'checkbox' | 'switch' | 'radio-option' | 'color';
 };
 
 export type FormEntryFieldGroup = FormEntryBase & {
@@ -24,7 +30,7 @@ export type FormEntrySelection = FormEntryBase & {
   values: string[];
 };
 
-export type FormEntry = FormEntrySelection | FormEntryInput | FormEntryFieldGroup;
+export type FormEntry = FormEntryButton | FormEntrySelection | FormEntryInput | FormEntryFieldGroup;
 
 export const BOOLEAN_TRUES = ['true', 'yes', 't', 'y', 'on', 'enable', 'enabled'];
 
@@ -35,10 +41,12 @@ export const FromJson = (entries: Readonly<FormEntry[]>) => {
 
   entries.forEach(entry => {
     let input = '';
+
+    const isButton = 'button' !== entry.inputType;
     const chosenLabel = entry.label ?? entry.name;
-    const defaultData = entry.defaultValue ?? '';
-    const required = entry.isRequired ? 'required' : '';
-    const tooltip = entry.tooltip ? `title="${entry.tooltip}"` : '';
+    const defaultData = (isButton && entry.defaultValue) ?? '';
+    const required = isButton && entry.isRequired ? 'required' : '';
+    const tooltip = isButton && entry.tooltip ? `title="${entry.tooltip}"` : '';
     const id = `${entry.name}-${labelId++}`; // unique ID for labels
 
     let inputType = '';
@@ -53,6 +61,12 @@ export const FromJson = (entries: Readonly<FormEntry[]>) => {
             </div>
           </details>
           `;
+        break;
+
+      case 'button':
+        input += `
+        <button id="${id}" name="${entry.name}">${chosenLabel}</button>
+        `;
         break;
 
       case 'radio-option':
@@ -75,9 +89,9 @@ export const FromJson = (entries: Readonly<FormEntry[]>) => {
       case 'checkbox-multiple':
       case 'switch-multiple':
         inputType =
-          'radio' === entry.inputType
-            ? 'radio-option'
-            : (entry.inputType.replace('-multiple', '') as FormEntry['inputType']);
+          'radio' === entry.inputType ?
+            'radio-option'
+          : (entry.inputType.replace('-multiple', '') as FormEntry['inputType']);
 
         input += '<div class="input-group">';
 
@@ -97,7 +111,9 @@ export const FromJson = (entries: Readonly<FormEntry[]>) => {
       case 'color':
       case 'number':
       case 'text':
+      case 'password':
         input += `
+          <div class='password-wrapper'>
             <input
               type="${entry.inputType}"
               value="${defaultData}"
@@ -105,7 +121,21 @@ export const FromJson = (entries: Readonly<FormEntry[]>) => {
               name="${entry.name}"
               placeholder="${chosenLabel}"
               ${required}
-            >`;
+            >
+        `;
+
+        if ('password' === entry.inputType) {
+          input += FromJson([
+            {
+              inputType: 'button',
+              label: '👁',
+              name: `password-view-${entry.name}`
+            }
+          ]);
+        }
+
+        input += '</div>';
+
         break;
 
       case 'select':
@@ -136,6 +166,7 @@ export const FromJson = (entries: Readonly<FormEntry[]>) => {
     }
 
     switch (entry.inputType) {
+      case 'button':
       case 'fieldgroup':
         // noop
         break;

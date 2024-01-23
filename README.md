@@ -2,10 +2,6 @@
 
 ## TODO
 
-* Utils::Form needs to support passwords
-  * Should have toggle eye to see password
-	* https://www.w3schools.com/howto/howto_js_toggle_password.asp
-	* Single handler for all buttons, which then finds `closest()` to target `input[name="${entry.name}"]`:
 * Create `middleware()` functions for Plugins
   * https://github.com/Digibear-io/middleware
   * Core app registers itself as first middleware to kick off pipeline
