@@ -1,21 +1,39 @@
-import PluginManager from './managers/PluginManager.js';
-import SettingsManager from './managers/SettingsManager.js';
+import { PluginManager } from './managers/PluginManager.js';
+import { SettingsManager } from './managers/SettingsManager.js';
+import { EnhancedEventEmitter } from './utils/EnhancedEventEmitter.js';
+import { FormEntryFieldGroup } from './utils/Forms.js';
 
-// Bootstrapping
+// Managers
+
+export type SettingsInjector = (fieldGroup: FormEntryFieldGroup) => void;
+export type SettingsValidator<OS extends OverlaySettings> = (settings: OS) => boolean;
+
+export type PluginImports<CS extends Object> = {
+  good: OverlayPluginInstance<CS>[];
+  bad: Error[];
+};
 
 export type ErrorManager = {
   showError(err: Error): void;
 };
 
-export type ConstructorOptions = {
-  settingsRenderer?: RendererConstructor;
-  overlayRenderer?: RendererConstructor;
-  settingsManager: typeof SettingsManager;
+export type SettingsManagerOptions<OS extends OverlaySettings> = {
+  settingsValidator: SettingsValidator<OS>;
+  locationHref: string;
 };
 
-export type BootstrapOptions = {
+export type PluginManagerOptions<OS extends OverlaySettings> = {
+  settingsManager: SettingsManager<OS>;
   renderOptions: RenderOptions;
-  constructorOptions: ConstructorOptions;
+};
+
+// Bootstrapping
+
+export type BootstrapOptions<OS extends OverlaySettings> = {
+  renderOptions: RenderOptions;
+  needsSettingsRenderer: boolean;
+  needsOverlayRenderer: boolean;
+  settingsValidator: SettingsValidator<OS>;
 };
 
 // Overlay Instance
@@ -28,40 +46,40 @@ export type OverlaySettings = {
 
 // Renderers
 
-export type Managers = {
-  settingsManager: SettingsManager;
-  pluginManager?: PluginManager;
-  errorManager: ErrorManager;
-};
-
 export type RenderOptions = {
   elements?: Record<string, HTMLElement>;
   templates?: Record<string, HandlebarsTemplateDelegate<any>>;
 };
 
-export type RendererInstance = {
-  init(): Promise<any> | any;
-  middleware?(): Promise<any> | any;
+export type RendererInstanceOptions<OS extends OverlaySettings, CS extends object> = {
+  pluginManager: PluginManager<OS, CS>;
+  settingsManager: SettingsManager<OS>;
+  errorManager: ErrorManager;
+  renderOptions: RenderOptions;
 };
 
-export type RendererConstructor = {
-  new (managers: Managers, renderOptions: RenderOptions): RendererInstance;
+export type RendererInstance<CS extends object> = {
+  init(): Promise<void>;
+  middleware?(): Promise<CS> | CS;
+};
+
+export type RendererConstructor<OS extends OverlaySettings, CS extends object> = {
+  new (options: RendererInstanceOptions<OS, CS>): RendererInstance<CS>;
 };
 
 // Plugins
 
-export type OverlayPluginInstance = {
+export type OverlayPluginInstance<CS extends object> = {
   name: string;
-  managers: Managers;
-  renderOptions: RenderOptions;
+  bus: EnhancedEventEmitter;
   priority?: number;
-  unregister?(): void;
-  loadSettingsSchema?(): void;
-  renderSettings?(): void;
-  renderOverlay?(): void;
-  middleware?(): Promise<any> | any;
+  unregister?(renderOptions: RenderOptions): void;
+  injectSettingsSchema?(injector: SettingsInjector): void;
+  renderSettings?(renderOptions: RenderOptions): void;
+  renderOverlay?(renderOptions: RenderOptions): void;
+  middleware?(ctx: CS): Promise<CS> | CS;
 };
 
-export type OverlayPluginConstructor = {
-  new (managers: Managers, renderOptions: RenderOptions): OverlayPluginInstance;
+export type OverlayPluginConstructor<CS extends object> = {
+  new (bus: EnhancedEventEmitter): OverlayPluginInstance<CS>;
 };

@@ -1,4 +1,4 @@
-import { Managers, RenderOptions, RendererInstance } from '../types.js';
+import { OverlaySettings, RendererInstance, RendererInstanceOptions } from '../types.js';
 import * as Forms from '../utils/Forms.js';
 import { RenderTemplate } from '../utils/Templating.js';
 import * as URI from '../utils/URI.js';
@@ -6,28 +6,38 @@ import { debounce } from '../utils/misc.js';
 
 const shouldReloadPlugins = ['plugins', 'customPlugins'];
 
-export default class SettingsRenderer implements RendererInstance {
-  constructor(private managers: Managers, private renderOptions: RenderOptions) {}
+export class SettingsRenderer<OS extends OverlaySettings, CS extends object> implements RendererInstance<CS> {
+  constructor(private options: RendererInstanceOptions<OS, CS>) {}
 
-  init() {
+  async init() {
     this.renderSettings();
 
     // Iterate over every loaded plugin, and call `renderSettings` to manipulate the Settings view
-    this.managers.pluginManager?.plugins?.forEach(plugin => plugin.renderSettings?.());
+    this.options.pluginManager.plugins.forEach(plugin => {
+      try {
+        plugin.renderSettings?.(this.options.renderOptions);
+      } catch (err) {
+        if (err instanceof Error) {
+          throw new Error(
+            `Failed hook into \`renderSettings\` for Plugin: ${plugin.name}<br /><br /><pre>${err.stack}</pre>`
+          );
+        }
+      }
+    });
 
     this.generateUrl();
   }
 
   private renderSettings() {
-    const elems = this.renderOptions.elements!;
-    const templs = this.renderOptions.templates!;
+    const elems = this.options.renderOptions.elements!;
+    const templs = this.options.renderOptions.templates!;
 
     // Ensure no elements in the Root so we can display settings
     const root = elems['root'];
     root.innerHTML = '';
 
     RenderTemplate(root, templs['settings'], {
-      formElements: Forms.FromJson(this.managers.settingsManager.settingsSchema)
+      formElements: Forms.FromJson(this.options.settingsManager.settingsSchema)
     });
 
     // Establish #elements now that the Settings Form has been injected into DOM
@@ -36,7 +46,7 @@ export default class SettingsRenderer implements RendererInstance {
     elems['link-results'] = root.querySelector('.link-results textarea')!;
     elems['first-details'] = root.querySelector('details')!;
 
-    Forms.Populate(form, this.managers.settingsManager.settings!);
+    Forms.Populate(form, this.options.settingsManager.settings!);
 
     form.addEventListener('input', debounce(this.onSettingsChanged, 500));
     btnLoadOverlay.addEventListener('click', this.onClickLoadOverlay);
@@ -49,16 +59,16 @@ export default class SettingsRenderer implements RendererInstance {
     const form = target.form!;
 
     const formData = Forms.GetData(form);
-    this.managers.settingsManager.settings = formData;
+    this.options.settingsManager.settings = formData;
 
     if (shouldReloadPlugins.includes(target.name)) {
-      this.managers.settingsManager.resetSettingsSchema();
+      this.options.settingsManager.resetSettingsSchema();
 
       try {
-        await this.managers.pluginManager?.loadPlugins();
+        await this.options.pluginManager.loadPlugins();
         this.init();
       } catch (err) {
-        this.managers.errorManager.showError(err as Error);
+        this.options.errorManager.showError(err as Error);
       }
     } else {
       form.reportValidity();
@@ -68,18 +78,18 @@ export default class SettingsRenderer implements RendererInstance {
   };
 
   private generateUrl() {
-    const elems = this.renderOptions.elements!;
+    const elems = this.options.renderOptions.elements!;
     const linkResults: HTMLInputElement = elems['link-results'] as HTMLInputElement;
     const linkButton: HTMLInputElement = elems['button-load-overlay'] as HTMLInputElement;
 
     const baseUrl = URI.BaseUrl();
-    const queryString = URI.JsonToQueryString(this.managers.settingsManager.settings);
+    const queryString = URI.JsonToQueryString(this.options.settingsManager.settings);
     linkResults.value = queryString ? `${baseUrl}?${queryString}`.replace(/\?+$/, '') : '';
     linkButton.disabled = !(elems['form'] as HTMLFormElement).checkValidity();
   }
 
   private onClickLoadOverlay = (_event: Event) => {
-    const linkResults: HTMLInputElement = this.renderOptions.elements!['link-results'] as HTMLInputElement;
+    const linkResults: HTMLInputElement = this.options.renderOptions.elements!['link-results'] as HTMLInputElement;
     window.location.href = linkResults.value;
   };
 }

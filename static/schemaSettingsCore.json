@@ -5,11 +5,43 @@
     "tooltip": "These are settings that generally apply to the entire Overlay.",
     "values": [
       {
-        "name": "channelName",
-        "label": "Channel Name",
-        "inputType": "text",
-        "isRequired": true,
-        "tooltip": "This is the channel you want to display in the overlay!"
+        "name": "channelSettings",
+        "label": "Channel Settings",
+        "inputType": "fieldgroup",
+        "values": [
+          {
+            "name": "channelName",
+            "label": "Channel Name",
+            "inputType": "text",
+            "isRequired": true,
+            "tooltip": "This is the channel you want to display in the overlay!"
+          },
+          {
+            "name": "tokenStreamer",
+            "label": "Chat Token (Streamer)",
+            "inputType": "text"
+          },
+          {
+            "name": "tokenBot",
+            "label": "Chat Token (Bot)",
+            "inputType": "text"
+          }
+        ]
+      },
+
+      {
+        "name": "fontSettings",
+        "label": "Font Settings",
+        "inputType": "fieldgroup",
+        "values": [
+          { "name": "fontSize", "label": "Font Size", "inputType": "number", "defaultValue": 16, "isRequired": true },
+          {
+            "name": "colorText",
+            "label": "Text Color",
+            "inputType": "color",
+            "defaultValue": "#FFFFFF"
+          }
+        ]
       },
 
       {
@@ -21,7 +53,7 @@
             "name": "plugins",
             "label": "Built-In Plugins",
             "inputType": "switch-multiple",
-            "values": ["Default", "HangoutHere"]
+            "values": ["Example", "HangoutHere"]
           },
           {
             "name": "customPlugins",
@@ -30,23 +62,7 @@
             "tooltip": "Enter a full URL to a Plugin path of a folder that has both 'plugin.js' and 'plugin.css'.&#10;If this is supplied, the Plugins selection will be ignored.&#10;&#10;Example: https://mywebsite.com/pluginFolder/"
           }
         ]
-      },
-
-      {
-        "name": "baseColors",
-        "label": "Base Colors",
-        "inputType": "fieldgroup",
-        "values": [
-          {
-            "name": "colorText",
-            "label": "Text Color",
-            "inputType": "color",
-            "defaultValue": "#FFFFFF"
-          }
-        ]
-      },
-
-      { "name": "fontSize", "label": "Font Size", "inputType": "number", "defaultValue": 16, "isRequired": true }
+      }
     ]
   }
 ]

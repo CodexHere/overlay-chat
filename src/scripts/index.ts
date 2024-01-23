@@ -1,13 +1,21 @@
-import OverlayBootstrapper from './OverlayBootstrapper.js';
-import { SettingsManager_Chat } from './SettingsManager_Chat.js';
+import { OverlayBootstrapper } from './OverlayBootstrapper.js';
 import * as Managers from './managers/index.js';
-import SettingsRenderer from './renderers/SettingsRenderer.js';
 import * as Renderers from './renderers/index.js';
+import { OverlaySettings } from './types.js';
 import * as Utils from './utils/index.js';
+
+// Lib Exports
+export { Managers, Renderers, Utils };
+
+type OverlaySettings_Chat = OverlaySettings & {
+  fontSize: number;
+};
+
+type MiddewareContext_Chat = {};
 
 // Start the overlay once DOM has loaded
 document.addEventListener('DOMContentLoaded', () => {
-  const bootstrapper = new OverlayBootstrapper({
+  const bootstrapper = new OverlayBootstrapper<OverlaySettings_Chat, MiddewareContext_Chat>({
     renderOptions: {
       elements: {
         root: document.getElementById('root')!,
@@ -20,14 +28,12 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     },
 
-    constructorOptions: {
-      overlayRenderer: Renderers.OverlayRenderer_Chat,
-      settingsManager: SettingsManager_Chat,
-      settingsRenderer: SettingsRenderer
+    needsOverlayRenderer: true,
+    needsSettingsRenderer: true,
+    settingsValidator: settings => {
+      return !!settings.channelName && !!settings.fontSize;
     }
   });
 
   bootstrapper.init();
 });
-
-export { Managers, Renderers, Utils };

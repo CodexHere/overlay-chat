@@ -1,63 +1,67 @@
-import PluginManager from './managers/PluginManager.js';
-import SettingsManager from './managers/SettingsManager.js';
-import { BootstrapOptions, ErrorManager, RendererConstructor } from './types.js';
+import { PluginManager } from './managers/PluginManager.js';
+import { SettingsManager } from './managers/SettingsManager.js';
+import { OverlayRenderer } from './renderers/OverlayRenderer.js';
+import { SettingsRenderer } from './renderers/SettingsRenderer.js';
+import { BootstrapOptions, ErrorManager, OverlaySettings, RendererConstructor, RendererInstance } from './types.js';
 
-export default class OverlayBootstrapper implements ErrorManager {
-  public settingsManager: SettingsManager;
-  public pluginManager: PluginManager;
+export class OverlayBootstrapper<OS extends OverlaySettings, CS extends Object> implements ErrorManager {
+  settingsManager: SettingsManager<OS>;
+  pluginManager: PluginManager<OS, CS>;
 
-  private _initialized: boolean = false;
+  constructor(public bootstrapOptions: BootstrapOptions<OS>) {
+    this.settingsManager = new SettingsManager<OS>({
+      locationHref: globalThis.location.href,
+      settingsValidator: bootstrapOptions.settingsValidator
+    });
 
-  constructor(public bootstrapOptions: BootstrapOptions) {
-    this.settingsManager = new bootstrapOptions.constructorOptions.settingsManager(globalThis.location.href);
-    this.pluginManager = new PluginManager(
-      {
-        settingsManager: this.settingsManager,
-        errorManager: this
-      },
-      bootstrapOptions.renderOptions
-    );
+    this.pluginManager = new PluginManager({
+      settingsManager: this.settingsManager,
+      renderOptions: bootstrapOptions.renderOptions
+    });
   }
 
   async init() {
-    const ctors = this.bootstrapOptions.constructorOptions;
+    const { needsSettingsRenderer, needsOverlayRenderer } = this.bootstrapOptions;
+    let hasError: Error | undefined;
 
     try {
-      // Don't allow multiple initializations.
-      // Generally this shouldnt happen, but since this is a public method, a plugin technically could
-      //  call this method and wreak all kinds of havoc!
-      if (this._initialized) {
-        throw new Error('Bootstrapper is already initialized');
-      }
-
-      let rendererClass: RendererConstructor | undefined;
-
       await this.settingsManager.init();
       await this.pluginManager.init();
-
-      // Unconfigured, and has SettingsRenderer specified
-      if (false === this.settingsManager?.isConfigured && ctors.settingsRenderer) {
-        rendererClass = ctors.settingsRenderer;
-      } else if (ctors.overlayRenderer) {
-        // Configured, and has OverlayRenderer specified
-        rendererClass = ctors.overlayRenderer;
-      }
-
-      // Any Renderer selected and existing, init to perform Render
-      if (rendererClass) {
-        new rendererClass(
-          {
-            pluginManager: this.pluginManager,
-            settingsManager: this.settingsManager,
-            errorManager: this
-          },
-          this.bootstrapOptions.renderOptions
-        ).init();
-      }
-
-      this._initialized = true;
     } catch (err) {
-      this.showError(err as Error);
+      hasError = err as Error;
+    }
+
+    // Determine if `SettingsManager` is configured by way of `SettingsValidator`
+    const isConfigured = this.settingsManager?.isConfigured || false;
+    // Wants a `SettingsRenderer`, and `SettingsManager::isConfigured()` returns `false`
+    const shouldRenderSettings = false === isConfigured && needsSettingsRenderer;
+    // Wants an `OverlayRenderer`, and `SettingsManager::isConfigured()` returns `true`
+    const shouldRenderOverlay = true === isConfigured && needsOverlayRenderer;
+
+    // Select which Renderer to load...
+    let rendererClass: RendererConstructor<OS, CS> | undefined =
+      shouldRenderSettings ? SettingsRenderer
+      : shouldRenderOverlay ? OverlayRenderer
+      : undefined;
+
+    // Any Renderer selected and existing, init to perform Render
+    if (rendererClass) {
+      const renderer: RendererInstance<CS> = new rendererClass({
+        renderOptions: this.bootstrapOptions.renderOptions,
+        pluginManager: this.pluginManager,
+        settingsManager: this.settingsManager,
+        errorManager: this
+      });
+
+      try {
+        await renderer.init();
+      } catch (err) {
+        hasError = err as Error;
+      }
+    }
+
+    if (hasError) {
+      this.showError(hasError);
     }
   }
 
@@ -65,6 +69,8 @@ export default class OverlayBootstrapper implements ErrorManager {
     const root = this.bootstrapOptions.renderOptions.elements!['root']!;
 
     console.error(err);
+
+    root.querySelector('dialog')?.remove();
 
     // TODO: Should be converted to a template!
 
@@ -74,7 +80,6 @@ export default class OverlayBootstrapper implements ErrorManager {
         <dialog open>
         <article>
           <header>
-            <a href="#close" aria-label="Close" class="close"></a>
             There was an Error
           </header>
           <p>${err.message}</p>

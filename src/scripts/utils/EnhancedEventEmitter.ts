@@ -1,6 +1,6 @@
 import { EventEmitter, Listener } from 'events';
 
-export default class EnhancedEventEmitter extends EventEmitter {
+export class EnhancedEventEmitter extends EventEmitter {
   _storeListenersMap: Record<string, [Listener, Listener][]> = {};
   _storeValuesMap: Record<string, [Listener, any][]> = {};
 
@@ -56,7 +56,7 @@ export default class EnhancedEventEmitter extends EventEmitter {
 
     this.emit(type, args);
 
-    const values = this._storeValuesMap[type].map(entry => entry[1]);
+    const values = this._storeValuesMap[type].map(entry => entry[1]) as T[];
 
     // Prevent memory leaks by removing the listener from the value mapping
     // This should GC values that are complex object types, if applicable
@@ -64,7 +64,7 @@ export default class EnhancedEventEmitter extends EventEmitter {
       this._storeValuesMap[type] = [];
     }, 0);
 
-    return values as T[];
+    return values;
   };
 
   override removeAllListeners(type: string | number): this {

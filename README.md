@@ -2,6 +2,10 @@
 
 ## TODO
 
+* Utils::Form needs to support passwords
+  * Should have toggle eye to see password
+	* https://www.w3schools.com/howto/howto_js_toggle_password.asp
+	* Single handler for all buttons, which then finds `closest()` to target `input[name="${entry.name}"]`:
 * Create `middleware()` functions for Plugins
   * https://github.com/Digibear-io/middleware
   * Core app registers itself as first middleware to kick off pipeline
@@ -32,7 +36,6 @@
 * Build a dropdown to jump to a plugins' settings
   * Plugin will need more contextual data:
     * Name
-    * Priority for load order. This could be dangerous depending on the author of the plugin, as it can mess up priority order for loading, and thus cause issues.
 * Convert to use `hh-util`
   * `hh-util` needs proper publishing
 
@@ -65,6 +68,8 @@
 
 ### Ideas
 
+* Chat Core
+* OBS WS Core
 * Chat Animations
   * https://www.minimamente.com/project/magic/
   * https://animate.style/

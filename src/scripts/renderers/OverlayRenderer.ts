@@ -1,7 +1,7 @@
 import Splitting from 'splitting';
 import { loadAssets, replaceEmotes } from 'tmi-emote-parse';
 import tmiJs from 'tmi.js';
-import { Managers, RenderOptions, RendererInstance } from '../types.js';
+import { OverlaySettings, RendererInstance, RendererInstanceOptions } from '../types.js';
 import { RenderTemplate } from '../utils/Templating.js';
 import { GetColorForUsername } from '../utils/misc.js';
 
@@ -12,17 +12,28 @@ type MessagePayload = {
   message: string;
 };
 
-export default class OverlayRenderer implements RendererInstance {
-  constructor(private managers: Managers, private renderOptions: RenderOptions) {}
+export class OverlayRenderer<OS extends OverlaySettings, CS extends object> implements RendererInstance<CS> {
+  constructor(private options: RendererInstanceOptions<OS, CS>) {}
 
   async init() {
     await this.initChatListen();
     // Iterate over every loaded plugin, and call `renderOverlay` to manipulate the Overlay view
-    this.managers.pluginManager?.plugins?.forEach(plugin => plugin.renderOverlay?.());
+
+    this.options.pluginManager.plugins.forEach(plugin => {
+      try {
+        plugin.renderOverlay?.(this.options.renderOptions);
+      } catch (err) {
+        if (err instanceof Error) {
+          throw new Error(
+            `Failed hook into \`renderOverlay\` for Plugin: ${plugin.name}<br /><br /><pre>${err.stack}</pre>`
+          );
+        }
+      }
+    });
   }
 
   async initChatListen() {
-    const channelName = this.managers.settingsManager.settings.channelName;
+    const channelName = this.options.settingsManager.settings.channelName;
 
     if (!channelName) {
       return;
@@ -62,19 +73,22 @@ export default class OverlayRenderer implements RendererInstance {
   };
 
   renderMessage(data: MessagePayload) {
-    RenderTemplate(this.renderOptions.elements!['container'], this.renderOptions.templates!['chat-message'], data);
+    RenderTemplate(
+      this.options.renderOptions.elements!['container'],
+      this.options.renderOptions.templates!['chat-message'],
+      data
+    );
 
     Splitting({ target: `[data-message-id="${data.messageId}"]` });
   }
 
   removeOutOfBoundsMessages() {
-    const container = this.renderOptions.elements!['container'];
+    const container = this.options.renderOptions.elements!['container'];
 
     if (!container) {
       return;
     }
 
-    /** @type {Element[]} */
     const children = [...container.querySelectorAll('.chat-message:not(.removing)')];
 
     for (let childIdx = 0; childIdx < children.length; childIdx++) {
@@ -102,5 +116,3 @@ export default class OverlayRenderer implements RendererInstance {
     }
   }
 }
-
-export class OverlayRenderer_Chat extends OverlayRenderer {}

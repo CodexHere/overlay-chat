@@ -30,7 +30,9 @@ details {
       left: 0;
       margin: -0.5rem -0.5rem 0 0.5rem;
       transform-origin: center center;
-      transition: transform 0.25s, left 0.25s;
+      transition:
+        transform 0.25s,
+        left 0.25s;
     }
 
     &::after {
@@ -73,6 +75,7 @@ details {
 
     & > details {
       margin-left: calc(var(--spacing) * 2);
+      margin-top: var(--spacing);
     }
   }
 }

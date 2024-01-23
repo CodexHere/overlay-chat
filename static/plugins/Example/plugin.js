@@ -8,8 +8,8 @@
  *
  * @implements {OverlayPluginInstance}
  */
-export default class Plugin_HangoutHereTheme {
-  name = 'Hangout Here Theme';
+export default class Plugin_Example {
+  name = 'Example Plugin';
   bus;
 
   /**
@@ -49,21 +49,20 @@ export default class Plugin_HangoutHereTheme {
       name: this.name.toLocaleLowerCase().replaceAll(' ', '_'),
       values: [
         {
-          name: 'showBadges',
-          label: 'Show Badges',
-          inputType: 'switch',
-          tooltip: 'Toggles whether to show leading Badges (i.e., Mod, VIP, etc)'
-        },
-
-        { name: 'colorLeading', label: 'Leading Color', inputType: 'color', defaultValue: '#FFFFFF' },
-        { name: 'colorMod', label: 'Mod Color', inputType: 'color', defaultValue: '#00FF00' },
-        { name: 'colorVip', label: 'VIP Color', inputType: 'color', defaultValue: '#FF00FF' }
+          name: 'exampleSettings',
+          label: 'Example Plugin',
+          inputType: 'text'
+        }
       ]
     });
   }
 
   renderSettings() {
     console.log(`${this.name} [renderSettings]`);
+
+    this.bus.emit('test', ['Some Test Value'], { foo: true, bar: false });
+    const val = this.bus.call('test', ['Some Test Value'], { foo: true, bar: false });
+    console.log('Event Output:', val);
   }
 
   renderOverlay() {
