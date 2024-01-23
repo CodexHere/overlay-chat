@@ -1,7 +1,8 @@
 import { OverlayBootstrapper } from './OverlayBootstrapper.js';
 import * as Managers from './managers/index.js';
 import * as Renderers from './renderers/index.js';
-import { OverlaySettings } from './types.js';
+import { OverlayPluginInstance, OverlaySettings } from './types.js';
+import { EnhancedEventEmitter } from './utils/EnhancedEventEmitter.js';
 import * as Utils from './utils/index.js';
 
 // Lib Exports
@@ -32,6 +33,13 @@ document.addEventListener('DOMContentLoaded', () => {
     needsSettingsRenderer: true,
     settingsValidator: settings => {
       return !!settings.channelName && !!settings.fontSize;
+    },
+
+    defaultPlugin: class CorePlugin implements OverlayPluginInstance<MiddewareContext_Chat> {
+      name = 'Core Plugin';
+      constructor(public bus: EnhancedEventEmitter) {}
+
+      
     }
   });
 

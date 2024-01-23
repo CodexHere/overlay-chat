@@ -111,8 +111,8 @@ export class SettingsRenderer<OS extends OverlaySettings, CS extends object> imp
     const linkButton: HTMLInputElement = elems['button-load-overlay'] as HTMLInputElement;
 
     const baseUrl = URI.BaseUrl();
-    const queryString = URI.JsonToQueryString(this.options.settingsManager.settings);
-    linkResults.value = queryString ? `${baseUrl}?${queryString}`.replace(/\?+$/, '') : '';
+    const querystring = URI.JsonToQuerystring(this.options.settingsManager.settings);
+    linkResults.value = querystring ? `${baseUrl}?${querystring}`.replace(/\?+$/, '') : '';
     linkButton.disabled = !(elems['form'] as HTMLFormElement).checkValidity();
   }
 

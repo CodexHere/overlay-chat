@@ -48,6 +48,7 @@
         - Overlay
       - Elements - These are the DOM elements to be injected to Renderers for manipulation
       - Templates - These are `<template>` tags to be injected into Renderers to render
+      - Default Plugin - This is the "Core" plugin that loads first in `Priority`
   - `SettingsManager` initialized
     - Load Settings from URI
     - Load Core Settings Schema

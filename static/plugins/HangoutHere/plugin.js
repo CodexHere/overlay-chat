@@ -10,7 +10,7 @@
  */
 export default class Plugin_HangoutHereTheme {
   name = 'Hangout Here Theme';
-  priority = -1;
+  priority = 99;
   bus;
 
   /**

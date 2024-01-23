@@ -33,7 +33,7 @@ export const QueryStringToJson = <SettingsType, SettingsKey extends keyof Settin
   return options;
 };
 
-export const JsonToQueryString = (json: any) =>
+export const JsonToQuerystring = (json: any) =>
   Object.keys(json)
     .reduce<string[]>((kvp, key) => {
       const values = Array.isArray(json[key]) ? (json[key] as []) : [json[key]];

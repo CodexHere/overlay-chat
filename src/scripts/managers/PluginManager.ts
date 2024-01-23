@@ -1,3 +1,4 @@
+import { Pipe, pipeline } from '@digibear/middleware';
 import {
   OverlayPluginConstructor,
   OverlayPluginInstance,
@@ -9,12 +10,17 @@ import { EnhancedEventEmitter } from '../utils/EnhancedEventEmitter.js';
 import { BOOLEAN_TRUES } from '../utils/Forms.js';
 import * as URI from '../utils/URI.js';
 
-export class PluginManager<OS extends OverlaySettings, CS extends Object> {
-  bus: EnhancedEventEmitter;
-  plugins: OverlayPluginInstance<CS>[] = [];
+type PluginLoaders<CS extends object> = Array<string | OverlayPluginConstructor<CS>>;
+type PluginInstances<CS extends object> = OverlayPluginInstance<CS>[];
 
-  constructor(private options: PluginManagerOptions<OS>) {
+export class PluginManager<OS extends OverlaySettings, CS extends object> {
+  bus: EnhancedEventEmitter;
+  plugins: PluginInstances<CS> = [];
+  pipeline: Pipe<CS>;
+
+  constructor(private options: PluginManagerOptions<OS, CS>) {
     this.bus = new EnhancedEventEmitter();
+    this.pipeline = pipeline<CS>();
   }
 
   private getPluginPath = (pluginName: string) => {
@@ -50,26 +56,36 @@ export class PluginManager<OS extends OverlaySettings, CS extends Object> {
     await this.loadPlugins();
   }
 
-  async loadPlugins() {
-    // Unregister existing plugins before loading new ones
-    this.plugins.forEach(plugin => plugin.unregister?.(this.options.renderOptions));
+  unregisterPlugins() {
+    const numPlugins = this.plugins.length;
 
-    const pluginBaseUrls = this.pluginBaseUrls();
-    const imports = await this.importModules(pluginBaseUrls);
+    // Unregister existing plugins, and remove from list
+    for (let idx = numPlugins - 1; idx >= 0; idx--) {
+      const plugin = this.plugins[idx];
+      plugin.unregister?.(this.options.renderOptions);
+      this.plugins.splice(idx, 1);
+    }
+  }
+
+  async loadPlugins() {
+    // Unregister Plugins before loading any new ones
+    this.unregisterPlugins();
+
+    // Load all URLs for desired plugins
+    const pluginLoaders: PluginLoaders<CS> = this.pluginBaseUrls() as PluginLoaders<CS>;
+    // Prepend Default plugin to instantiate/import
+    pluginLoaders.unshift(this.options.defaultPlugin);
+    // Perform Imports/Intantiations
+    const imports = await this.importModules(pluginLoaders);
+    // Assign Plugins as the "Good" imports
+    imports.good.forEach(imported => this.plugins.push(imported));
 
     // Sort Plugins by Priority
     this.plugins.sort(this.sortPlugins);
+    // Load Settings for Plugins
+    this.loadPluginSettings(imports);
     // Load Style for Plugin
-    this.loadPluginStyles(pluginBaseUrls);
-
-    // Iterate over every loaded plugin, and call `loadSettings` to manipulate the Settings Schema
-    this.plugins.forEach(plugin => {
-      try {
-        plugin.injectSettingsSchema?.(this.options.settingsManager.addPluginSettings);
-      } catch (err) {
-        imports.bad.push(new Error(`Could not inject Settings Schema for Plugin: ${plugin.name}`));
-      }
-    });
+    this.loadPluginStyles(pluginLoaders);
 
     if (0 !== imports.bad.length) {
       throw new Error(imports.bad.join('<br /><br />'));
@@ -93,38 +109,56 @@ export class PluginManager<OS extends OverlaySettings, CS extends Object> {
     return sortval;
   }
 
-  private async importModules(pluginBaseUrls: string[]) {
-    const promises = pluginBaseUrls.map(async pluginUrl => await this.loadPluginInstance(pluginUrl));
+  private async importModules(pluginLoaders: PluginLoaders<CS>) {
+    const promises = pluginLoaders.map(async pluginUrl => await this.loadPluginInstance(pluginUrl));
 
-    const setteled = (await Promise.allSettled(promises))
-      // Filter bad results
-      .reduce(
-        (plugins, result) => {
-          if ('fulfilled' === result.status) {
-            if (result.value) {
-              plugins.good.push(result.value);
+    return (
+      (await Promise.allSettled(promises))
+        // Filter bad results
+        .reduce(
+          (plugins, result) => {
+            if ('fulfilled' === result.status) {
+              if (result.value) {
+                plugins.good.push(result.value);
+              }
+            } else {
+              plugins.bad.push(result.reason);
             }
-          } else {
-            plugins.bad.push(result.reason);
-          }
 
-          return plugins;
-        },
-        {
-          good: [],
-          bad: []
-        } as PluginImports<CS>
-      );
-
-    this.plugins = setteled.good;
-
-    return setteled;
+            return plugins;
+          },
+          {
+            good: [],
+            bad: []
+          } as PluginImports<CS>
+        )
+    );
   }
 
-  private async loadPluginInstance(pluginBaseUrl: string) {
+  private async loadPluginInstance(pluginLoadValue: string | OverlayPluginConstructor<CS>) {
     let pluginClass: OverlayPluginConstructor<CS> | undefined;
 
+    if (typeof pluginLoadValue === 'string') {
+      pluginClass = await this.importPlugin(pluginLoadValue as string);
+    } else {
+      pluginClass = pluginLoadValue as OverlayPluginConstructor<CS>;
+    }
+
+    // Instantiate Plugin
     try {
+      const pluginInstance: OverlayPluginInstance<CS> = new pluginClass!(this.bus);
+      return pluginInstance;
+    } catch (err) {
+      if (err instanceof Error) {
+        throw new Error(`Plugin could not be instantiated:<br />${pluginLoadValue}<br /><br /><pre>${err.stack}</pre>`);
+      }
+    }
+  }
+
+  private async importPlugin(pluginBaseUrl: string) {
+    try {
+      let pluginClass: OverlayPluginConstructor<CS> | undefined;
+
       // If a Custom Theme is supplied, we'll expect it to be a full URL, otherwise we'll formulate a URL.
       // This allows us to ensure vite will not attempt to package the plugin on our behalf, and will truly
       //   import from a remote file.
@@ -136,6 +170,8 @@ export class PluginManager<OS extends OverlaySettings, CS extends Object> {
           throw new Error('Missing `default` export in Plugin Module!');
         }
       }
+
+      return pluginClass;
     } catch (err) {
       if (err instanceof TypeError) {
         throw new Error(`Plugin does not exist at URL: ${pluginBaseUrl}`);
@@ -143,26 +179,34 @@ export class PluginManager<OS extends OverlaySettings, CS extends Object> {
         throw new Error(`Could not dynamically load Plugin:<br />${pluginBaseUrl}<br /><br />${err.message}`);
       }
     }
-
-    try {
-      const pluginInstance: OverlayPluginInstance<CS> = new pluginClass!(this.bus);
-      return pluginInstance;
-    } catch (err) {
-      if (err instanceof Error) {
-        throw new Error(`Plugin could not be instantiated:<br />${pluginBaseUrl}<br /><br /><pre>${err.stack}</pre>`);
-      }
-    }
   }
 
-  private loadPluginStyles(pluginBaseUrls: string[]) {
-    pluginBaseUrls.forEach(pluginBaseUrl => {
+  private loadPluginStyles(pluginLoaders: PluginLoaders<CS>) {
+    for (let idx = 0; idx < pluginLoaders.length; idx++) {
+      const pluginLoader = pluginLoaders[idx];
+
+      if (typeof pluginLoader !== 'string') {
+        continue;
+      }
+
       const head = document.getElementsByTagName('head')[0];
       const link = document.createElement('link');
       link.rel = 'stylesheet';
       link.type = 'text/css';
-      link.href = `${pluginBaseUrl}/plugin.css`;
+      link.href = `${pluginLoader}/plugin.css`;
 
       head.appendChild(link);
+    }
+  }
+
+  private loadPluginSettings(imports: PluginImports<CS>) {
+    // Iterate over every loaded plugin, and call `loadSettings` to manipulate the Settings Schema
+    this.plugins.forEach(plugin => {
+      try {
+        plugin.injectSettingsSchema?.(this.options.settingsManager.addPluginSettings);
+      } catch (err) {
+        imports.bad.push(new Error(`Could not inject Settings Schema for Plugin: ${plugin.name}`));
+      }
     });
   }
 }

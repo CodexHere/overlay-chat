@@ -4,11 +4,11 @@ import { OverlayRenderer } from './renderers/OverlayRenderer.js';
 import { SettingsRenderer } from './renderers/SettingsRenderer.js';
 import { BootstrapOptions, ErrorManager, OverlaySettings, RendererConstructor, RendererInstance } from './types.js';
 
-export class OverlayBootstrapper<OS extends OverlaySettings, CS extends Object> implements ErrorManager {
+export class OverlayBootstrapper<OS extends OverlaySettings, CS extends object> implements ErrorManager {
   settingsManager: SettingsManager<OS>;
   pluginManager: PluginManager<OS, CS>;
 
-  constructor(public bootstrapOptions: BootstrapOptions<OS>) {
+  constructor(public bootstrapOptions: BootstrapOptions<OS, CS>) {
     this.settingsManager = new SettingsManager<OS>({
       locationHref: globalThis.location.href,
       settingsValidator: bootstrapOptions.settingsValidator
@@ -16,7 +16,8 @@ export class OverlayBootstrapper<OS extends OverlaySettings, CS extends Object> 
 
     this.pluginManager = new PluginManager({
       settingsManager: this.settingsManager,
-      renderOptions: bootstrapOptions.renderOptions
+      renderOptions: bootstrapOptions.renderOptions,
+      defaultPlugin: bootstrapOptions.defaultPlugin
     });
   }
 

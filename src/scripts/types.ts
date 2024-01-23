@@ -8,7 +8,7 @@ import { FormEntryFieldGroup } from './utils/Forms.js';
 export type SettingsInjector = (fieldGroup: FormEntryFieldGroup) => void;
 export type SettingsValidator<OS extends OverlaySettings> = (settings: OS) => boolean;
 
-export type PluginImports<CS extends Object> = {
+export type PluginImports<CS extends object> = {
   good: OverlayPluginInstance<CS>[];
   bad: Error[];
 };
@@ -22,18 +22,20 @@ export type SettingsManagerOptions<OS extends OverlaySettings> = {
   locationHref: string;
 };
 
-export type PluginManagerOptions<OS extends OverlaySettings> = {
+export type PluginManagerOptions<OS extends OverlaySettings, CS extends object> = {
+  defaultPlugin: OverlayPluginConstructor<CS>;
   settingsManager: SettingsManager<OS>;
   renderOptions: RenderOptions;
 };
 
 // Bootstrapping
 
-export type BootstrapOptions<OS extends OverlaySettings> = {
+export type BootstrapOptions<OS extends OverlaySettings, CS extends object> = {
   renderOptions: RenderOptions;
   needsSettingsRenderer: boolean;
   needsOverlayRenderer: boolean;
   settingsValidator: SettingsValidator<OS>;
+  defaultPlugin: OverlayPluginConstructor<CS>;
 };
 
 // Overlay Instance
