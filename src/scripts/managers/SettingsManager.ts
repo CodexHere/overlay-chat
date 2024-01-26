@@ -1,8 +1,8 @@
-import { ContextBase, OverlaySettings, PluginImports, PluginInstances, SettingsManagerOptions } from '../types.js';
+import { OverlaySettings, PluginImports, PluginInstances, SettingsManagerOptions } from '../types.js';
 import { FormEntry, FormEntryFieldGroup, FromJson, ParsedJsonResults } from '../utils/Forms.js';
 import * as URI from '../utils/URI.js';
 
-export class SettingsManager<OS extends OverlaySettings, Context extends ContextBase> {
+export class SettingsManager<OS extends OverlaySettings> {
   parsedJsonResults: ParsedJsonResults | undefined;
   private settingsSchema: FormEntry[] = [];
   private settings: OS = {} as OS;
@@ -42,11 +42,11 @@ export class SettingsManager<OS extends OverlaySettings, Context extends Context
     this.settingsSchema = structuredClone(this.settingsSchemaDefault);
   }
 
-  loadPluginSettings(plugins: PluginInstances<Context>, imports: PluginImports<Context>) {
+  loadPluginSettings(plugins: PluginInstances, imports: PluginImports) {
     // Iterate over every loaded plugin, and call `loadSettings` to manipulate the Settings Schema
     plugins.forEach(plugin => {
       try {
-        const fieldGroup = plugin.getSettingsSchema?.();
+        const fieldGroup = plugin.registerPluginSettings?.();
         if (fieldGroup) {
           this.settingsSchema.push(fieldGroup);
         }

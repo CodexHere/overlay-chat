@@ -67,9 +67,11 @@ export class EnhancedEventEmitter extends EventEmitter {
     return values;
   };
 
-  override removeAllListeners(type: string | number): this {
-    delete this._storeValuesMap[type];
-    delete this._storeListenersMap[type];
+  override removeAllListeners(type?: string | number): this {
+    if (type) {
+      delete this._storeValuesMap[type];
+      delete this._storeListenersMap[type];
+    }
 
     return super.removeAllListeners(type);
   }

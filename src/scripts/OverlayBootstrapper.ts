@@ -1,22 +1,19 @@
+import { BusManager } from './managers/BusManager.js';
 import { PluginManager } from './managers/PluginManager.js';
 import { SettingsManager } from './managers/SettingsManager.js';
 import { OverlayRenderer } from './renderers/OverlayRenderer.js';
 import { SettingsRenderer } from './renderers/SettingsRenderer.js';
-import {
-  BootstrapOptions,
-  ContextBase,
-  ErrorManager,
-  OverlaySettings,
-  RendererConstructor,
-  RendererInstance
-} from './types.js';
+import { BootstrapOptions, ErrorManager, OverlaySettings, RendererConstructor, RendererInstance } from './types.js';
 
-export class OverlayBootstrapper<OS extends OverlaySettings, Context extends ContextBase> implements ErrorManager {
-  settingsManager: SettingsManager<OS, Context>;
-  pluginManager: PluginManager<OS, Context>;
+export class OverlayBootstrapper<OS extends OverlaySettings> implements ErrorManager {
+  settingsManager: SettingsManager<OS>;
+  pluginManager: PluginManager<OS>;
+  busManager: BusManager;
 
-  constructor(public bootstrapOptions: BootstrapOptions<OS, Context>) {
-    this.settingsManager = new SettingsManager<OS, Context>({
+  constructor(public bootstrapOptions: BootstrapOptions<OS>) {
+    this.busManager = new BusManager();
+
+    this.settingsManager = new SettingsManager<OS>({
       locationHref: globalThis.location.href,
       settingsValidator: bootstrapOptions.settingsValidator
     });
@@ -25,6 +22,7 @@ export class OverlayBootstrapper<OS extends OverlaySettings, Context extends Con
       defaultPlugin: bootstrapOptions.defaultPlugin,
       renderOptions: bootstrapOptions.renderOptions,
       settingsManager: this.settingsManager,
+      busManager: this.busManager,
       errorManager: this
     });
   }
@@ -35,6 +33,7 @@ export class OverlayBootstrapper<OS extends OverlaySettings, Context extends Con
 
     try {
       await this.settingsManager.init();
+      await this.busManager.init();
       await this.pluginManager.init();
     } catch (err) {
       hasError = err as Error;
@@ -49,7 +48,7 @@ export class OverlayBootstrapper<OS extends OverlaySettings, Context extends Con
     const shouldRenderOverlay = true === isConfigured && needsOverlayRenderer;
 
     // Select which Renderer to load...
-    let rendererClass: RendererConstructor<OS, Context> | undefined =
+    let rendererClass: RendererConstructor<OS> | undefined =
       shouldRenderSettings ? SettingsRenderer
       : shouldRenderOverlay ? OverlayRenderer
       : undefined;

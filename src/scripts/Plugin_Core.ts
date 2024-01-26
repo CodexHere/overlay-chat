@@ -1,15 +1,16 @@
-import { Middleware } from '@digibear/middleware';
 import Splitting from 'splitting';
 import { loadAssets, replaceEmotes } from 'tmi-emote-parse';
 import tmiJs from 'tmi.js';
 import {
+  BusManagerContext_Init,
+  BusManagerEmitter,
+  BusManagerEvents,
   ContextBase,
   OverlayPluginInstance,
   OverlaySettings,
-  PluginManagerBus,
-  PluginManagerEvents,
   RenderOptions
 } from './types.js';
+import { Middleware } from './utils/Middleware.js';
 import { RenderTemplate } from './utils/Templating.js';
 import { GetColorForUsername } from './utils/misc.js';
 
@@ -21,7 +22,7 @@ export type OverlaySettings_Chat = OverlaySettings & {
   tokenStreamer?: string;
 };
 
-export type MiddewareContext_Chat = ContextBase & {
+export type MiddewareContext_Chat = {
   channel: string;
   isBot: boolean;
   isSelf: boolean;
@@ -31,11 +32,13 @@ export type MiddewareContext_Chat = ContextBase & {
   userColor: string;
 };
 
-type Context = MiddewareContext_Chat;
+type Context = ContextBase & Partial<MiddewareContext_Chat>;
 type ClientTypes = 'streamer' | 'bot';
 
-export default class Plugin_Core implements OverlayPluginInstance<Context> {
+export default class Plugin_Core implements OverlayPluginInstance {
   name = 'Core Plugin';
+  ref = Symbol(this.name);
+
   private renderOptions: RenderOptions | undefined;
 
   private clients: Record<ClientTypes, tmiJs.Client | undefined> = {
@@ -44,7 +47,7 @@ export default class Plugin_Core implements OverlayPluginInstance<Context> {
   };
 
   constructor(
-    public bus: PluginManagerBus,
+    public emitter: BusManagerEmitter,
     private getSettings: () => OverlaySettings_Chat
   ) {}
 
@@ -122,7 +125,7 @@ export default class Plugin_Core implements OverlayPluginInstance<Context> {
     }
   }
 
-  private processMessage = (
+  private buildInitialContext = (
     channel: string,
     userstate: tmiJs.ChatUserstate,
     message: string,
@@ -134,7 +137,7 @@ export default class Plugin_Core implements OverlayPluginInstance<Context> {
     }
 
     const ctx: Context = {
-      errors: [] as Error[],
+      runningErrors: [] as Error[],
       user: userstate['display-name']!,
       userColor: userstate.color || GetColorForUsername(userstate['display-name']!),
       messageId: userstate.id!,
@@ -144,7 +147,13 @@ export default class Plugin_Core implements OverlayPluginInstance<Context> {
       message
     };
 
-    return ctx;
+    const initCtx: BusManagerContext_Init<Context> = {
+      chainName: 'chat:twitch',
+      initialContext: ctx,
+      initiatingPlugin: this
+    };
+
+    return initCtx;
   };
 
   private handleMessage_Streamer = (
@@ -153,27 +162,35 @@ export default class Plugin_Core implements OverlayPluginInstance<Context> {
     message: string,
     isSelf: boolean
   ) => {
-    const ctx = this.processMessage(channel, userstate, message, isSelf);
+    const ctx = this.buildInitialContext(channel, userstate, message, isSelf);
 
-    if (ctx) {
-      ctx.message = replaceEmotes(ctx.message, userstate, channel);
+    if (ctx && ctx.initialContext) {
+      ctx.initialContext.message = replaceEmotes(ctx.initialContext.message!, userstate, channel);
     }
 
     console.log('Streamer Got: ', message);
 
-    this.bus.emit(PluginManagerEvents.MIDDLEWARE_EXECUTE, ctx);
+    this.emitter.emit(BusManagerEvents.MIDDLEWARE_EXECUTE, ctx);
   };
 
   private handleMessage_Bot = (channel: string, userstate: tmiJs.ChatUserstate, message: string, isSelf: boolean) => {
-    const ctx = this.processMessage(channel, userstate, message, isSelf, true);
+    const ctx = this.buildInitialContext(channel, userstate, message, isSelf, true);
 
     console.log('Bot Got: ', message);
 
-    this.bus.emit(PluginManagerEvents.MIDDLEWARE_EXECUTE, ctx);
+    this.emitter.emit(BusManagerEvents.MIDDLEWARE_EXECUTE, ctx);
   };
 
+  registerPluginMiddleware() {
+    return new Map(
+      Object.entries({
+        'chat:twitch': [this.middleware]
+      })
+    );
+  }
+
   middleware: Middleware<Context> = async (context, next) => {
-    // Wait for Middleware chane to execute
+    // Wait for Middleware chance to execute
     await next();
 
     // Only continue rendering if we're not the bot (ie, chat is rendered from streamer data)
@@ -190,8 +207,8 @@ export default class Plugin_Core implements OverlayPluginInstance<Context> {
   renderMessage(context: Context) {
     // prettier-ignore
     RenderTemplate(
-        this.renderOptions!.elements!['container'], 
-        this.renderOptions!.templates!['chat-message'], 
+        this.renderOptions!.elements!['container'],
+        this.renderOptions!.templates!['chat-message'],
     context);
 
     Splitting({ target: `[data-message-id="${context.messageId}"]` });

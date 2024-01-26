@@ -1,7 +1,7 @@
-import { ContextBase, OverlaySettings, RendererInstance, RendererInstanceOptions } from '../types.js';
+import { OverlaySettings, RendererInstance, RendererInstanceOptions } from '../types.js';
 
-export class OverlayRenderer<OS extends OverlaySettings, Context extends ContextBase> implements RendererInstance {
-  constructor(private options: RendererInstanceOptions<OS, Context>) {}
+export class OverlayRenderer<OS extends OverlaySettings> implements RendererInstance {
+  constructor(private options: RendererInstanceOptions<OS>) {}
 
   async init() {
     this.renderOverlay();

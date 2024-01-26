@@ -2,18 +2,6 @@
 
 ## TODO
 
-* Create `middleware()` functions for Plugins
-  * https://github.com/Digibear-io/middleware
-  * Core app registers itself as first middleware to kick off pipeline
-  * Needs a way to break out of middleware, ie ignoring a chatter shouldn't continue any processing
-	* Throw a custom error type, and/or shape
-  * Needs not to use just a central pipeline, but plugins can register for certain names as they are "binded"...
-	* They give names of "chains" they want to belong to
-	* The plugin-manager (by way of BusManager) will register the plugin to said chains
-		* If the chain already exists, add to pipeline
-		* If the chain doesn't exist, create and map pipeline to the first plugin to create it
-			* Might use symbol?
-		* When executing a chain (event needs to update, needs iface for chainName & context), only executes if matches the first plugin creating the chain
 * Form Groups: Add Description to interface, and create a custom div for it
 	* SHould we also include simple Text sections? This could allow injectable html, which could be dangerous!
 * Rename to Default Plugin to Example with some cool examples
@@ -38,6 +26,8 @@
   * Event:HasAuth - returns bool if auth'd
 * Figure out debouncing on Settings... There's some annoyance with UX and jumping to a required input
 * Bootstrapper should load HTML Template file
+* Handle error responses from `SettingsValidator`
+  * This will show errors and possibly modify the form validity if necessary
 * New FormEntry type: array
   * Similar to a field group, but the children are repeated n-times
   * The user is given +/- buttons, and possibly re-ordering? 
@@ -52,8 +42,6 @@
      * Options to auto convert to array per key
   * URI Serialize/Deserialize
      * Options to auto convert to array per key
-* Handle error responses from `SettingsValidator`
-  * This will show errors and possibly modify the form validity if necessary
 * Build a dropdown to jump to a plugins' settings
   * Plugin will need more contextual data:
     * Name
@@ -187,4 +175,3 @@ if (foundNode !== null) {
 }
 
 ```
-

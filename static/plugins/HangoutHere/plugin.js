@@ -9,29 +9,30 @@
  * @typedef {import('../../../src/scripts/Plugin_Core.js').MiddewareContext_Chat} Context
  * @typedef {import('../../../src/scripts/utils/EnhancedEventEmitter.js').EnhancedEventEmitter} EnhancedEventEmitter
  * @typedef {import('../../../src/scripts/utils/Forms.js').FormEntryFieldGroup} FormEntryFieldGroup
+ * @typedef {import('../../../src/scripts/types.js').ContextBase} ContextBase
  * @typedef {import('../../../src/scripts/types.js').RenderOptions} RenderOptions
  * @typedef {import('../../../src/scripts/types.js').SettingsInjector} SettingsInjector
- * @typedef {import('../../../src/scripts/types.js').OverlayPluginInstance<Context>} OverlayPluginInstance
+ * @typedef {import('../../../src/scripts/types.js').OverlayPluginInstance} OverlayPluginInstance
  * @typedef {import('../../../src/scripts/types.js').SettingsRetriever<SO>} SettingsRetriever
- * @typedef {import('@digibear/middleware').Middleware<Context>} Middleware
- * @typedef {import('@digibear/middleware').Next} Next
+ * @typedef {import('../../../src/scripts/types.js').BusManagerEmitter} BusManagerEmitter
  *
  * @implements {OverlayPluginInstance}
  */
 export default class Plugin_HangoutHereTheme {
   name = 'HangoutHere Theme';
+  ref = Symbol(this.name);
 
   /**
-   * @param {EnhancedEventEmitter} bus
+   * @param {BusManagerEmitter} emitter
    * @param {SettingsRetriever} getSettings
    */
-  constructor(bus, getSettings) {
-    this.bus = bus;
+  constructor(emitter, getSettings) {
+    this.emitter = emitter;
     this.getSettings = getSettings;
 
     console.log(`${this.name} instantiated`);
 
-    this.bus.addListener('test-event', this.testEventHandler);
+    this.emitter.addListener('test-event', this.testEventHandler);
   }
 
   /**
@@ -42,15 +43,15 @@ s   */
     return `${this.name} TEST return call successfully (${param1.join(', ')}, ${JSON.stringify(param2)})`;
   };
 
-  unregister() {
+  unregisterPlugin() {
     console.log(`${this.name} Unregistering`);
-    this.bus.removeListener('test-event', this.testEventHandler);
+    this.emitter.removeListener('test-event', this.testEventHandler);
   }
 
   /**
    * @returns {FormEntryFieldGroup}
    */
-  getSettingsSchema() {
+  registerPluginSettings() {
     console.log(`${this.name} [injectSettingsSchema]`);
 
     return {
@@ -99,12 +100,23 @@ s   */
     console.log(`${this.name} [renderOverlay]`);
   }
 
+  registerPluginMiddleware() {
+    /** @type {?} */
+    const bindMap = new Map(
+      Object.entries({
+        'chat:twitch': [this.middleware]
+      })
+    );
+
+    return /** @type {Map<string, Middleware>} */ bindMap;
+  }
+
   /**
    * @param {Context} context
-   * @param {Next} next
+   * @param {(error?: Error) => Promise<void>} next
    */
   middleware = async (context, next) => {
-    context.message += ` [HangoutHere] colorVip=${this.getSettings().colorVip}`;
+    context.message += ` [HangoutHere] `;
 
     await next();
   };

@@ -1,5 +1,5 @@
 import { OverlayBootstrapper } from './OverlayBootstrapper.js';
-import Plugin_Core, { MiddewareContext_Chat, OverlaySettings_Chat } from './Plugin_Core.js';
+import Plugin_Core, { OverlaySettings_Chat } from './Plugin_Core.js';
 import * as Managers from './managers/index.js';
 import * as Renderers from './renderers/index.js';
 import * as Utils from './utils/index.js';
@@ -9,7 +9,7 @@ export { Managers, Renderers, Utils };
 
 // Start the overlay once DOM has loaded
 document.addEventListener('DOMContentLoaded', () => {
-  const bootstrapper = new OverlayBootstrapper<OverlaySettings_Chat, MiddewareContext_Chat>({
+  const bootstrapper = new OverlayBootstrapper<OverlaySettings_Chat>({
     renderOptions: {
       elements: {
         root: document.getElementById('root')!,

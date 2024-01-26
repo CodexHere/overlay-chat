@@ -1,4 +1,4 @@
-import { ContextBase, OverlaySettings, RendererInstance, RendererInstanceOptions } from '../types.js';
+import { OverlaySettings, RendererInstance, RendererInstanceOptions } from '../types.js';
 import * as Forms from '../utils/Forms.js';
 import { RenderTemplate } from '../utils/Templating.js';
 import * as URI from '../utils/URI.js';
@@ -6,8 +6,8 @@ import { debounce } from '../utils/misc.js';
 
 const shouldReloadPlugins = ['plugins', 'customPlugins'];
 
-export class SettingsRenderer<OS extends OverlaySettings, Context extends ContextBase> implements RendererInstance {
-  constructor(private options: RendererInstanceOptions<OS, Context>) {}
+export class SettingsRenderer<OS extends OverlaySettings> implements RendererInstance {
+  constructor(private options: RendererInstanceOptions<OS>) {}
 
   async init() {
     this.renderSettings();
