@@ -119,17 +119,17 @@ export default class Plugin_Example {
    * @param {Next} next
    */
   middlewareSkipCurrent = async (context, next) => {
-    console.log('[Middleware 1] - Start');
+    console.log('[MW 1] - Start');
 
     if (context.message?.includes('skipCurrent')) {
-      console.log('[Middleware 1] - Skipping the rest of current Segment, move onto the next one');
+      console.log('[MW 1] - Skipping the rest of current Segment, move onto the next one');
       await next();
       return;
     }
 
-    console.log('[Middleware 1] - Not skipping the current Segment, mutate and continue');
+    console.log('[MW 1] - Not skipping the current Segment, mutate and continue');
 
-    context.message += ' [Middleware 1 Executed] ';
+    context.message += ' [MW 1 Exec] ';
 
     const settings = this.getSettings();
     if (settings.exampleSettings) {
@@ -144,17 +144,17 @@ export default class Plugin_Example {
    * @param {Next} next
    */
   middlewareSkipChain1_next = async (context, next) => {
-    console.log('[Middleware 2] - Next');
+    console.log('[MW 2] - Next');
 
     if (context.message?.includes('skipChain1')) {
-      console.log('[Middleware 2] - Next - Skipping the rest of Chain');
+      console.log('[MW 2] - Next - Skipping the rest of Chain');
       await next(new Error('', { cause: { forceFailPipeline: true } }));
       return;
     }
 
-    console.log('[Middleware 2] - Next - Not skipping the rest of Chain, mutate and continue');
+    console.log('[MW 2] - Next - Not skipping the rest of Chain, mutate and continue');
 
-    context.message += ' [Middleware 2 Executed] ';
+    context.message += ' [MW 2 Exec] ';
 
     const settings = this.getSettings();
     if (settings.exampleSettings) {
@@ -169,16 +169,16 @@ export default class Plugin_Example {
    * @param {Next} next
    */
   middlewareSkipChain2_error = async (context, next) => {
-    console.log('[Middleware 3] - Error');
+    console.log('[MW 3] - Error');
 
     if (context.message?.includes('skipChain2')) {
-      console.log('[Middleware 3] - Error - [Incorrectly] Skipping the rest of Chain');
+      console.log('[MW 3] - Error - [Incorrectly] Skipping the rest of Chain');
       throw new Error('', { cause: { forceFailPipeline: true } });
     }
 
-    console.log('[Middleware 3] - Error - Not skipping the rest of Chain, mutate and continue');
+    console.log('[MW 3] - Error - Not skipping the rest of Chain, mutate and continue');
 
-    context.message += ' [Middleware 3 Executed] ';
+    context.message += ' [MW 3 Exec] ';
 
     const settings = this.getSettings();
     if (settings.exampleSettings) {
@@ -193,9 +193,9 @@ export default class Plugin_Example {
    * @param {Next} next
    */
   middlewareTransient = async (context, next) => {
-    console.log('[Middleware 4] - Transient Middleware, should just zoom by!');
+    console.log('[MW 4] - Transient Middleware, should just zoom by!');
 
-    context.message += ' [Middleware 4 Executed] ';
+    context.message += ' [MW 4 Exec] ';
 
     await next();
   };
@@ -205,17 +205,17 @@ export default class Plugin_Example {
    * @param {Next} next
    */
   middlewareNextError = async (context, next) => {
-    console.log('[Middleware 5] - Next Error');
+    console.log('[MW 5] - Next Error');
 
     if (context.message?.includes('nextError')) {
-      console.log('[Middleware 5] - Next Error - Skipping the rest of Segment');
+      console.log('[MW 5] - Next Error - Skipping the rest of Segment');
       await next(new Error('Not Skippable Error'));
       return;
     }
 
-    console.log('[Middleware 5] - Next Error - Not skipping the rest of Chain, mutate and continue');
+    console.log('[MW 5] - Next Error - Not skipping the rest of Chain, mutate and continue');
 
-    context.message += ' [Middleware 5] ';
+    context.message += ' [MW 5] ';
 
     const settings = this.getSettings();
     if (settings.exampleSettings) {
@@ -229,16 +229,16 @@ export default class Plugin_Example {
    * @param {Next} next
    */
   middlewareThrowError = async (context, next) => {
-    console.log('[Middleware 6] - Throw Error');
+    console.log('[MW 6] - Throw Error');
 
     if (context.message?.includes('throwError')) {
-      console.log('[Middleware 6] - Throw Error - Skipping the rest of Segment');
+      console.log('[MW 6] - Throw Error - Skipping the rest of Segment');
       throw new Error('Not Skippable Error');
     }
 
-    console.log('[Middleware 6] - Throw Error - Not skipping the rest of Chain, mutate and continue');
+    console.log('[MW 6] - Throw Error - Not skipping the rest of Chain, mutate and continue');
 
-    context.message += ' [Middleware 6] ';
+    context.message += ' [MW 6] ';
 
     const settings = this.getSettings();
     if (settings.exampleSettings) {
@@ -253,9 +253,9 @@ export default class Plugin_Example {
    * @param {Next} next
    */
   middlewareFinal = async (context, next) => {
-    console.log("[Middleware - FINAL] Got here if the entire Chain wasn't skipped!");
+    console.log("[MW - FINAL] Got here if the entire Chain wasn't skipped!");
 
-    context.message += ' [Middleware - FINAL] ';
+    context.message += ' [MW - FINAL] ';
 
     await next();
   };

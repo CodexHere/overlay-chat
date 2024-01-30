@@ -1,5 +1,43 @@
 [
   {
+    "name": "testArea",
+    "inputType": "arraygroup",
+    "label": "Testing Stuff",
+    "description": "Just testing things dawg",
+    "values": [
+      {
+        "name": "myOption",
+        "label": "Option Thing",
+        "inputType": "radio",
+        "values": ["rdo Item Entry 1", "rdo Item Entry Two"]
+      },
+      {
+        "name": "fieldName",
+        "label": "Field Name",
+        "inputType": "text"
+      },
+      {
+        "name": "myOption2",
+        "label": "Check Thing",
+        "inputType": "checkbox-multiple",
+        "values": ["chk Item Entry 1", "chk Item Entry Two"]
+      },
+      {
+        "name": "myOption3",
+        "label": "Select Multi Thing",
+        "inputType": "select-multiple",
+        "values": ["sm Item Entry 1", "sm Item Entry Two"]
+      },
+      {
+        "name": "myOption4",
+        "label": "Select Thing",
+        "inputType": "select",
+        "values": ["s Item Entry 1", "s Item Entry Two"]
+      }
+    ]
+  },
+
+  {
     "name": "globalSettings",
     "inputType": "fieldgroup",
     "label": "Global Settings",
@@ -9,7 +47,7 @@
         "name": "channelSettings",
         "label": "Channel Settings",
         "inputType": "fieldgroup",
-        "description": "Enter your channel settings for Chat connectivity. If you don't supply a Token for the Streamer Channel, then the connection will be Anonymous. In order to send messages back, supply a Token for the Streamer Channel, or supply both a Bot Channel and Token for the Bot Channel.",
+        "description": "Enter your channel settings for Chat. If you do not supply a <a href=\"https://twitchapps.com/tmi/\" target=\"_new\">Token</a> for the Streamer or Bot User <i>each</i>, then the connection will be Anonymous and you cannot send messages.",
         "values": [
           {
             "name": "nameStreamer",
@@ -22,12 +60,6 @@
             "name": "tokenStreamer",
             "label": "Chat Token (Streamer)",
             "inputType": "password"
-          },
-          {
-            "name": "nameBot",
-            "label": "Channel Name (Bot)",
-            "inputType": "text",
-            "tooltip": "This is the channel you want to act on behalf of the Bot!"
           },
           {
             "name": "tokenBot",

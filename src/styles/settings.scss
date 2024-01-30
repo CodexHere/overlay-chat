@@ -73,6 +73,10 @@ body:has(#container-settings) {
         display: none;
       }
 
+      .input-group label {
+        display: inline-block;
+      }
+
       .arraygroup-controls {
         display: flex;
         width: 8rem;
