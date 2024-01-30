@@ -64,6 +64,25 @@ body:has(#container-settings) {
     }
   }
 
+  [data-input-type='arraygroup'] {
+    .content {
+      display: flex;
+      flex-direction: column;
+
+      label {
+        display: none;
+      }
+
+      .arraygroup-controls {
+        display: flex;
+        width: 8rem;
+        gap: 1rem;
+        margin-left: auto;
+        margin-right: 1rem;
+      }
+    }
+  }
+
   .container-title {
     margin-bottom: 1rem;
   }

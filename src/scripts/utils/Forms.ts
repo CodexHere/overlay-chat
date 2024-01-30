@@ -21,10 +21,11 @@ export type FormEntryInput = FormEntryBase & {
   inputType: 'text' | 'password' | 'number' | 'checkbox' | 'switch' | 'radio-option' | 'color';
 };
 
-export type FormEntryFieldGroup = FormEntryBase & {
-  inputType: 'fieldgroup';
+export type FormEntryGrouping = FormEntryBase & {
+  inputType: 'fieldgroup' | 'arraygroup';
   label: string;
   values: FormEntry[];
+  description?: string;
 };
 
 export type FormEntrySelection = FormEntryBase & {
@@ -32,7 +33,7 @@ export type FormEntrySelection = FormEntryBase & {
   values: string[];
 };
 
-export type FormEntry = FormEntryButton | FormEntrySelection | FormEntryInput | FormEntryFieldGroup;
+export type FormEntry = FormEntryButton | FormEntrySelection | FormEntryInput | FormEntryGrouping;
 
 let labelId = 0;
 
@@ -43,34 +44,96 @@ export type ParsedJsonResults = {
 
 type ParsedJsonMap = ParsedJsonResults['mapping'];
 
-export const FromJson = (entries: Readonly<FormEntry[]>): ParsedJsonResults => {
+export const FromJson = <Settings extends {}>(
+  entries: Readonly<FormEntry[]>,
+  settings: Settings
+): ParsedJsonResults => {
   let mapping: ParsedJsonMap = {};
   let results = '';
 
   entries.forEach(entry => {
     let input = '';
 
+    if (!entry.name) {
+      throw new Error('FormEntry does not have a `name` property! ' + JSON.stringify(entry));
+    }
+
     const isButton = 'button' !== entry.inputType;
     const chosenLabel = entry.label ?? entry.name;
     const defaultData = (isButton && entry.defaultValue) ?? '';
     const required = isButton && entry.isRequired ? 'required' : '';
     const tooltip = isButton && entry.tooltip ? `title="${entry.tooltip}"` : '';
-    const id = `${entry.name}-${labelId++}`; // unique ID for labels
+    const uniqueId = `${entry.name}-${labelId++}`; // unique ID for labels
+    const nameOrLabelId = entry.name ?? entry.label?.toLocaleLowerCase().replaceAll(' ', '_');
 
     let inputType = '';
     let recursedCall: ParsedJsonResults | undefined;
+    let description = '';
 
     /**
      * Input-level Generation
      */
     switch (entry.inputType) {
-      case 'fieldgroup':
-        recursedCall = FromJson(entry.values);
-        mapping = { ...mapping, ...recursedCall.mapping };
+      case 'arraygroup':
+        const settingsValues = settings[nameOrLabelId as keyof Settings];
+        const numSettings = Array.isArray(settingsValues) ? settingsValues.length : 1;
+        const recursedCallArray = Array(numSettings)
+          .fill(0)
+          .map(_settingCount => {
+            return entry.values.map(fe => {
+              const processedJson = FromJson([fe], settings);
+              mapping = { ...mapping, ...processedJson.mapping };
+              return processedJson.results;
+            });
+          });
+
+        description = entry.description ? `<blockquote class="description">${entry.description}</blockquote>` : '';
+
+        const tableData = `
+          <table>
+            <thead>
+              <tr>
+                <th>${entry.values.map(fe => fe.label).join('</th><th>')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${recursedCallArray.map(row => `<tr><td>${row.join('</td><td>')}</td></tr>`)}
+            </tbody>
+          </table>
+        `;
+
         input += `
-          <details id="${entry.name ?? entry.label.toLocaleLowerCase().replaceAll(' ', '_')}">
-            <summary><div class="summary-wrapper" ${tooltip}>${chosenLabel}</div></summary>
+            <details 
+              id="${nameOrLabelId}" 
+              data-input-type="${entry.inputType}"
+            >
+              <summary><div class="label-wrapper" ${tooltip}>${chosenLabel}</div></summary>
+              <div class="content">
+                ${description}
+                ${tableData}
+
+                <div class="arraygroup-controls" data-inputs='${JSON.stringify(entry.values)}'>
+                  <button name="addentry-${nameOrLabelId}" class="add">+</button>
+                  <button name="delentry-${nameOrLabelId}" class="subtract">-</button>
+                </div>
+              </div>
+            </details>
+            `;
+        break;
+      case 'fieldgroup':
+        recursedCall = FromJson(entry.values, settings);
+        mapping = { ...mapping, ...recursedCall.mapping };
+
+        description = entry.description ? `<blockquote class="description">${entry.description}</blockquote>` : '';
+
+        input += `
+          <details 
+            id="${entry.name ?? entry.label.toLocaleLowerCase().replaceAll(' ', '_')}" 
+            data-input-type="${entry.inputType}"
+          >
+            <summary><div class="label-wrapper" ${tooltip}>${chosenLabel}</div></summary>
             <div class="content">
+              ${description}
               ${recursedCall.results}
             </div>
           </details>
@@ -79,7 +142,7 @@ export const FromJson = (entries: Readonly<FormEntry[]>): ParsedJsonResults => {
 
       case 'button':
         input += `
-        <button id="${id}" name="${entry.name}">${chosenLabel}</button>
+        <button id="${uniqueId}" name="${entry.name}">${chosenLabel}</button>
         `;
         break;
 
@@ -91,7 +154,7 @@ export const FromJson = (entries: Readonly<FormEntry[]>): ParsedJsonResults => {
         input += `
             <input
               type="${inputType}"
-              id="${id}"
+              id="${uniqueId}"
               name="${entry.name}"
               value="${chosenLabel}"
               ${switchAttr}
@@ -110,13 +173,16 @@ export const FromJson = (entries: Readonly<FormEntry[]>): ParsedJsonResults => {
         input += '<div class="input-group">';
 
         entry.values.forEach(value => {
-          recursedCall = FromJson([
-            {
-              name: entry.name,
-              label: value,
-              inputType
-            } as FormEntryInput
-          ]);
+          recursedCall = FromJson(
+            [
+              {
+                name: entry.name,
+                label: value,
+                inputType
+              } as FormEntryInput
+            ],
+            settings
+          );
 
           input += recursedCall.results;
           mapping = { ...mapping, ...recursedCall.mapping };
@@ -130,11 +196,10 @@ export const FromJson = (entries: Readonly<FormEntry[]>): ParsedJsonResults => {
       case 'text':
       case 'password':
         input += `
-          <div class='password-wrapper'>
             <input
               type="${entry.inputType}"
               value="${defaultData}"
-              id="${id}"
+              id="${uniqueId}"
               name="${entry.name}"
               placeholder="${chosenLabel}"
               ${required}
@@ -142,19 +207,25 @@ export const FromJson = (entries: Readonly<FormEntry[]>): ParsedJsonResults => {
         `;
 
         if ('password' === entry.inputType) {
-          recursedCall = FromJson([
-            {
-              inputType: 'button',
-              label: '👁',
-              name: `password-view-${entry.name}`
-            }
-          ]);
+          recursedCall = FromJson(
+            [
+              {
+                inputType: 'button',
+                label: '👁',
+                name: `password-view-${entry.name}`
+              }
+            ],
+            settings
+          );
 
-          input += recursedCall.results;
+          input = `
+            <div class='password-wrapper'>
+              ${input}
+              ${recursedCall.results}
+            </div>
+          `;
           mapping = { ...mapping, ...recursedCall.mapping };
         }
-
-        input += '</div>';
 
         break;
 
@@ -169,7 +240,7 @@ export const FromJson = (entries: Readonly<FormEntry[]>): ParsedJsonResults => {
         input += `
             <select
               value="${defaultData}"
-              id="${id}"
+              id="${uniqueId}"
               name="${entry.name}"
               ${isMulti}
               ${required}
@@ -191,12 +262,13 @@ export const FromJson = (entries: Readonly<FormEntry[]>): ParsedJsonResults => {
     switch (entry.inputType) {
       case 'button':
       case 'fieldgroup':
+      case 'arraygroup':
         // noop
         break;
 
       default:
         const skipForAttr = ['checkbox-multiple', 'switch-multiple', 'radio'];
-        const forAttr = skipForAttr.includes(entry.inputType) ? '' : `for="${id}"`;
+        const forAttr = skipForAttr.includes(entry.inputType) ? '' : `for="${uniqueId}"`;
 
         input = `
               <div data-input-type="${entry.inputType}">
@@ -277,7 +349,11 @@ export const GetData = (formElement: HTMLFormElement) => {
     } else if (input instanceof HTMLSelectElement) {
       json[name] = [...input.options].filter(opt => opt.selected).map(opt => opt.value);
     } else if (input instanceof RadioNodeList) {
-      json[name] = ([...input] as HTMLInputElement[]).map(opt => `${opt.checked}:${opt.value}`);
+      json[name] = ([...input] as HTMLInputElement[]).map(opt =>
+        'checkbox' === opt.type ? `${opt.checked}:${opt.value}` : opt.value
+      );
+      // Cull empty values
+      json[name] = (json[name] as []).filter(item => !!item);
     } else {
       json[name] = value;
     }

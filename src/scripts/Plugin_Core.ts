@@ -8,7 +8,8 @@ import {
   ContextBase,
   OverlayPluginInstance,
   OverlaySettings,
-  RenderOptions
+  RenderOptions,
+  SettingsRetriever
 } from './types.js';
 import { Middleware } from './utils/Middleware.js';
 import { RenderTemplate } from './utils/Templating.js';
@@ -35,7 +36,8 @@ export type MiddewareContext_Chat = {
 type Context = ContextBase & Partial<MiddewareContext_Chat>;
 type ClientTypes = 'streamer' | 'bot';
 
-export default class Plugin_Core implements OverlayPluginInstance {
+export default class Plugin_Core implements OverlayPluginInstance<OverlaySettings_Chat> {
+  priority = -Number.MAX_SAFE_INTEGER;
   name = 'Core Plugin';
   ref = Symbol(this.name);
 
@@ -46,14 +48,20 @@ export default class Plugin_Core implements OverlayPluginInstance {
     bot: undefined
   };
 
+  get useBot() {
+    return this.clients.bot;
+  }
+
   constructor(
     public emitter: BusManagerEmitter,
-    private getSettings: () => OverlaySettings_Chat
+    public getSettings: SettingsRetriever<OverlaySettings_Chat>
   ) {}
 
   async renderOverlay(renderOptions: RenderOptions): Promise<void> {
     this.renderOptions = renderOptions;
     await this.initChatListen();
+
+    this.emitter.on('chat:twitch--send', this._onBusSendMessage);
   }
 
   private generateTmiOptions() {
@@ -61,7 +69,10 @@ export default class Plugin_Core implements OverlayPluginInstance {
 
     let clientOptions_Bot: tmiJs.Options | undefined;
     let clientOptions_Streamer: tmiJs.Options = {
-      channels: [nameStreamer!]
+      channels: [nameStreamer!],
+      options: {
+        skipUpdatingEmotesets: true
+      }
     };
 
     if (nameStreamer && tokenStreamer) {
@@ -82,10 +93,12 @@ export default class Plugin_Core implements OverlayPluginInstance {
 
       clientOptions_Bot = {
         channels: [nameStreamer!],
-
+        options: {
+          skipUpdatingEmotesets: true
+        },
         identity: {
-          username: nameStreamer,
-          password: tokenStreamer
+          username: nameBot,
+          password: tokenBot
         }
       };
     }
@@ -109,19 +122,25 @@ export default class Plugin_Core implements OverlayPluginInstance {
       this.clients.streamer = new tmiJs.Client(tmiOpts.streamer);
       await this.clients.streamer.connect();
       this.clients.streamer.on('message', this.handleMessage_Streamer);
-
-      if (tmiOpts.bot) {
-        this.clients.bot = new tmiJs.Client(tmiOpts.bot);
-        await this.clients.streamer.connect();
-        this.clients.streamer.on('message', this.handleMessage_Bot);
-      }
-
       // TODO: Needs to move to icon swap plugin
       loadAssets('twitch');
       loadAssets(nameStreamer);
     } catch (err) {
       const myError = err as Error;
-      throw new Error('Could not connect to chat: ' + myError.message);
+      delete this.clients['streamer'];
+      throw new Error('Could not connect Streamer to chat: ' + myError);
+    }
+
+    try {
+      if (tmiOpts.bot) {
+        this.clients.bot = new tmiJs.Client(tmiOpts.bot);
+        await this.clients.bot.connect();
+        this.clients.bot.on('message', this.handleMessage_Bot);
+      }
+    } catch (err) {
+      const myError = err as Error;
+      delete this.clients['bot'];
+      throw new Error('Could not connect Bot to chat: ' + myError);
     }
   }
 
@@ -247,4 +266,11 @@ export default class Plugin_Core implements OverlayPluginInstance {
       }
     }
   }
+
+  _onBusSendMessage = (message: string) => {
+    const settings = this.getSettings();
+    const client = this.useBot ? this.clients.bot : this.clients.streamer;
+
+    client?.say(settings.nameStreamer!, message);
+  };
 }

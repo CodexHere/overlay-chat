@@ -2,21 +2,21 @@
  * @typedef {import('../../../src/scripts/types.js').OverlaySettings} OS_Core
  * @typedef {Object} OS_Base
  * @property {string} exampleSettings
- * @typedef {OS_Base & OS_Core} SO
+ * @typedef {OS_Base & OS_Core} OS
  *
  * @typedef {import('../../../src/scripts/managers/BusManager.js').BusError_ForceFailPipeline} BusError_ForceFailPipeline
  * @typedef {import('../../../src/scripts/types.js').ContextBase} ContextBase
  * @typedef {import('../../../src/scripts/Plugin_Core.js').MiddewareContext_Chat} ConcreteContext
  * @typedef {ContextBase & Partial<ConcreteContext>} Context
  * @typedef {import('../../../src/scripts/utils/EnhancedEventEmitter.js').EnhancedEventEmitter} EnhancedEventEmitter
- * @typedef {import('../../../src/scripts/utils/Forms.js').FormEntryFieldGroup} FormEntryFieldGroup
+ * @typedef {import('../../../src/scripts/utils/Forms.js').FormEntryGrouping} FormEntryFieldGroup
  * @typedef {import('../../../src/scripts/utils/Middleware.js').Next<Context>} Next
  * @typedef {import('../../../src/scripts/utils/Middleware.js').Middleware<Context>} MiddlewareContext
  * @typedef {import('../../../src/scripts/utils/Middleware.js').Middleware<ContextBase>} MiddlewareContextBase
  * @typedef {import('../../../src/scripts/types.js').RenderOptions} RenderOptions
  * @typedef {import('../../../src/scripts/types.js').SettingsInjector} SettingsInjector
- * @typedef {import('../../../src/scripts/types.js').OverlayPluginInstance} OverlayPluginInstance
- * @typedef {import('../../../src/scripts/types.js').SettingsRetriever<SO>} SettingsRetriever
+ * @typedef {import('../../../src/scripts/types.js').OverlayPluginInstance<OS>} OverlayPluginInstance
+ * @typedef {import('../../../src/scripts/types.js').SettingsRetriever<OS>} SettingsRetriever
  * @typedef {import('../../../src/scripts/types.js').BusManagerEvents} BusManagerEvents
  * @typedef {import('../../../src/scripts/types.js').BusManagerEmitter} BusManagerEmitter
  * @typedef {import('../../../src/scripts/types.js').BusManagerContext_Init<ContextBase>} BusManagerContext_Init
@@ -26,6 +26,7 @@
 export default class Plugin_Example {
   name = 'Example Plugin';
   ref = Symbol(this.name);
+  priority = 20;
 
   /**
    * @param {BusManagerEmitter} emitter

@@ -8,7 +8,7 @@ import { BootstrapOptions, ErrorManager, OverlaySettings, RendererConstructor, R
 export class OverlayBootstrapper<OS extends OverlaySettings> implements ErrorManager {
   settingsManager: SettingsManager<OS>;
   pluginManager: PluginManager<OS>;
-  busManager: BusManager;
+  busManager: BusManager<OS>;
 
   constructor(public bootstrapOptions: BootstrapOptions<OS>) {
     this.busManager = new BusManager();
@@ -29,14 +29,14 @@ export class OverlayBootstrapper<OS extends OverlaySettings> implements ErrorMan
 
   async init() {
     const { needsSettingsRenderer, needsOverlayRenderer } = this.bootstrapOptions;
-    let hasError: Error | undefined;
+    let hasErrors: Error[] = [];
 
     try {
       await this.settingsManager.init();
       await this.busManager.init();
       await this.pluginManager.init();
     } catch (err) {
-      hasError = err as Error;
+      hasErrors.push(err as Error);
     }
 
     // Determine if `SettingsManager` is configured by way of `SettingsValidator`
@@ -65,17 +65,19 @@ export class OverlayBootstrapper<OS extends OverlaySettings> implements ErrorMan
       try {
         await renderer.init();
       } catch (err) {
-        hasError = err as Error;
+        hasErrors.push(err as Error);
       }
     }
 
-    if (hasError) {
-      this.showError(hasError);
-    }
+    this.showError(hasErrors);
   }
 
   showError = (err: Error | Error[]) => {
     const root = this.bootstrapOptions.renderOptions.elements!['root']!;
+
+    if (!err || (Array.isArray(err) && 0 === err.length)) {
+      return;
+    }
 
     console.error(err);
 

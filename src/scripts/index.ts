@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
     needsSettingsRenderer: true,
     settingsValidator: settings => {
       const userDefined = !!settings.nameStreamer && (!!settings.tokenStreamer || true);
-      const botDefined = (!settings.nameBot && !settings.tokenBot) || (!!settings.nameBot && !!settings.tokenBot);
+      const botDefined = !!settings.tokenBot;
       return !!settings.fontSize && userDefined && botDefined;
     },
 

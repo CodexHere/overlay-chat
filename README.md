@@ -2,8 +2,11 @@
 
 ## TODO
 
-* Form Groups: Add Description to interface, and create a custom div for it
-	* SHould we also include simple Text sections? This could allow injectable html, which could be dangerous!
+* New FormEntry type: array
+  ~~* Similar to a field group, but the children are repeated n-times~~
+  ~~* The user is given +/- buttons, and possibly re-ordering?~~
+    * https://github.com/lukasoppermann/html5sortable#examples
+  * Test against multiple items in sub-fieldgroup
 * Rename to Default Plugin to Example with some cool examples
 	* Generally where I come up with ideas and flesh them out before moving into final plugin
 		* Just don't delete stuff!!!
@@ -28,10 +31,6 @@
 * Bootstrapper should load HTML Template file
 * Handle error responses from `SettingsValidator`
   * This will show errors and possibly modify the form validity if necessary
-* New FormEntry type: array
-  * Similar to a field group, but the children are repeated n-times
-  * The user is given +/- buttons, and possibly re-ordering? 
-    * https://github.com/lukasoppermann/html5sortable#examples
 * Ability to compress (`lz-string`) url params
   * `&compressed=true&data=<data_here>`
   * Will need to decompress in settings as well
@@ -47,6 +46,12 @@
     * Name
 * Convert to use `hh-util`
   * `hh-util` needs proper publishing
+* SimpleReply
+  * Simple mapping of `!command` to "Reply Text"
+* Event Sub Response:
+  * Output simple message (customizable) indicating an event was triggered
+  * Needs a tokenized mapping of event sub properties
+    * https://dev.twitch.tv/docs/eventsub/eventsub-subscription-types/#channelhype_trainbegin
 
 ## Application Lifecycle
 

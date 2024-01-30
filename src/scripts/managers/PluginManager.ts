@@ -11,11 +11,11 @@ import {
 import * as URI from '../utils/URI.js';
 
 export class PluginManager<OS extends OverlaySettings> {
-  private plugins: PluginInstances = [];
+  private plugins: PluginInstances<OS> = [];
 
   constructor(private options: PluginManagerOptions<OS>) {}
 
-  getPlugins(): PluginInstances {
+  getPlugins(): PluginInstances<OS> {
     return this.plugins;
   }
 
@@ -29,7 +29,7 @@ export class PluginManager<OS extends OverlaySettings> {
     const { customPlugins, plugins } = this.options.settingsManager.getSettings();
 
     if (customPlugins) {
-      pluginUrls = customPlugins.split(';');
+      pluginUrls = Array.isArray(customPlugins) ? customPlugins : [customPlugins];
     } else if (plugins) {
       // At runtime, `plugins` may actually be a single string due to deserializing
       // URLSearchParams that only had one specified plugin
@@ -86,11 +86,11 @@ export class PluginManager<OS extends OverlaySettings> {
     // Sort Plugins by Priority
     this.plugins.sort(this.sortPlugins);
     // Load Settings for Plugins
-    settingsManager.loadPluginSettings(this.plugins, imports);
+    settingsManager.registerPluginSettings(this.plugins, imports);
     // Load Style for Plugin
     this.loadPluginStyles(pluginLoaders);
     // Bind Middleware
-    busManager.registerPluginMiddleware(this.plugins as unknown as PluginInstances);
+    busManager.registerPluginMiddleware(this.plugins as PluginInstances<OS>);
 
     if (0 !== imports.bad.length) {
       // TODO: Turn (imports) into a return value and handle in Renderers/etc to call showError
@@ -98,7 +98,7 @@ export class PluginManager<OS extends OverlaySettings> {
     }
   }
 
-  private sortPlugins(a: OverlayPluginInstance, b: OverlayPluginInstance) {
+  private sortPlugins(a: OverlayPluginInstance<OverlaySettings>, b: OverlayPluginInstance<OverlaySettings>) {
     if (!a.priority) {
       return 1;
     }
@@ -136,7 +136,7 @@ export class PluginManager<OS extends OverlaySettings> {
           {
             good: [],
             bad: []
-          } as PluginImports
+          } as PluginImports<OS>
         )
     );
   }
@@ -153,7 +153,7 @@ export class PluginManager<OS extends OverlaySettings> {
     // Instantiate Plugin
     try {
       // prettier-ignore
-      const pluginInstance: OverlayPluginInstance = 
+      const pluginInstance: OverlayPluginInstance<OS> = 
         new pluginClass!(
           this.options.busManager.events, 
           this.options.settingsManager.getSettings

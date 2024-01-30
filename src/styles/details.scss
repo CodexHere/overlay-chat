@@ -12,7 +12,6 @@ details {
     background: color-mix(in srgb, red 10%, var(--card-background-color));
   }
 
-
   // The Rotating Marker
   summary {
     --size: 1.5rem;
@@ -54,7 +53,7 @@ details {
       color: inherit;
     }
 
-    .summary-wrapper {
+    .label-wrapper {
       padding: 0.5rem;
     }
   }
@@ -75,6 +74,15 @@ details {
     }
   }
 
+  .description {
+    border: 1px solid var(--card-border-color);
+    padding: calc(var(--spacing) / 2);
+    margin: 0;
+    margin-bottom: var(--spacing);
+    font-size: 0.8em;
+    background-color: var(--description-background-color);
+  }
+
   .content {
     position: relative;
 
@@ -86,6 +94,26 @@ details {
     & > details {
       margin-left: calc(var(--spacing) * 2);
       margin-top: var(--spacing);
+
+      &[open] summary::before {
+        top: 0.75rem;
+        left: 0;
+      }
+
+      summary {
+        font-size: 1em;
+
+        &::before {
+          font-size: 1.5em;
+          top: 0.65rem;
+          left: 0;
+        }
+
+        .label-wrapper {
+          padding: 0;
+          padding-left: 0.5em;
+        }
+      }
     }
   }
 }

@@ -4,16 +4,16 @@
  * @property {string} colorLeading
  * @property {string} colorMod
  * @property {string} colorVip
- * @typedef {OS_Base & OS_Core} SO
+ * @typedef {OS_Base & OS_Core} OS
  *
  * @typedef {import('../../../src/scripts/Plugin_Core.js').MiddewareContext_Chat} Context
  * @typedef {import('../../../src/scripts/utils/EnhancedEventEmitter.js').EnhancedEventEmitter} EnhancedEventEmitter
- * @typedef {import('../../../src/scripts/utils/Forms.js').FormEntryFieldGroup} FormEntryFieldGroup
+ * @typedef {import('../../../src/scripts/utils/Forms.js').FormEntryGrouping} FormEntryFieldGroup
  * @typedef {import('../../../src/scripts/types.js').ContextBase} ContextBase
  * @typedef {import('../../../src/scripts/types.js').RenderOptions} RenderOptions
  * @typedef {import('../../../src/scripts/types.js').SettingsInjector} SettingsInjector
- * @typedef {import('../../../src/scripts/types.js').OverlayPluginInstance} OverlayPluginInstance
- * @typedef {import('../../../src/scripts/types.js').SettingsRetriever<SO>} SettingsRetriever
+ * @typedef {import('../../../src/scripts/types.js').OverlayPluginInstance<OS>} OverlayPluginInstance
+ * @typedef {import('../../../src/scripts/types.js').SettingsRetriever<OS>} SettingsRetriever
  * @typedef {import('../../../src/scripts/types.js').BusManagerEmitter} BusManagerEmitter
  *
  * @implements {OverlayPluginInstance}
@@ -98,6 +98,11 @@ s   */
 
   renderOverlay() {
     console.log(`${this.name} [renderOverlay]`);
+
+    setTimeout(() => {
+      console.log('Sending message');
+      this.emitter.emit('chat:twitch--send', 'Hello from HangoutHere Theme!');
+    }, 3000);
   }
 
   registerPluginMiddleware() {

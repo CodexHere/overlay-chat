@@ -3,7 +3,7 @@ import { BusManager } from './managers/BusManager.js';
 import { PluginManager } from './managers/PluginManager.js';
 import { SettingsManager } from './managers/SettingsManager.js';
 import { EnhancedEventEmitter } from './utils/EnhancedEventEmitter.js';
-import { FormEntryFieldGroup } from './utils/Forms.js';
+import { FormEntryGrouping } from './utils/Forms.js';
 import { Middleware } from './utils/Middleware.js';
 
 export type ContextBase = {
@@ -16,7 +16,7 @@ export type ErrorManager = {
   showError(err: Error | Error[]): void;
 };
 
-export type SettingsInjector = (fieldGroup: FormEntryFieldGroup) => void;
+export type SettingsInjector = (fieldGroup: FormEntryGrouping) => void;
 export type SettingsRetriever<OS extends OverlaySettings> = () => OS;
 export type SettingsValidator<OS extends OverlaySettings> = (settings: OS) => boolean;
 export type SettingsManagerOptions<OS extends OverlaySettings> = {
@@ -24,24 +24,24 @@ export type SettingsManagerOptions<OS extends OverlaySettings> = {
   locationHref: string;
 };
 
-export type PluginInstances = OverlayPluginInstance[];
+export type PluginInstances<OS extends OverlaySettings> = OverlayPluginInstance<OS>[];
 export type PluginLoaders<OS extends OverlaySettings> = Array<string | OverlayPluginConstructor<OS>>;
-export type PluginImports = {
-  good: OverlayPluginInstance[];
+export type PluginImports<OS extends OverlaySettings> = {
+  good: OverlayPluginInstance<OS>[];
   bad: Error[];
 };
 export type PluginManagerOptions<OS extends OverlaySettings> = {
   defaultPlugin: OverlayPluginConstructor<OS>;
   renderOptions: RenderOptions;
   settingsManager: SettingsManager<OS>;
-  busManager: BusManager;
+  busManager: BusManager<OS>;
   errorManager: ErrorManager;
 };
 
 export type BusManagerContext_Init<Context extends ContextBase> = {
   chainName: string;
   initialContext: Context;
-  initiatingPlugin: OverlayPluginInstance;
+  initiatingPlugin: OverlayPluginInstance<OverlaySettings>;
 };
 
 export enum BusManagerEvents {
@@ -99,21 +99,22 @@ export type RendererConstructor<OS extends OverlaySettings> = {
 
 // Plugins
 
-export type OverlayPluginInstance = {
+export type OverlayPluginInstance<OS extends OverlaySettings> = {
   name: string;
   ref: Symbol;
   emitter: BusManagerEmitter;
+  getSettings: SettingsRetriever<OS>;
   priority?: number;
   unregisterPlugin?(renderOptions: RenderOptions): void;
   registerPluginMiddleware?(): Map<string, Middleware<ContextBase>[]>;
-  registerPluginSettings?(): FormEntryFieldGroup;
+  registerPluginSettings?(): FormEntryGrouping;
 
   renderSettings?(renderOptions: RenderOptions): void;
   renderOverlay?(renderOptions: RenderOptions): void;
 };
 
 export type OverlayPluginConstructor<OS extends OverlaySettings> = {
-  new (emitter: BusManagerEmitter, getSettings: SettingsRetriever<OS>): OverlayPluginInstance;
+  new (emitter: BusManagerEmitter, getSettings: SettingsRetriever<OS>): OverlayPluginInstance<OS>;
 };
 
 // Misc

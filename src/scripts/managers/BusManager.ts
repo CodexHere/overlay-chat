@@ -1,4 +1,11 @@
-import { BusManagerContext_Init, BusManagerEmitter, BusManagerEvents, ContextBase, PluginInstances } from '../types.js';
+import {
+  BusManagerContext_Init,
+  BusManagerEmitter,
+  BusManagerEvents,
+  ContextBase,
+  OverlaySettings,
+  PluginInstances
+} from '../types.js';
 import { EnhancedEventEmitter } from '../utils/EnhancedEventEmitter.js';
 import { Middleware, Pipeline } from '../utils/Middleware.js';
 
@@ -25,7 +32,7 @@ export class BusError_ForceFailPipeline extends Error {
   }
 }
 
-export class BusManager {
+export class BusManager<OS extends OverlaySettings> {
   private pipelineRegistrations: Map<Pipeline<ContextBase>, Symbol> = new Map();
   private pipelines: Map<string, Pipeline<ContextBase>> = new Map();
   private _events: BusManagerEmitter;
@@ -49,7 +56,7 @@ export class BusManager {
     this._events.removeAllListeners();
   }
 
-  registerPluginMiddleware(plugins: PluginInstances) {
+  registerPluginMiddleware(plugins: PluginInstances<OS>) {
     // Register each plugin (in assumed Priority-sort order) for their desired Middleware Chains
     for (const plugin of plugins) {
       if (!plugin.registerPluginMiddleware) {

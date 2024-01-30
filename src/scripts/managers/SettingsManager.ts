@@ -1,5 +1,5 @@
 import { OverlaySettings, PluginImports, PluginInstances, SettingsManagerOptions } from '../types.js';
-import { FormEntry, FormEntryFieldGroup, FromJson, ParsedJsonResults } from '../utils/Forms.js';
+import { FormEntry, FormEntryGrouping, FromJson, ParsedJsonResults } from '../utils/Forms.js';
 import * as URI from '../utils/URI.js';
 
 export class SettingsManager<OS extends OverlaySettings> {
@@ -14,12 +14,16 @@ export class SettingsManager<OS extends OverlaySettings> {
 
   constructor(private options: SettingsManagerOptions<OS>) {}
 
-  getSettings = (): OS => {
-    return structuredClone(this.settings);
+  getSettings = (unmask: boolean = true): OS => {
+    const settings = structuredClone(this.settings);
+
+    return unmask ? this.toggleMaskSettings(settings, false) : settings;
   };
 
   setSettings = (settings: OS) => {
     this.settings = settings;
+
+    this.toggleMaskSettings(settings, true);
   };
 
   getSettingsSchema(): Readonly<FormEntry[]> {
@@ -42,7 +46,7 @@ export class SettingsManager<OS extends OverlaySettings> {
     this.settingsSchema = structuredClone(this.settingsSchemaDefault);
   }
 
-  loadPluginSettings(plugins: PluginInstances, imports: PluginImports) {
+  registerPluginSettings(plugins: PluginInstances<OS>, imports: PluginImports<OS>) {
     // Iterate over every loaded plugin, and call `loadSettings` to manipulate the Settings Schema
     plugins.forEach(plugin => {
       try {
@@ -56,25 +60,25 @@ export class SettingsManager<OS extends OverlaySettings> {
     });
 
     // After we've finished modifying the SettingsSchema, we can parse and cache
-    this.parsedJsonResults = FromJson(this.getSettingsSchema());
-
-    this.toggleMaskSettings(false);
+    this.parsedJsonResults = FromJson(this.getSettingsSchema(), this.settings);
   }
 
-  toggleMaskSettings(mask: boolean) {
+  toggleMaskSettings(settings: OS, mask: boolean) {
     const passwordEntries = this.parsedJsonResults?.mapping?.password;
 
     Object.keys(passwordEntries ?? {}).forEach(settingName => {
-      const val = this.settings[settingName as keyof OS] as string;
+      const val = settings[settingName as keyof OS] as string;
 
       if (val) {
         const codingDir = mask ? btoa : atob;
-        this.settings[settingName as keyof OS] = codingDir(val) as OS[keyof OS];
+        settings[settingName as keyof OS] = codingDir(val) as OS[keyof OS];
       }
     });
+
+    return settings;
   }
 
-  addPluginSettings = (fieldGroup: FormEntryFieldGroup) => {
+  addPluginSettings = (fieldGroup: FormEntryGrouping) => {
     fieldGroup;
   };
 }

@@ -1,5 +1,6 @@
 [
   {
+    "name": "globalSettings",
     "inputType": "fieldgroup",
     "label": "Global Settings",
     "tooltip": "These are settings that generally apply to the entire Overlay.",
@@ -8,6 +9,7 @@
         "name": "channelSettings",
         "label": "Channel Settings",
         "inputType": "fieldgroup",
+        "description": "Enter your channel settings for Chat connectivity. If you don't supply a Token for the Streamer Channel, then the connection will be Anonymous. In order to send messages back, supply a Token for the Streamer Channel, or supply both a Bot Channel and Token for the Bot Channel.",
         "values": [
           {
             "name": "nameStreamer",
@@ -25,7 +27,7 @@
             "name": "nameBot",
             "label": "Channel Name (Bot)",
             "inputType": "text",
-            "tooltip": "This is the channel you want to display in the overlay!"
+            "tooltip": "This is the channel you want to act on behalf of the Bot!"
           },
           {
             "name": "tokenBot",
@@ -54,18 +56,34 @@
         "name": "pluginSettings",
         "label": "Plugins",
         "inputType": "fieldgroup",
+        "description": "Select the Plugins you'd like to load at the startup of the Overlay! These may perform operations on data, the way the Overlay renders, or supply additional Settings! You can use built-in Plugins, or supply your own!",
         "values": [
           {
-            "name": "plugins",
+            "name": "pluginSettings",
             "label": "Built-In Plugins",
-            "inputType": "switch-multiple",
-            "values": ["Example", "HangoutHere"]
+            "inputType": "fieldgroup",
+            "description": "Select a set of Built-In Plugins to load at startup! Warning: Certain Plugins can override functionality and cause conflicts or errors, so be sure they're compatible!",
+            "values": [
+              {
+                "name": "plugins",
+                "label": "",
+                "inputType": "switch-multiple",
+                "values": ["Example", "HangoutHere"]
+              }
+            ]
           },
           {
             "name": "customPlugins",
+            "inputType": "arraygroup",
             "label": "Custom Plugins",
-            "inputType": "text",
-            "tooltip": "Enter a full URL to a Plugin path of a folder that has both 'plugin.js' and 'plugin.css'.&#10;If this is supplied, the Plugins selection will be ignored.&#10;&#10;Example: https://mywebsite.com/pluginFolder/"
+            "description": "Enter a full URL to a Plugin path of a folder that has both <code>plugin.js</code> and <code>plugin.css</code>.<br />If this is supplied, the Plugins selection will be ignored.<br />Example: https://mywebsite.com/pluginFolder/",
+            "values": [
+              {
+                "name": "customPlugins",
+                "label": "Plugin Name",
+                "inputType": "text"
+              }
+            ]
           }
         ]
       }
