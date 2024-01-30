@@ -1,4 +1,6 @@
+import set from 'lodash.set';
 import { BOOLEAN_FALSES, BOOLEAN_TRUES } from '../types.js';
+import { IsValidValue } from './misc.js';
 
 export const BaseUrl = () => {
   const url = new URL(location.href.replaceAll('#', ''));
@@ -24,39 +26,35 @@ export const QueryStringToJson = <SettingsType, SettingsKey extends keyof Settin
   };
 
   params.forEach((param, paramName) => {
-    let existingValue = options[paramName as SettingsKey];
-
     const builtParam = buildParam(param as SettingsType[SettingsKey]);
-
-    // If we have an existing value...
-    //  and it's an array, append to it
-    if (undefined !== existingValue) {
-      if (Array.isArray(existingValue)) {
-        existingValue.push(builtParam);
-      } else {
-        // Exists, but not an array, turn it into one
-        existingValue = [existingValue, builtParam] as SettingsType[SettingsKey];
-      }
-    } else {
-      // Never existed, assume single item parameter
-      existingValue = builtParam as SettingsType[SettingsKey];
-    }
-
-    options[paramName as SettingsKey] = existingValue;
+    set(options as object, paramName, builtParam);
   });
 
   return options;
 };
 
-export const JsonToQuerystring = (json: any) =>
-  Object.keys(json)
-    .reduce<string[]>((kvp, key) => {
-      const values = Array.isArray(json[key]) ? (json[key] as []) : [json[key]];
-      values.forEach(value => {
-        if (undefined !== value && null !== value && '' !== value) {
-          kvp.push(key + '=' + encodeURIComponent(value));
-        }
-      });
+const buildObjectString = (prefix: string, propVal: any) => {
+  let kvp: string[] = [];
+
+  // Our object is an Array, so recursively process the properties!
+  if (true === Array.isArray(propVal)) {
+    propVal.forEach((subValue: any, idx: number) => {
+      kvp.push(...buildObjectString(`${prefix}[${idx}]`, subValue));
+    });
+  } else {
+    if (IsValidValue(propVal)) {
+      // KVP is simple prefix=someVal
+      kvp.push(`${prefix}=${encodeURIComponent(propVal)}`);
+    }
+  }
+
+  return kvp;
+};
+
+export const JsonToQuerystring = (json: Record<string, any>) =>
+  Object.entries(json)
+    .reduce<string[]>((kvp, [propName, propVal]) => {
+      kvp.push(...buildObjectString(propName, propVal));
       return kvp;
     }, [])
     .join('&');

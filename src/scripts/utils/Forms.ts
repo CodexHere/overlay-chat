@@ -1,4 +1,6 @@
-import { BOOLEAN_TRUES } from '../types.js';
+import merge from 'lodash.merge';
+import set from 'lodash.set';
+import { IsValidValue } from './misc.js';
 
 // TODO: Change to Map?
 export type FormData = Record<string, any>;
@@ -51,7 +53,8 @@ export const FromJson = <Settings extends {}>(
   let mapping: ParsedJsonMap = {};
   let results = '';
 
-  entries.forEach(entry => {
+  for (let entryIdx = 0; entryIdx < entries.length; entryIdx++) {
+    const entry = entries[entryIdx];
     let input = '';
 
     if (!entry.name) {
@@ -70,19 +73,43 @@ export const FromJson = <Settings extends {}>(
     let recursedCall: ParsedJsonResults | undefined;
     let description = '';
 
+    const settingsMapCount = Object.keys(settings).reduce(
+      (maxCountMap, paramName) => {
+        const paramVal = settings[paramName as keyof Settings];
+        const settingsCount = Array.isArray(paramVal) ? paramVal.length : 1;
+        maxCountMap[paramName] = maxCountMap[paramName] ?? 0;
+        maxCountMap[paramName] += 0 + settingsCount;
+
+        return maxCountMap;
+      },
+      {} as Record<string, any>
+    );
+
     /**
      * Input-level Generation
      */
     switch (entry.inputType) {
       case 'arraygroup':
-        const settingsValues = settings[nameOrLabelId as keyof Settings];
-        const numSettings = Array.isArray(settingsValues) ? settingsValues.length : 1;
+        const groupParamNames = entry.values.map(fe => fe.name);
+        const numSettings = groupParamNames.reduce((maxCount, paramName) => {
+          return Math.max(settingsMapCount[paramName] ?? 0, maxCount);
+        }, 1);
+
         const recursedCallArray = Array(numSettings)
           .fill(0)
-          .map(_settingCount => {
+          .map((_settingCount, settingIdx) => {
             return entry.values.map(fe => {
-              const processedJson = FromJson([fe], settings);
-              mapping = { ...mapping, ...processedJson.mapping };
+              const processedJson = FromJson(
+                [
+                  {
+                    ...fe,
+                    name: `${fe.name}[${settingIdx}]`
+                  }
+                ],
+                settings
+              );
+              mapping = merge({}, mapping, processedJson.mapping);
+
               return processedJson.results;
             });
           });
@@ -97,7 +124,7 @@ export const FromJson = <Settings extends {}>(
               </tr>
             </thead>
             <tbody>
-              ${recursedCallArray.map(row => `<tr><td>${row.join('</td><td>')}</td></tr>`)}
+              ${recursedCallArray.map(row => `<tr><td>${row.join('</td><td>')}</td></tr>`).join('')}
             </tbody>
           </table>
         `;
@@ -122,7 +149,7 @@ export const FromJson = <Settings extends {}>(
         break;
       case 'fieldgroup':
         recursedCall = FromJson(entry.values, settings);
-        mapping = { ...mapping, ...recursedCall.mapping };
+        mapping = merge({}, mapping, recursedCall.mapping);
 
         description = entry.description ? `<blockquote class="description">${entry.description}</blockquote>` : '';
 
@@ -185,7 +212,7 @@ export const FromJson = <Settings extends {}>(
           );
 
           input += recursedCall.results;
-          mapping = { ...mapping, ...recursedCall.mapping };
+          mapping = merge({}, mapping, recursedCall.mapping);
         });
 
         input += '</div>';
@@ -224,7 +251,7 @@ export const FromJson = <Settings extends {}>(
               ${recursedCall.results}
             </div>
           `;
-          mapping = { ...mapping, ...recursedCall.mapping };
+          mapping = merge({}, mapping, recursedCall.mapping);
         }
 
         break;
@@ -281,9 +308,9 @@ export const FromJson = <Settings extends {}>(
 
     results += input;
 
-    mapping[entry.inputType] = mapping[entry.inputType] || {};
+    mapping[entry.inputType] = mapping[entry.inputType] ?? {};
     mapping[entry.inputType]![entry.name] = entry;
-  });
+  }
 
   return {
     results,
@@ -291,39 +318,58 @@ export const FromJson = <Settings extends {}>(
   };
 };
 
-export const Populate = (form: HTMLFormElement, entries: FormData) => {
-  for (const [name, value] of Object.entries(entries)) {
-    const element = form.elements.namedItem(name);
+export const Populate = (form: HTMLFormElement, formData: FormData) => {
+  for (const [fieldName, fieldValue] of Object.entries(formData)) {
+    const looseLookup = form.elements.namedItem(fieldName);
+    let elements: Array<Element | RadioNodeList> = [looseLookup] as Array<Element | RadioNodeList>;
+    const isArrayOfElements = !looseLookup && Array.isArray(fieldValue);
 
-    if (!element) {
+    if (isArrayOfElements) {
+      elements = Array(fieldValue.length)
+        .fill(0)
+        .map((_i, idx) => form.elements.namedItem(`${fieldName}[${idx}]`)) as Array<Element | RadioNodeList>;
+    }
+
+    if (!elements || 0 == elements.length) {
       continue;
     }
 
-    if (element instanceof HTMLInputElement) {
-      switch (element.type) {
-        case 'checkbox':
-          element.checked = value;
-          break;
-        case 'color':
-          element.value = `#${value.replace('#', '')}`;
-          break;
-        case 'select-multiple':
-          const opts = [...(element as unknown as HTMLSelectElement).options];
-          const values = value as string[];
-          opts.forEach(opt => (opt.selected = values.includes(opt.value)));
-          break;
-        default:
-          element.value = value;
+    for (let idx = 0; idx < elements.length; idx++) {
+      const element = elements[idx];
+      const currValue = isArrayOfElements ? fieldValue[idx] : fieldValue;
+
+      if (false === IsValidValue(currValue)) {
+        continue;
       }
-    } else if (element instanceof RadioNodeList) {
-      [...element.entries()].forEach(([idx, input]) => {
-        if (input instanceof HTMLInputElement) {
-          const [checked, _inputValue] = value[idx].split(':');
-          input.checked = BOOLEAN_TRUES.includes(checked);
-        } else {
-          console.error('Invalid Input Type: ${input}');
+
+      if (element instanceof HTMLInputElement) {
+        switch (element.type) {
+          case 'checkbox':
+            element.checked = currValue;
+            break;
+          case 'color':
+            element.value = `#${currValue.replace('#', '')}`;
+            break;
+          default:
+            element.value = currValue;
         }
-      });
+      } else if (element instanceof HTMLSelectElement) {
+        const opts = [...element.options];
+        // `value` is a comma-separated string of `selectedIndex:value`
+        const enabledIndices = (currValue as string[]).map(v => v.split(':')[0]);
+        opts.forEach((opt, idx) => (opt.selected = enabledIndices.includes(idx.toString())));
+      } else if (element instanceof RadioNodeList) {
+        const inputs = [...element.values()];
+        // `value` is a comma-separated string of selected indices
+        const enabledIndices = (currValue as string[]).map(v => v.split(':')[0]);
+        inputs.forEach((input, idx) => {
+          if (input instanceof HTMLInputElement) {
+            input.checked = enabledIndices.includes(idx.toString());
+          } else {
+            console.error(`Invalid Input Type: ${input}`);
+          }
+        });
+      }
     }
   }
 };
@@ -333,30 +379,45 @@ export const GetData = (formElement: HTMLFormElement) => {
   const json: any = {};
 
   for (let [name, value] of formData.entries()) {
+    if (false === IsValidValue(value)) {
+      continue;
+    }
+
     const input = formElement.elements.namedItem(name);
+    let newValues: any = [];
 
     if (input instanceof HTMLInputElement) {
       switch (input.type) {
         case 'number':
-          json[name] = parseFloat(value as string);
+          newValues = parseFloat(value as string);
           break;
         case 'checkbox':
-          json[name] = input.checked;
+          newValues = input.checked;
           break;
         default:
-          json[name] = value;
+          if (value) {
+            newValues = value;
+          }
       }
     } else if (input instanceof HTMLSelectElement) {
-      json[name] = [...input.options].filter(opt => opt.selected).map(opt => opt.value);
+      newValues = [...input.options].filter(opt => opt.selected).map(opt => `${opt.index}:${opt.value}`);
     } else if (input instanceof RadioNodeList) {
-      json[name] = ([...input] as HTMLInputElement[]).map(opt =>
-        'checkbox' === opt.type ? `${opt.checked}:${opt.value}` : opt.value
-      );
-      // Cull empty values
-      json[name] = (json[name] as []).filter(item => !!item);
+      newValues = [...input]
+        .map((opt, idx) => {
+          if (false === opt instanceof HTMLInputElement) {
+            return -1;
+          }
+
+          return opt.checked ? `${idx}:${opt.value}` : null;
+        })
+        .filter(item => !!item);
     } else {
-      json[name] = value;
+      if (value) {
+        newValues = value;
+      }
     }
+
+    set(json, name, newValues);
   }
 
   return json;

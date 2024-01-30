@@ -83,36 +83,27 @@ details {
     background-color: var(--description-background-color);
   }
 
-  .content {
-    position: relative;
+  .content > details {
+    margin-left: calc(var(--spacing) * 2);
+    margin-top: var(--spacing);
 
-    padding: 0.5rem;
-    border: 1px solid var(--card-border-color);
-    border-top: 0;
-    background: var(--card-background-color);
+    &[open] summary::before {
+      top: 0.75rem;
+      left: 0;
+    }
 
-    & > details {
-      margin-left: calc(var(--spacing) * 2);
-      margin-top: var(--spacing);
+    summary {
+      font-size: 1em;
 
-      &[open] summary::before {
-        top: 0.75rem;
+      &::before {
+        font-size: 1.5em;
+        top: 0.65rem;
         left: 0;
       }
 
-      summary {
-        font-size: 1em;
-
-        &::before {
-          font-size: 1.5em;
-          top: 0.65rem;
-          left: 0;
-        }
-
-        .label-wrapper {
-          padding: 0;
-          padding-left: 0.5em;
-        }
+      .label-wrapper {
+        padding: 0;
+        padding-left: 0.5em;
       }
     }
   }

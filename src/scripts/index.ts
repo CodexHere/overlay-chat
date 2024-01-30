@@ -25,9 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
     needsOverlayRenderer: true,
     needsSettingsRenderer: true,
     settingsValidator: settings => {
-      const userDefined = !!settings.nameStreamer && (!!settings.tokenStreamer || true);
-      const botDefined = !!settings.tokenBot;
-      return !!settings.fontSize && userDefined && botDefined;
+      return !!settings.fontSize && !!settings.nameStreamer;
     },
 
     defaultPlugin: Plugin_Core

@@ -1,6 +1,6 @@
 {
   "name": "overlay-chat",
-  "version": "0.0.82",
+  "version": "0.0.9",
   "description": "",
   "main": "dist/index.js",
   "types": "dist/types/index.d.ts",
@@ -16,6 +16,9 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@types/lodash.get": "^4.4.9",
+    "@types/lodash.merge": "^4.6.9",
+    "@types/lodash.set": "^4.3.9",
     "@types/node": "^20.11.5",
     "@types/splitting": "^1.0.5",
     "@types/tmi.js": "^1.8.6",
@@ -30,6 +33,9 @@
     "@types/events": "^3.0.3",
     "events": "^3.3.0",
     "handlebars": "^4.7.8",
+    "lodash.get": "^4.4.2",
+    "lodash.merge": "^4.6.2",
+    "lodash.set": "^4.3.2",
     "splitting": "^1.0.6",
     "tmi-emote-parse": "^2.0.0",
     "tmi.js": "^1.8.5"

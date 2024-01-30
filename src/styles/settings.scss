@@ -16,6 +16,7 @@ body:has(#container-settings) {
   [data-input-type='password'] {
     .password-wrapper {
       display: flex;
+      position: relative;
 
       input {
         flex: 1;
@@ -25,7 +26,7 @@ body:has(#container-settings) {
         width: auto;
         background-color: transparent;
         border: none;
-        right: 1rem;
+        right: 0.4rem;
         display: inline-block;
         position: absolute;
       }
@@ -73,6 +74,10 @@ body:has(#container-settings) {
         display: none;
       }
 
+      .input-group label {
+        display: inline-block;
+      }
+
       .arraygroup-controls {
         display: flex;
         width: 8rem;
@@ -81,10 +86,31 @@ body:has(#container-settings) {
         margin-right: 1rem;
       }
     }
+
+    input,
+    select,
+    .input-group {
+      margin-bottom: 0;
+    }
   }
 
   .container-title {
     margin-bottom: 1rem;
+  }
+
+  .content {
+    position: relative;
+
+    padding: 0.5rem;
+    border: 1px solid var(--card-border-color);
+    border-top: 0;
+    background: var(--card-background-color);
+
+    table {
+      display: block;
+      max-width: 100%;
+      overflow: auto;
+    }
   }
 
   form {

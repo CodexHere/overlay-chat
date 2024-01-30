@@ -1,5 +1,7 @@
+import get from 'lodash.get';
+import set from 'lodash.set';
 import { OverlaySettings, PluginImports, PluginInstances, SettingsManagerOptions } from '../types.js';
-import { FormEntry, FormEntryGrouping, FromJson, ParsedJsonResults } from '../utils/Forms.js';
+import { FormEntry, FromJson, ParsedJsonResults } from '../utils/Forms.js';
 import * as URI from '../utils/URI.js';
 
 export class SettingsManager<OS extends OverlaySettings> {
@@ -22,6 +24,8 @@ export class SettingsManager<OS extends OverlaySettings> {
 
   setSettings = (settings: OS) => {
     this.settings = settings;
+
+    this.updateParsedJsonResults(settings);
 
     this.toggleMaskSettings(settings, true);
   };
@@ -60,25 +64,25 @@ export class SettingsManager<OS extends OverlaySettings> {
     });
 
     // After we've finished modifying the SettingsSchema, we can parse and cache
-    this.parsedJsonResults = FromJson(this.getSettingsSchema(), this.settings);
+    this.updateParsedJsonResults();
+  }
+
+  updateParsedJsonResults(settings: OS = this.settings) {
+    this.parsedJsonResults = FromJson(this.getSettingsSchema(), settings);
   }
 
   toggleMaskSettings(settings: OS, mask: boolean) {
     const passwordEntries = this.parsedJsonResults?.mapping?.password;
 
     Object.keys(passwordEntries ?? {}).forEach(settingName => {
-      const val = settings[settingName as keyof OS] as string;
+      const val = get(settings, settingName);
 
       if (val) {
         const codingDir = mask ? btoa : atob;
-        settings[settingName as keyof OS] = codingDir(val) as OS[keyof OS];
+        set(settings, settingName, codingDir(val));
       }
     });
 
     return settings;
   }
-
-  addPluginSettings = (fieldGroup: FormEntryGrouping) => {
-    fieldGroup;
-  };
 }

@@ -2,9 +2,10 @@ import { OverlaySettings, PluginInstances, RendererInstance, RendererInstanceOpt
 import * as Forms from '../utils/Forms.js';
 import { RenderTemplate } from '../utils/Templating.js';
 import * as URI from '../utils/URI.js';
-import { debounce } from '../utils/misc.js';
+import { GetLocalStorageItem, RemoveArrayIndex, SetLocalStorageItem, debounce } from '../utils/misc.js';
 
 const shouldReloadPlugins = ['plugins', 'customPlugins'];
+const detailsTypes = ['DETAILS:', 'SUMMARY:', 'DIV:label-wrapper'];
 
 export class SettingsRenderer<OS extends OverlaySettings> implements RendererInstance {
   private _onSettingsChanged: (event: Event) => Promise<void>;
@@ -27,6 +28,8 @@ export class SettingsRenderer<OS extends OverlaySettings> implements RendererIns
     this.bindFormEvents();
 
     this.updateUrlAndResults();
+
+    this.restoreDetailOpens();
   }
 
   private updateUrlAndResults() {
@@ -50,11 +53,8 @@ export class SettingsRenderer<OS extends OverlaySettings> implements RendererIns
     // Establish `elements` now that the Settings Form has been injected into DOM
     const form = (elems['form'] = root.querySelector('form')!);
     elems['link-results'] = root.querySelector('.link-results textarea')!;
-    elems['first-details'] = root.querySelector('details')!;
 
     Forms.Populate(form, settings);
-
-    elems['first-details']?.setAttribute('open', '');
   }
 
   private renderPluginSettings(plugins: PluginInstances<OS>) {
@@ -96,12 +96,49 @@ export class SettingsRenderer<OS extends OverlaySettings> implements RendererIns
 
     elems['new-window-checkbox'] = root.querySelector('.link-results .load-option-new')!;
 
-    form.addEventListener('input', debounce(this.onSettingsChanged, 500));
+    form.addEventListener('input', this._onSettingsChanged);
     form.addEventListener('click', this.onFormClicked);
     btnLoadOverlay.addEventListener('click', this.onClickLoadOverlay);
   }
 
+  private restoreDetailOpens() {
+    const openDetails = GetLocalStorageItem('openDetails') as string[];
+
+    if (!openDetails || 0 === openDetails.length) {
+      // Open first one if state is missing
+      this.options.renderOptions.elements?.['root'].querySelector('details')?.setAttribute('open', '');
+      return;
+    }
+
+    openDetails.forEach(id => document.querySelector(`#${id}`)?.setAttribute('open', ''));
+  }
+
   private onFormClicked = (event: MouseEvent) => {
+    // A Details section might have been clicked
+    if (true === event.target instanceof Element) {
+      const tagAndClass = `${event.target.tagName}:${event.target.className}`;
+      // User clicked a valid tag/class combo for a Details capture
+      if (detailsTypes.includes(tagAndClass)) {
+        const details = event.target.closest('details')!;
+        const parentDetails = details.parentElement?.closest('details')!;
+        const isOpening = false === details.hasAttribute('open');
+        const openDetailsArray = GetLocalStorageItem('openDetails') ?? [];
+        const openDetails = new Set(openDetailsArray);
+
+        if (isOpening) {
+          openDetails.add(details.id);
+          openDetails.add(parentDetails.id);
+        } else {
+          openDetails.delete(details.id);
+        }
+
+        SetLocalStorageItem('openDetails', [...openDetails]);
+
+        return;
+      }
+    }
+
+    // A Button might have been clicked
     if (false === event.target instanceof HTMLButtonElement) {
       return;
     }
@@ -136,12 +173,22 @@ export class SettingsRenderer<OS extends OverlaySettings> implements RendererIns
     } else {
       const fieldgroupJSON = content?.querySelector('.arraygroup-controls')?.getAttribute('data-inputs');
       const fieldgroup = JSON.parse(fieldgroupJSON || '[]') as Forms.FormEntryGrouping[];
+      const rows = content?.querySelectorAll('table tbody tr');
+      let rowCount = rows?.length ?? 0;
 
       if (0 !== fieldgroup.length) {
-        const inputs = fieldgroup.map(
-          fe => Forms.FromJson([fe], this.options.settingsManager.getSettings()).results,
-          this.options.settingsManager.getSettings()
-        );
+        const inputs = fieldgroup.map(fe => {
+          return Forms.FromJson(
+            [
+              {
+                ...fe,
+                name: `${fe.name}[${rowCount}]`
+              }
+            ],
+            this.options.settingsManager.getSettings()
+          ).results;
+        });
+
         tableBody.insertAdjacentHTML('beforeend', `<tr><td>${inputs.join('</td><td>')}</td></tr>`);
       }
     }
@@ -152,7 +199,7 @@ export class SettingsRenderer<OS extends OverlaySettings> implements RendererIns
     event.stopImmediatePropagation();
 
     const name = btn.name.replace('password-view-', '');
-    const input = btn.closest('div.password-wrapper')?.querySelector(`input[name=${name}]`) as HTMLInputElement;
+    const input = btn.closest('div.password-wrapper')?.querySelector(`input[name="${name}"]`) as HTMLInputElement;
 
     if (input) {
       input.type = 'text' === input.type ? 'password' : 'text';
@@ -164,9 +211,10 @@ export class SettingsRenderer<OS extends OverlaySettings> implements RendererIns
     const form = target.form!;
 
     const formData = Forms.GetData(form);
+    const targetName = RemoveArrayIndex(target.name);
     this.options.settingsManager.setSettings(formData);
 
-    if (shouldReloadPlugins.includes(target.name)) {
+    if (shouldReloadPlugins.includes(targetName)) {
       this.options.settingsManager.resetSettingsSchema();
 
       try {
@@ -177,7 +225,6 @@ export class SettingsRenderer<OS extends OverlaySettings> implements RendererIns
       }
     } else {
       form.reportValidity();
-
       this.updateUrlAndResults();
     }
   };

@@ -17,7 +17,6 @@ import { GetColorForUsername } from './utils/misc.js';
 
 export type OverlaySettings_Chat = OverlaySettings & {
   fontSize: number;
-  nameBot?: string;
   nameStreamer?: string;
   tokenBot?: string;
   tokenStreamer?: string;
@@ -48,8 +47,12 @@ export default class Plugin_Core implements OverlayPluginInstance<OverlaySetting
     bot: undefined
   };
 
-  get useBot() {
-    return this.clients.bot;
+  get hasClientStreamer() {
+    return this.clients.streamer && false === this.clients.streamer.getUsername().startsWith('justin');
+  }
+
+  get hasClientBot() {
+    return this.clients.bot && false === this.clients.bot.getUsername().startsWith('justin');
   }
 
   constructor(
@@ -65,7 +68,7 @@ export default class Plugin_Core implements OverlayPluginInstance<OverlaySetting
   }
 
   private generateTmiOptions() {
-    const { nameStreamer, tokenStreamer, nameBot, tokenBot } = this.getSettings();
+    const { nameStreamer, tokenStreamer, tokenBot } = this.getSettings();
 
     let clientOptions_Bot: tmiJs.Options | undefined;
     let clientOptions_Streamer: tmiJs.Options = {
@@ -88,7 +91,7 @@ export default class Plugin_Core implements OverlayPluginInstance<OverlaySetting
       };
     }
 
-    if (nameBot && tokenBot) {
+    if (tokenBot) {
       console.log('Authenticating as Bot');
 
       clientOptions_Bot = {
@@ -97,7 +100,7 @@ export default class Plugin_Core implements OverlayPluginInstance<OverlaySetting
           skipUpdatingEmotesets: true
         },
         identity: {
-          username: nameBot,
+          username: nameStreamer,
           password: tokenBot
         }
       };
@@ -267,9 +270,20 @@ export default class Plugin_Core implements OverlayPluginInstance<OverlaySetting
     }
   }
 
-  _onBusSendMessage = (message: string) => {
+  _onBusSendMessage = (message: string, useClient: 'bot' | 'streamer' = 'bot') => {
     const settings = this.getSettings();
-    const client = this.useBot ? this.clients.bot : this.clients.streamer;
+    // Use the client specified, defaulting to `bot`
+    // If `streamer` is set, try to use that, otherwise fallback to `bot` client if valid
+    // lastly fallback to `null` for error handling
+    const client =
+      'bot' === useClient && this.hasClientBot ? this.clients.bot
+      : this.hasClientStreamer ? this.clients.streamer
+      : this.hasClientBot ? this.clients.bot
+      : null;
+
+    if (!client) {
+      throw new Error('No viable Twitch Client to message on');
+    }
 
     client?.say(settings.nameStreamer!, message);
   };

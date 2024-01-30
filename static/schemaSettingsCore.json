@@ -9,7 +9,7 @@
         "name": "channelSettings",
         "label": "Channel Settings",
         "inputType": "fieldgroup",
-        "description": "Enter your channel settings for Chat connectivity. If you don't supply a Token for the Streamer Channel, then the connection will be Anonymous. In order to send messages back, supply a Token for the Streamer Channel, or supply both a Bot Channel and Token for the Bot Channel.",
+        "description": "Enter your channel settings for Chat. If you do not supply a <a href=\"https://twitchapps.com/tmi/\" target=\"_new\">Token</a> for the Streamer or Bot User <i>each</i>, then the connection will be Anonymous and you cannot send messages.",
         "values": [
           {
             "name": "nameStreamer",
@@ -22,12 +22,6 @@
             "name": "tokenStreamer",
             "label": "Chat Token (Streamer)",
             "inputType": "password"
-          },
-          {
-            "name": "nameBot",
-            "label": "Channel Name (Bot)",
-            "inputType": "text",
-            "tooltip": "This is the channel you want to act on behalf of the Bot!"
           },
           {
             "name": "tokenBot",
@@ -53,7 +47,7 @@
       },
 
       {
-        "name": "pluginSettings",
+        "name": "pluginLoadSettings",
         "label": "Plugins",
         "inputType": "fieldgroup",
         "description": "Select the Plugins you'd like to load at the startup of the Overlay! These may perform operations on data, the way the Overlay renders, or supply additional Settings! You can use built-in Plugins, or supply your own!",

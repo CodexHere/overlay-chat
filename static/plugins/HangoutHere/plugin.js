@@ -6,15 +6,22 @@
  * @property {string} colorVip
  * @typedef {OS_Base & OS_Core} OS
  *
- * @typedef {import('../../../src/scripts/Plugin_Core.js').MiddewareContext_Chat} Context
+ * @typedef {import('../../../src/scripts/managers/BusManager.js').BusError_ForceFailPipeline} BusError_ForceFailPipeline
+ * @typedef {import('../../../src/scripts/types.js').ContextBase} ContextBase
+ * @typedef {import('../../../src/scripts/Plugin_Core.js').MiddewareContext_Chat} ConcreteContext
+ * @typedef {ContextBase & Partial<ConcreteContext>} Context
  * @typedef {import('../../../src/scripts/utils/EnhancedEventEmitter.js').EnhancedEventEmitter} EnhancedEventEmitter
  * @typedef {import('../../../src/scripts/utils/Forms.js').FormEntryGrouping} FormEntryFieldGroup
- * @typedef {import('../../../src/scripts/types.js').ContextBase} ContextBase
+ * @typedef {import('../../../src/scripts/utils/Middleware.js').Next<Context>} Next
+ * @typedef {import('../../../src/scripts/utils/Middleware.js').Middleware<Context>} MiddlewareContext
+ * @typedef {import('../../../src/scripts/utils/Middleware.js').Middleware<ContextBase>} MiddlewareContextBase
  * @typedef {import('../../../src/scripts/types.js').RenderOptions} RenderOptions
  * @typedef {import('../../../src/scripts/types.js').SettingsInjector} SettingsInjector
  * @typedef {import('../../../src/scripts/types.js').OverlayPluginInstance<OS>} OverlayPluginInstance
  * @typedef {import('../../../src/scripts/types.js').SettingsRetriever<OS>} SettingsRetriever
+ * @typedef {import('../../../src/scripts/types.js').BusManagerEvents} BusManagerEvents
  * @typedef {import('../../../src/scripts/types.js').BusManagerEmitter} BusManagerEmitter
+ * @typedef {import('../../../src/scripts/types.js').BusManagerContext_Init<ContextBase>} BusManagerContext_Init
  *
  * @implements {OverlayPluginInstance}
  */
@@ -101,24 +108,22 @@ s   */
 
     setTimeout(() => {
       console.log('Sending message');
-      this.emitter.emit('chat:twitch--send', 'Hello from HangoutHere Theme!');
+      this.emitter.emit('chat:twitch--send', '[from Bot] Hello from HangoutHere Theme!');
+      this.emitter.emit('chat:twitch--send', '[from Streamer] Hello from HangoutHere Theme!', 'streamer');
     }, 3000);
   }
 
   registerPluginMiddleware() {
-    /** @type {?} */
-    const bindMap = new Map(
+    return new Map(
       Object.entries({
         'chat:twitch': [this.middleware]
       })
     );
-
-    return /** @type {Map<string, Middleware>} */ bindMap;
   }
 
   /**
    * @param {Context} context
-   * @param {(error?: Error) => Promise<void>} next
+   * @param {Next} next
    */
   middleware = async (context, next) => {
     context.message += ` [HangoutHere] `;
