@@ -1,43 +1,5 @@
 [
   {
-    "name": "testArea",
-    "inputType": "arraygroup",
-    "label": "Testing Stuff",
-    "description": "Just testing things dawg",
-    "values": [
-      {
-        "name": "myOption",
-        "label": "Option Thing",
-        "inputType": "radio",
-        "values": ["rdo Item Entry 1", "rdo Item Entry Two"]
-      },
-      {
-        "name": "fieldName",
-        "label": "Field Name",
-        "inputType": "text"
-      },
-      {
-        "name": "myOption2",
-        "label": "Check Thing",
-        "inputType": "checkbox-multiple",
-        "values": ["chk Item Entry 1", "chk Item Entry Two"]
-      },
-      {
-        "name": "myOption3",
-        "label": "Select Multi Thing",
-        "inputType": "select-multiple",
-        "values": ["sm Item Entry 1", "sm Item Entry Two"]
-      },
-      {
-        "name": "myOption4",
-        "label": "Select Thing",
-        "inputType": "select",
-        "values": ["s Item Entry 1", "s Item Entry Two"]
-      }
-    ]
-  },
-
-  {
     "name": "globalSettings",
     "inputType": "fieldgroup",
     "label": "Global Settings",
@@ -85,7 +47,7 @@
       },
 
       {
-        "name": "pluginSettings",
+        "name": "pluginLoadSettings",
         "label": "Plugins",
         "inputType": "fieldgroup",
         "description": "Select the Plugins you'd like to load at the startup of the Overlay! These may perform operations on data, the way the Overlay renders, or supply additional Settings! You can use built-in Plugins, or supply your own!",

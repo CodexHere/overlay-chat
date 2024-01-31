@@ -72,7 +72,7 @@ export type BootstrapOptions<OS extends OverlaySettings> = {
 export type OverlaySettings = {
   forceShowSettings?: boolean;
   plugins?: string[];
-  customPlugins?: string;
+  customPlugins?: string[];
 };
 
 // Renderers

@@ -75,18 +75,23 @@ export class OverlayBootstrapper<OS extends OverlaySettings> implements ErrorMan
   showError = (err: Error | Error[]) => {
     const root = this.bootstrapOptions.renderOptions.elements!['root']!;
 
-    if (!err || (Array.isArray(err) && 0 === err.length)) {
+    if (!err) {
       return;
     }
 
-    console.error(err);
+    if (false === Array.isArray(err)) {
+      err = [err];
+    }
+
+    if (0 === err.length) {
+      return;
+    }
+
+    err.forEach(console.error);
 
     root.querySelector('dialog')?.remove();
 
-    const msg =
-      err instanceof Error ? err.message
-      : Array.isArray(err) ? err.map(e => e.message).join('<br> <br>')
-      : '';
+    const msg = err.map(e => e.message).join('<br> <br>');
 
     // TODO: Should be converted to a template!
 

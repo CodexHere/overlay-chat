@@ -105,13 +105,11 @@ export class BusManager<OS extends OverlaySettings> {
 
     try {
       console.log(`Starting Chain: ${ctx.initiatingPlugin.name}`);
-
       await pipeline.execute(ctx.initialContext);
-
       console.log(`Ending Chain: ${ctx.initiatingPlugin.name}`);
     } catch (err) {
       if (true === isForceFailPipelineError(err)) {
-        console.log(`Chain Catch -- Force Fail Chain: ${ctx.initiatingPlugin.name}`);
+        console.log(`Chain Catch - Force Fail Chain: ${ctx.initiatingPlugin.name}`);
       } else {
         console.log(`Error in Chain: ${ctx.initiatingPlugin.name}`);
         throw err;

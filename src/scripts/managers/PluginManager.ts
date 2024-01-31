@@ -1,5 +1,4 @@
 import {
-  BOOLEAN_TRUES,
   OverlayPluginConstructor,
   OverlayPluginInstance,
   OverlaySettings,
@@ -29,15 +28,11 @@ export class PluginManager<OS extends OverlaySettings> {
     const { customPlugins, plugins } = this.options.settingsManager.getSettings();
 
     if (customPlugins) {
-      pluginUrls = Array.isArray(customPlugins) ? customPlugins : [customPlugins];
+      pluginUrls = customPlugins;
     } else if (plugins) {
       // At runtime, `plugins` may actually be a single string due to deserializing
       // URLSearchParams that only had one specified plugin
-      pluginUrls = Array.isArray(plugins) ? plugins : ([plugins] as unknown as string[]);
-
-      pluginUrls = pluginUrls
-        // Filter allow `true` values (format is: `boolean:Value`)
-        .filter(invalidPluginData => BOOLEAN_TRUES.includes(invalidPluginData.split(':')[0]))
+      pluginUrls = plugins
         // Convert `true:SomePluginName` -> `SomePluginName`
         .map(invalidPluginData => invalidPluginData.split(':')[1])
         // Iterate getting the full plugin path

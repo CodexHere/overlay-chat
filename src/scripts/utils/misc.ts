@@ -31,3 +31,18 @@ export function debounce<T extends (...args: any[]) => any>(callback: T, wait: n
 
   return <T>(<any>callable);
 }
+
+const indexRegExp = new RegExp(/(.*)\[\d*\]$/);
+
+export const RemoveArrayIndex = (paramName: string) => paramName.replace(indexRegExp, '$1');
+
+export const IsValidValue = (value: any) =>
+  (undefined !== value && null !== value && '' !== value) || (Array.isArray(value) && 0 == value.length);
+
+export const GetLocalStorageItem = (name: string) => {
+  const data = globalThis.localStorage.getItem(name);
+  return data ? JSON.parse(data) : null;
+};
+
+export const SetLocalStorageItem = (name: string, value: any) =>
+  globalThis.localStorage.setItem(name, JSON.stringify(value));

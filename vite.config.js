@@ -1,4 +1,5 @@
 import { resolve } from 'path';
+import { splitVendorChunkPlugin } from 'vite';
 import dts from 'vite-plugin-dts';
 import version from 'vite-plugin-package-version';
 
@@ -15,6 +16,7 @@ export default {
   publicDir: STATIC_DIR,
 
   plugins: [
+    splitVendorChunkPlugin(),
     // Inject `package.json`::`version` into `import.meta.env.PACKAGE_VERSION`
     version(),
 

@@ -11,11 +11,13 @@ body:has(#container-settings) {
   [data-input-type] {
     display: flex;
     flex-direction: column;
+    min-width: 12em;
   }
 
   [data-input-type='password'] {
     .password-wrapper {
       display: flex;
+      position: relative;
 
       input {
         flex: 1;
@@ -25,7 +27,7 @@ body:has(#container-settings) {
         width: auto;
         background-color: transparent;
         border: none;
-        right: 1rem;
+        right: 0.4rem;
         display: inline-block;
         position: absolute;
       }
@@ -85,10 +87,35 @@ body:has(#container-settings) {
         margin-right: 1rem;
       }
     }
+
+    input,
+    select,
+    .input-group {
+      margin-bottom: 0;
+    }
   }
 
   .container-title {
     margin-bottom: 1rem;
+  }
+
+  .content {
+    position: relative;
+
+    padding: 0.5rem;
+    border: 1px solid var(--card-border-color);
+    border-top: 0;
+    background: var(--card-background-color);
+
+    .table-wrapper {
+      max-width: 100%;
+      overflow: auto;
+      margin-bottom: var(--typography-spacing-vertical);
+
+      table {
+        margin-bottom: 0;
+      }
+    }
   }
 
   form {
