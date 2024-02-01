@@ -1,12 +1,20 @@
-body:has(#container-settings) {
-  background: #0b0b0b url('../../../images/bg_stone.jpg') center/cover no-repeat;
-}
+// body:has(#container-settings) {
+//   background: #0b0b0b url('../../../images/bg_stone.jpg') center/cover no-repeat;
+// }
 
 #container-settings {
   display: flex;
   flex-direction: column;
   padding: 1rem;
   height: 100%;
+
+  h1 {
+    text-shadow:
+      0px 0px 3px rgb(255 255 255),
+      0px 0px 4px rgb(0 0 0),
+      0px 0px 18px var(--base-background),
+      0px 0px 5px var(--base-background);
+  }
 
   [data-input-type] {
     display: flex;
@@ -174,6 +182,12 @@ body:has(#container-settings) {
     button {
       width: auto;
       flex: 1;
+    }
+  }
+
+  .settings-options {
+    &:has(*) {
+      padding: calc(var(--spacing) / 2);
     }
   }
 

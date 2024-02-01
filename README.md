@@ -2,12 +2,30 @@
 
 ## TODO
 
-* New FormEntry type: array
-  ~~* Similar to a field group, but the children are repeated n-times~~
-  ~~* The user is given +/- buttons, and possibly re-ordering?~~
-    * https://github.com/lukasoppermann/html5sortable#examples
-  * Test against multiple items in sub-fieldgroup
-* Rename to Default Plugin to Example with some cool examples
+* ALL Plugins need chance to implement `isConfigured`
+	* If not, there's no way to know if the overlay is ACTUALLY configured
+	* No longer should be an injection to Bootstrapper since it's now plugin-based, and will be part of Core Plugin
+* Plugins should have configs returned as it currently is, or a URL to load on behalf of the plugin
+* Plugins should have injection points for style URL object
+  * Don't auto assume!
+* Need new custom error type: `ForceShowUser`
+  * Enforces calling `showError` so the user can see
+  * Discretionary use, specifically for when plugins/chains/etc simply CANNOT work and it breaks the entire everything. IE, user auth fails at some point?
+* Move existing Twitch Chat stuff over to it's own Chat: Core plugin
+  * Include Authentication w/Twitch
+    * Look more into: https://twitchtokengenerator.com/
+  * Needs refresh capabilities
+  * Event:SendMessage (if auth'd properly) - Sends a simple message to chat
+  * Event:HasAuth - ?? returns bool if auth'd
+* Figure out debouncing on Settings... There's some annoyance with UX and jumping to a required input
+* Bootstrapper should load HTML Template file
+* Handle error responses from `SettingsValidator`
+  * This will show errors and possibly modify the form validity if necessary
+* Ability to compress (`lz-string`) url params
+  * `&compressed=true&data=<data_here>`
+  * Will need to decompress in settings as well
+* Heavily Document everything
+* Create some cool examples:
 	* Generally where I come up with ideas and flesh them out before moving into final plugin
 		* Just don't delete stuff!!!
 	* Custom Chains
@@ -19,23 +37,8 @@
 		* Sound on msg
 		* confetti on follow?
 		* TTS on eventsub redeem
-* Do we move core functionality to a `Core` plugin that is always loaded? This lets the framework be more agnostic?
-* ALL Plugins need chance to implement `isConfigured`
-	* If not, there's no way to know if the overlay is ACTUALLY configured
-	* No longer should be an injection to Bootstrapper since it's now plugin-based, and will be part of Core Plugin
-* Move existing Twitch Chat stuff over to it's own Chat: Core plugin
-  * Include Authentication w/Twitch
-  * Event:SendMessage (if auth'd properly) - Sends a simple message to chat
-  * Event:HasAuth - returns bool if auth'd
-* Figure out debouncing on Settings... There's some annoyance with UX and jumping to a required input
-* Bootstrapper should load HTML Template file
-* Handle error responses from `SettingsValidator`
-  * This will show errors and possibly modify the form validity if necessary
-* Ability to compress (`lz-string`) url params
-  * `&compressed=true&data=<data_here>`
-  * Will need to decompress in settings as well
-* Heavily Document everything
 * Librarify:
+  * https://vitejs.dev/guide/build#library-mode
   * Overlay Architecture
   * Form Utils
      * Options to auto convert to array per key

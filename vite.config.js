@@ -8,9 +8,7 @@ const SRC_DIR = resolve(PROJECT_DIR, 'src');
 const OUT_DIR = resolve(PROJECT_DIR, 'dist');
 const STATIC_DIR = resolve(PROJECT_DIR, 'static');
 
-// TODO: Make operate later, disabling for testing
-// const isProd = 'production' === process.env.NODE_ENV;
-const isProd = true;
+const isProd = 'production' === process.env.NODE_ENV;
 
 export default {
   publicDir: STATIC_DIR,

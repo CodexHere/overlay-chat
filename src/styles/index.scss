@@ -19,8 +19,17 @@ body {
 }
 
 body {
-  background: #0b0b0b;
-  background-size: cover;
+  --base-background-percent-x: 15%;
+  --base-background-percent-y: 85%;
+
+  background: var(--base-background);
+  background: radial-gradient(
+    circle farthest-side at var(--base-background-percent-x) var(--base-background-percent-y),
+    var(--base-background) 0%,
+    var(--base-background-2) 90%
+  );
+
+  animation: base-animate-background var(--base-background-animation-speed) linear infinite normal;
 
   display: flex;
   flex-direction: column;
@@ -42,4 +51,31 @@ dialog {
 
 code {
   border: 1px solid var(--card-border-color);
+}
+
+@keyframes base-animate-background {
+  0% {
+    --base-background-percent-x: 85%;
+    --base-background-percent-y: 85%;
+  }
+
+  20% {
+    --base-background-percent-x: 15%;
+    --base-background-percent-y: 85%;
+  }
+
+  60% {
+    --base-background-percent-x: 15%;
+    --base-background-percent-y: 15%;
+  }
+
+  80% {
+    --base-background-percent-x: 85%;
+    --base-background-percent-y: 15%;
+  }
+
+  100% {
+    --base-background-percent-x: 85%;
+    --base-background-percent-y: 85%;
+  }
 }

@@ -7,11 +7,22 @@ import { GetLocalStorageItem, RemoveArrayIndex, SetLocalStorageItem, debounce } 
 const shouldReloadPlugins = ['plugins', 'customPlugins'];
 const detailsTypes = ['DETAILS:', 'SUMMARY:', 'DIV:label-wrapper'];
 
+const ScrollTTY = 20; // in seconds
+const isScrollTTYExpired = () => {
+  const lastScrolledAt = Number(GetLocalStorageItem('lastScrolledAt') || 0);
+  const now = new Date().getTime();
+  const elapsed = now - lastScrolledAt;
+
+  return elapsed >= ScrollTTY * 1000;
+};
+
 export class SettingsRenderer<OS extends OverlaySettings> implements RendererInstance {
-  private _onSettingsChanged: (event: Event) => Promise<void>;
+  private _onOverlaySettingsChanged: (event: Event) => Promise<void>;
+  private _onFormScrolled: (event: Event) => void;
 
   constructor(private options: RendererInstanceOptions<OS>) {
-    this._onSettingsChanged = debounce(this.onSettingsChanged, 500);
+    this._onOverlaySettingsChanged = debounce(this.onOverlaySettingsChanged, 500);
+    this._onFormScrolled = debounce(this.onFormScrolled, 100);
   }
 
   async init() {
@@ -52,7 +63,8 @@ export class SettingsRenderer<OS extends OverlaySettings> implements RendererIns
 
     // Establish `elements` now that the Settings Form has been injected into DOM
     const form = (elems['form'] = root.querySelector('form')!);
-    elems['link-results'] = root.querySelector('.link-results textarea')!;
+    elems['link-results'] = root.querySelector('.link-results')!;
+    elems['link-results-output'] = elems['link-results'].querySelector('textarea')!;
 
     Forms.Populate(form, settings);
   }
@@ -74,37 +86,43 @@ export class SettingsRenderer<OS extends OverlaySettings> implements RendererIns
 
   private unbindFormEvents() {
     const elems = this.options.renderOptions.elements!;
-    const root = elems['root'];
-    const form = (elems['form'] = root.querySelector('form')!);
-    const btnLoadOverlay = (elems['button-load-overlay'] = root.querySelector('.link-results .button-load-overlay')!);
+    const form = elems['form'];
+    const linkResults = elems['link-results'];
+    const btnLoadOverlay = linkResults?.querySelector('.button-load-overlay');
 
     if (form) {
-      form.removeEventListener('input', this._onSettingsChanged);
+      form.removeEventListener('input', this._onOverlaySettingsChanged);
       form.removeEventListener('click', this.onFormClicked);
+      form.removeEventListener('scroll', this._onFormScrolled);
     }
 
-    if (btnLoadOverlay) {
-      btnLoadOverlay.removeEventListener('click', this.onClickLoadOverlay);
-    }
+    btnLoadOverlay?.removeEventListener('click', this.onClickLoadOverlay);
+    linkResults?.removeEventListener('click', this.onSettingsOptionChange);
   }
 
   private bindFormEvents() {
     const elems = this.options.renderOptions.elements!;
-    const root = elems['root'];
-    const form = (elems['form'] = root.querySelector('form')!);
-    const btnLoadOverlay = (elems['button-load-overlay'] = root.querySelector('.link-results .button-load-overlay')!);
+    const form = elems['form'];
+    const linkResults = elems['link-results'];
+    const btnLoadOverlay = linkResults?.querySelector('.button-load-overlay')!;
 
-    elems['new-window-checkbox'] = root.querySelector('.link-results .load-option-new')!;
+    linkResults?.addEventListener('click', this.onSettingsOptionChange);
 
-    form.addEventListener('input', this._onSettingsChanged);
-    form.addEventListener('click', this.onFormClicked);
-    btnLoadOverlay.addEventListener('click', this.onClickLoadOverlay);
+    if (form) {
+      form.addEventListener('input', this._onOverlaySettingsChanged);
+      form.addEventListener('click', this.onFormClicked);
+      form.addEventListener('scroll', this._onFormScrolled);
+    }
+
+    if (btnLoadOverlay) {
+      elems['button-load-overlay'] = btnLoadOverlay as HTMLElement;
+      btnLoadOverlay.addEventListener('click', this.onClickLoadOverlay);
+    }
   }
 
   private restoreViewState() {
-    const lastClickedId = GetLocalStorageItem('lastClicked');
+    // Re-open Details groups
     const openDetails = GetLocalStorageItem('openDetails') as string[];
-
     if (!openDetails || 0 === openDetails.length) {
       // Open first one if state is missing
       this.options.renderOptions.elements?.['root'].querySelector('details')?.setAttribute('open', '');
@@ -112,38 +130,71 @@ export class SettingsRenderer<OS extends OverlaySettings> implements RendererIns
       openDetails.forEach(id => document.querySelector(`#${id}`)?.setAttribute('open', ''));
     }
 
-    if (lastClickedId) {
-      const lastClicked = document.getElementById(lastClickedId);
+    // Scroll Height
+    const scrollHeight = GetLocalStorageItem('scrollHeight');
+    if (scrollHeight && false === isScrollTTYExpired()) {
+      this.options.renderOptions.elements!['form'].scrollTo({
+        top: scrollHeight
+      });
+    }
 
-      if (lastClicked) {
-        const top = lastClicked.offsetTop + this.options.renderOptions.elements!['form'].offsetTop;
-        this.options.renderOptions.elements?.['form']?.scrollTo({
-          behavior: 'smooth',
-          top
-        });
-      }
+    // Settings Options
+    const settingsOptions = GetLocalStorageItem('settingsOptions') as Record<string, any>;
+    if (settingsOptions) {
+      this.options.renderOptions.elements!['root'].querySelectorAll('.settings-option').forEach(opt => {
+        if (false === opt instanceof HTMLInputElement) {
+          return;
+        }
+
+        const storedSetting = settingsOptions[opt.name];
+        if (!storedSetting) {
+          return;
+        }
+
+        switch (opt.type) {
+          case 'checkbox':
+          case 'radio':
+            opt.checked = storedSetting;
+            break;
+          default:
+            opt.value = storedSetting;
+            break;
+        }
+      });
     }
   }
 
-  private onFormClicked = (event: MouseEvent) => {
-    // A Details section might have been clicked
-    if (true === event.target instanceof Element) {
-      const useId = event.target.id ? event.target.id : event.target.closest('*[id]')?.id;
-      SetLocalStorageItem('lastClicked', useId);
-
-      const tagAndClass = `${event.target.tagName}:${event.target.className}`;
-      // User clicked a valid tag/class combo for a Details capture
-      if (detailsTypes.includes(tagAndClass)) {
-        this.trackDetailsClicks(event);
-        return;
-      }
+  private onFormScrolled = (event: Event) => {
+    if (!event.target || false === event.target instanceof HTMLFormElement) {
+      return;
     }
 
-    // A Button might have been clicked
+    // Form has scrolled
+    const scrollHeight = event.target.scrollTop;
+    SetLocalStorageItem('scrollHeight', scrollHeight);
+    SetLocalStorageItem('lastScrolledAt', new Date().getTime());
+  };
+
+  private checkDetailsClicked = (event: MouseEvent) => {
+    if (false === event.target instanceof Element) {
+      return;
+    }
+
+    // A Details section might have been clicked
+    const tagAndClass = `${event.target.tagName}:${event.target.className}`;
+
+    // User clicked a valid tag/class combo for a Details capture
+    if (detailsTypes.includes(tagAndClass)) {
+      this.trackDetailsClicks(event);
+    }
+  };
+
+  private checkButtonsClicked = (event: MouseEvent) => {
     if (false === event.target instanceof HTMLButtonElement) {
       return;
     }
 
+    // A Button might have been clicked
     const btn = event.target;
     const name = btn.name;
 
@@ -152,6 +203,11 @@ export class SettingsRenderer<OS extends OverlaySettings> implements RendererIns
     } else if (true === name.startsWith('addentry') || true === name.startsWith('delentry')) {
       return this.manageArrayGroupEntries(event, btn);
     }
+  };
+
+  private onFormClicked = (event: MouseEvent) => {
+    this.checkDetailsClicked(event);
+    this.checkButtonsClicked(event);
   };
 
   private trackDetailsClicks(event: MouseEvent) {
@@ -227,7 +283,47 @@ export class SettingsRenderer<OS extends OverlaySettings> implements RendererIns
     }
   }
 
-  private onSettingsChanged = async (event: Event) => {
+  private onSettingsOptionChange = (event: Event) => {
+    if (false === event.target instanceof HTMLElement) {
+      return;
+    }
+
+    const isSettingsOption = event.target.classList.contains('settings-option');
+
+    if (!isSettingsOption) {
+      return;
+    }
+
+    // Settings Option was changed
+
+    const elems = this.options.renderOptions.elements!;
+
+    // Ensure no elements in the Root so we can display settings
+    const root = elems['root'];
+
+    const settingsOptions: Record<string, any> = {};
+
+    root.querySelectorAll('.settings-option').forEach(elem => {
+      if (false == elem instanceof HTMLInputElement) {
+        return;
+      }
+
+      const settingName = elem.name;
+
+      switch (elem.type) {
+        case 'checkbox':
+          settingsOptions[settingName] = elem.checked;
+          break;
+        default:
+          settingsOptions[settingName] = elem.value;
+          break;
+      }
+    });
+
+    SetLocalStorageItem('settingsOptions', settingsOptions);
+  };
+
+  private onOverlaySettingsChanged = async (event: Event) => {
     const target = event.target! as HTMLInputElement;
     const form = target.form!;
 
@@ -259,15 +355,17 @@ export class SettingsRenderer<OS extends OverlaySettings> implements RendererIns
 
   private updateLinkResults(url: string) {
     const elems = this.options.renderOptions.elements!;
-    const linkResults: HTMLInputElement = elems['link-results'] as HTMLInputElement;
+    const linkResultsOutput: HTMLInputElement = elems['link-results-output'] as HTMLInputElement;
     const linkButton: HTMLInputElement = elems['button-load-overlay'] as HTMLInputElement;
 
-    linkResults.value = url;
+    linkResultsOutput.value = url;
     linkButton.disabled = !this.options.settingsManager.isConfigured;
   }
 
   private onClickLoadOverlay = (_event: Event) => {
-    const newWindowCheck = this.options.renderOptions.elements!['new-window-checkbox'] as HTMLInputElement;
+    const newWindowCheck = this.options.renderOptions.elements!['link-results'].querySelector(
+      '[name="new-window"]'
+    ) as HTMLInputElement;
 
     const settings = this.options.settingsManager.getSettings();
     this.options.settingsManager.toggleMaskSettings(settings, true);

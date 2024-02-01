@@ -1,9 +1,90 @@
 [
   {
+    "name": "testArea1",
+    "inputType": "fieldgroup",
+    "label": "Testing Field Group Stuff",
+    "description": "Just testing things dawg",
+    "tooltip": "We're testing every type of item",
+    "values": [
+      {
+        "name": "simpleInputs",
+        "inputType": "fieldgroup",
+        "label": "Simple Inputs",
+        "description": "These are single-value inputs",
+        "values": [
+          {
+            "name": "myOption001",
+            "label": "myOption001",
+            "inputType": "text"
+          },
+          {
+            "name": "myOption002",
+            "label": "myOption002",
+            "inputType": "password"
+          },
+          {
+            "name": "myOption003",
+            "label": "myOption003",
+            "inputType": "number"
+          },
+          {
+            "name": "myOption004",
+            "label": "myOption004",
+            "inputType": "checkbox"
+          },
+          {
+            "name": "myOption005",
+            "label": "myOption005",
+            "inputType": "switch"
+          },
+          {
+            "name": "myOption006",
+            "label": "myOption006",
+            "inputType": "color"
+          }
+        ]
+      },
+      {
+        "name": "multiInputs",
+        "inputType": "fieldgroup",
+        "label": "Multiple Inputs",
+        "description": "These are multiple-value inputs",
+        "values": [
+          {
+            "name": "myOption007",
+            "label": "myOption007",
+            "inputType": "select",
+            "values": ["sel Item Entry 1", "sel Item Entry Two"]
+          },
+          {
+            "name": "myOption008",
+            "label": "myOption008",
+            "inputType": "radio",
+            "values": ["rdo Item Entry 1", "rdo Item Entry Two"]
+          },
+          {
+            "name": "myOption009",
+            "label": "myOption009",
+            "inputType": "checkbox-multiple",
+            "values": ["chk Item Entry 1", "chk Item Entry Two"]
+          },
+          {
+            "name": "myOption010",
+            "label": "myOption010",
+            "inputType": "select-multiple",
+            "values": ["sm Item Entry 1", "sm Item Entry Two"]
+          }
+        ]
+      }
+    ]
+  },
+
+  {
     "name": "testArea2",
     "inputType": "arraygroup",
     "label": "Testing Array Group Stuff",
     "description": "Just testing things dawg",
+    "tooltip": "We're testing every type of item as an Array Group",
     "values": [
       {
         "name": "myOption111",
@@ -56,69 +137,6 @@
       {
         "name": "myOption120",
         "label": "myOption120",
-        "inputType": "select-multiple",
-        "values": ["sm Item Entry 1", "sm Item Entry Two"]
-      }
-    ]
-  },
-
-  {
-    "name": "testArea1",
-    "inputType": "fieldgroup",
-    "label": "Testing Field Group Stuff",
-    "description": "Just testing things dawg",
-    "values": [
-      {
-        "name": "myOption001",
-        "label": "myOption001",
-        "inputType": "text"
-      },
-      {
-        "name": "myOption002",
-        "label": "myOption002",
-        "inputType": "password"
-      },
-      {
-        "name": "myOption003",
-        "label": "myOption003",
-        "inputType": "number"
-      },
-      {
-        "name": "myOption004",
-        "label": "myOption004",
-        "inputType": "checkbox"
-      },
-      {
-        "name": "myOption005",
-        "label": "myOption005",
-        "inputType": "switch"
-      },
-      {
-        "name": "myOption006",
-        "label": "myOption006",
-        "inputType": "color"
-      },
-      {
-        "name": "myOption007",
-        "label": "myOption007",
-        "inputType": "select",
-        "values": ["sel Item Entry 1", "sel Item Entry Two"]
-      },
-      {
-        "name": "myOption008",
-        "label": "myOption008",
-        "inputType": "radio",
-        "values": ["rdo Item Entry 1", "rdo Item Entry Two"]
-      },
-      {
-        "name": "myOption009",
-        "label": "myOption009",
-        "inputType": "checkbox-multiple",
-        "values": ["chk Item Entry 1", "chk Item Entry Two"]
-      },
-      {
-        "name": "myOption010",
-        "label": "myOption010",
         "inputType": "select-multiple",
         "values": ["sm Item Entry 1", "sm Item Entry Two"]
       }
