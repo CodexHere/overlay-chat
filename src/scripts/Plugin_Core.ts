@@ -3,19 +3,18 @@ import { loadAssets, replaceEmotes } from 'tmi-emote-parse';
 import tmiJs from 'tmi.js';
 import {
   BusManagerContext_Init,
-  BusManagerEmitter,
   BusManagerEvents,
-  ContextBase,
-  OverlayPluginInstance,
-  OverlaySettings,
-  RenderOptions,
-  SettingsRetriever
-} from './types.js';
+  SettingsValidatorResult,
+  SettingsValidatorResults
+} from './types/Managers.js';
+import { ContextBase, PluginMiddlewareMap } from './types/Middleware.js';
+import { PluginInstance, PluginOptions, PluginRegistrationOptions, PluginSettingsBase } from './types/Plugin.js';
+import { FormEntryGrouping } from './utils/Forms.js';
 import { Middleware } from './utils/Middleware.js';
 import { RenderTemplate } from './utils/Templating.js';
 import { GetColorForUsername } from './utils/misc.js';
 
-export type OverlaySettings_Chat = OverlaySettings & {
+export type OverlaySettings_Chat = PluginSettingsBase & {
   fontSize: number;
   nameStreamer?: string;
   tokenBot?: string;
@@ -35,19 +34,17 @@ export type MiddewareContext_Chat = {
 type Context = ContextBase & Partial<MiddewareContext_Chat>;
 type ClientTypes = 'streamer' | 'bot';
 
-export default class Plugin_Core implements OverlayPluginInstance<OverlaySettings_Chat> {
+export default class Plugin_Core<OS extends OverlaySettings_Chat> implements PluginInstance<OS> {
   priority = -Number.MAX_SAFE_INTEGER;
   name = 'Core Plugin';
   ref = Symbol(this.name);
-
-  private renderOptions: RenderOptions | undefined;
 
   private clients: Record<ClientTypes, tmiJs.Client | undefined> = {
     streamer: undefined,
     bot: undefined
   };
 
-  get hasClientStreamer() {
+  get hasAuthedClientStreamer() {
     return this.clients.streamer && false === this.clients.streamer.getUsername().startsWith('justin');
   }
 
@@ -55,20 +52,66 @@ export default class Plugin_Core implements OverlayPluginInstance<OverlaySetting
     return this.clients.bot && false === this.clients.bot.getUsername().startsWith('justin');
   }
 
-  constructor(
-    public emitter: BusManagerEmitter,
-    public getSettings: SettingsRetriever<OverlaySettings_Chat>
-  ) {}
+  constructor(public options: PluginOptions<OS>) {}
 
-  async renderOverlay(renderOptions: RenderOptions): Promise<void> {
-    this.renderOptions = renderOptions;
+  getRegistrationOptions = (): PluginRegistrationOptions => ({
+    middlewarePipelines: this._getMiddleware(),
+    //TODO Move to Twitch Chat Plugin
+    settings: this._getSettings()
+  });
+
+  isConfigured(): true | SettingsValidatorResults<OS> {
+    const { customPlugins, plugins } = this.options.getSettings();
+    const hasAnyPlugins = (!!customPlugins && 0 !== customPlugins.length) || (!!plugins && 0 !== plugins.length);
+
+    return (
+      hasAnyPlugins ||
+      ({
+        customPlugins: 'Needs at least one Custom Plugin',
+        plugins: 'Needs at least one Plugin'
+      } as SettingsValidatorResult<OS>)
+    );
+  }
+
+  private _getMiddleware = (): PluginMiddlewareMap => ({
+    'chat:twitch': [this.middleware]
+  });
+
+  private _getSettings = (): FormEntryGrouping => ({
+    name: 'channelSettings',
+    label: 'Channel Settings',
+    inputType: 'fieldgroup',
+    description:
+      'Enter your channel settings for Chat. If you do not supply a <a href="https://twitchapps.com/tmi/" target="_new">Token</a> for the Streamer or Bot User <i>each</i>, then the connection will be Anonymous and you cannot send messages.',
+    values: [
+      {
+        name: 'nameStreamer',
+        label: 'Channel Name (Streamer)',
+        inputType: 'text',
+        isRequired: true,
+        tooltip: 'This is the channel you want to display in the overlay!'
+      },
+      {
+        name: 'tokenStreamer',
+        label: 'Chat Token (Streamer)',
+        inputType: 'password'
+      },
+      {
+        name: 'tokenBot',
+        label: 'Chat Token (Bot)',
+        inputType: 'password'
+      }
+    ]
+  });
+
+  async renderOverlay(): Promise<void> {
     await this.initChatListen();
 
-    this.emitter.on('chat:twitch--send', this._onBusSendMessage);
+    this.options.emitter.on('chat:twitch--send', this._onBusSendMessage);
   }
 
   private generateTmiOptions() {
-    const { nameStreamer, tokenStreamer, tokenBot } = this.getSettings();
+    const { nameStreamer, tokenStreamer, tokenBot } = this.options.getSettings();
 
     let clientOptions_Bot: tmiJs.Options | undefined;
     let clientOptions_Streamer: tmiJs.Options = {
@@ -113,7 +156,7 @@ export default class Plugin_Core implements OverlayPluginInstance<OverlaySetting
   }
 
   async initChatListen() {
-    const { nameStreamer } = this.getSettings();
+    const { nameStreamer } = this.options.getSettings();
 
     if (!nameStreamer) {
       return;
@@ -192,7 +235,8 @@ export default class Plugin_Core implements OverlayPluginInstance<OverlaySetting
 
     console.log('Streamer Got: ', message);
 
-    this.emitter.emit(BusManagerEvents.MIDDLEWARE_EXECUTE, ctx);
+    // execute `chat:twitch`
+    this.options.emitter.emit(BusManagerEvents.MIDDLEWARE_EXECUTE, ctx);
   };
 
   private handleMessage_Bot = (channel: string, userstate: tmiJs.ChatUserstate, message: string, isSelf: boolean) => {
@@ -200,16 +244,8 @@ export default class Plugin_Core implements OverlayPluginInstance<OverlaySetting
 
     console.log('Bot Got: ', message);
 
-    this.emitter.emit(BusManagerEvents.MIDDLEWARE_EXECUTE, ctx);
+    this.options.emitter.emit(BusManagerEvents.MIDDLEWARE_EXECUTE, ctx);
   };
-
-  registerPluginMiddleware() {
-    return new Map(
-      Object.entries({
-        'chat:twitch': [this.middleware]
-      })
-    );
-  }
 
   middleware: Middleware<Context> = async (context, next) => {
     // Wait for Middleware chance to execute
@@ -229,15 +265,15 @@ export default class Plugin_Core implements OverlayPluginInstance<OverlaySetting
   renderMessage(context: Context) {
     // prettier-ignore
     RenderTemplate(
-        this.renderOptions!.elements!['container'],
-        this.renderOptions!.templates!['chat-message'],
+        this.options.renderOptions!.elements!['container'],
+        this.options.renderOptions!.templates!['chat-message'],
     context);
 
     Splitting({ target: `[data-message-id="${context.messageId}"]` });
   }
 
   removeOutOfBoundsMessages() {
-    const container = this.renderOptions!.elements!['container'];
+    const container = this.options.renderOptions!.elements!['container'];
 
     if (!container) {
       return;
@@ -271,18 +307,18 @@ export default class Plugin_Core implements OverlayPluginInstance<OverlaySetting
   }
 
   _onBusSendMessage = (message: string, useClient: 'bot' | 'streamer' = 'bot') => {
-    const settings = this.getSettings();
+    const settings = this.options.getSettings();
     // Use the client specified, defaulting to `bot`
     // If `streamer` is set, try to use that, otherwise fallback to `bot` client if valid
     // lastly fallback to `null` for error handling
     const client =
       'bot' === useClient && this.hasClientBot ? this.clients.bot
-      : this.hasClientStreamer ? this.clients.streamer
+      : this.hasAuthedClientStreamer ? this.clients.streamer
       : this.hasClientBot ? this.clients.bot
       : null;
 
     if (!client) {
-      throw new Error('No viable Twitch Client to message on');
+      throw new Error('No Authenticated Twitch Client to message on');
     }
 
     client?.say(settings.nameStreamer!, message);

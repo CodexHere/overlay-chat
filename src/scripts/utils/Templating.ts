@@ -6,6 +6,10 @@ export const PrepareTemplate = (templateId: string) =>
   Handlebars.compile(document.getElementById(templateId)?.innerHTML, { noEscape: true });
 
 export const RenderTemplate = (container: HTMLElement, template: Handlebars.TemplateDelegate, data = {}) => {
+  if (!template) {
+    return;
+  }
+
   const renderedTemplate = template(data);
 
   // Parse the rendered template as HTML

@@ -1,6 +1,6 @@
 {
   "name": "overlay-chat",
-  "version": "0.0.91",
+  "version": "0.0.95",
   "description": "",
   "main": "dist/index.js",
   "types": "dist/types/index.d.ts",

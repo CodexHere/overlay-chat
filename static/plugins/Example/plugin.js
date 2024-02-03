@@ -1,27 +1,21 @@
 /**
- * @typedef {import('../../../src/scripts/types.js').OverlaySettings} OS_Core
- * @typedef {Object} OS_Base
+ * @typedef {import('../../../src/scripts/types/Plugin.js').PluginSettingsBase} OS_Base
+ * @typedef {Object} OS_Plugin
  * @property {string} exampleSettings
- * @typedef {OS_Base & OS_Core} OS
+ * @typedef {OS_Plugin & OS_Base} OS
  *
- * @typedef {import('../../../src/scripts/managers/BusManager.js').BusError_ForceFailPipeline} BusError_ForceFailPipeline
- * @typedef {import('../../../src/scripts/types.js').ContextBase} ContextBase
- * @typedef {import('../../../src/scripts/Plugin_Core.js').MiddewareContext_Chat} ConcreteContext
  * @typedef {ContextBase & Partial<ConcreteContext>} Context
- * @typedef {import('../../../src/scripts/utils/EnhancedEventEmitter.js').EnhancedEventEmitter} EnhancedEventEmitter
+ * @typedef {import('../../../src/scripts/Plugin_Core.js').MiddewareContext_Chat} ConcreteContext
  * @typedef {import('../../../src/scripts/utils/Forms.js').FormEntryGrouping} FormEntryFieldGroup
+ * @typedef {import('../../../src/scripts/types/Managers.js').BusManagerContext_Init<ContextBase>} BusManagerContext_Init
+ * @typedef {import('../../../src/scripts/types/Middleware.js').ContextBase} ContextBase
+ * @typedef {import('../../../src/scripts/types/Middleware.js').PluginMiddlewareMap} PluginMiddlewareMap
+ * @typedef {import('../../../src/scripts/types/Plugin.js').PluginOptions<OS>} PluginInjectables
+ * @typedef {import('../../../src/scripts/types/Plugin.js').PluginInstance<OS>} PluginInstance
+ * @typedef {import('../../../src/scripts/types/Plugin.js').PluginRegistrationOptions} PluginRegistrationOptions
  * @typedef {import('../../../src/scripts/utils/Middleware.js').Next<Context>} Next
- * @typedef {import('../../../src/scripts/utils/Middleware.js').Middleware<Context>} MiddlewareContext
- * @typedef {import('../../../src/scripts/utils/Middleware.js').Middleware<ContextBase>} MiddlewareContextBase
- * @typedef {import('../../../src/scripts/types.js').RenderOptions} RenderOptions
- * @typedef {import('../../../src/scripts/types.js').SettingsInjector} SettingsInjector
- * @typedef {import('../../../src/scripts/types.js').OverlayPluginInstance<OS>} OverlayPluginInstance
- * @typedef {import('../../../src/scripts/types.js').SettingsRetriever<OS>} SettingsRetriever
- * @typedef {import('../../../src/scripts/types.js').BusManagerEvents} BusManagerEvents
- * @typedef {import('../../../src/scripts/types.js').BusManagerEmitter} BusManagerEmitter
- * @typedef {import('../../../src/scripts/types.js').BusManagerContext_Init<ContextBase>} BusManagerContext_Init
  *
- * @implements {OverlayPluginInstance}
+ * @implements {PluginInstance}
  */
 export default class Plugin_Example {
   name = 'Example Plugin';
@@ -29,38 +23,29 @@ export default class Plugin_Example {
   priority = 20;
 
   /**
-   * @param {BusManagerEmitter} emitter
-   * @param {SettingsRetriever} getSettings
+   * @param {PluginInjectables} options
    */
-  constructor(emitter, getSettings) {
-    this.emitter = emitter;
-    this.getSettings = getSettings;
+  constructor(options) {
+    this.options = options;
 
     console.log(`${this.name} instantiated`);
 
-    this.emitter.addListener('test-event', this.testEventHandler);
+    this.options.emitter.addListener('test-event', this.testEventHandler);
   }
 
   /**
-   * @param {string[]} param1
-   * @param {object} param2
-   * @returns
+   * @returns {PluginRegistrationOptions}
    */
-  testEventHandler = (param1, param2) => {
-    return `${this.name} TEST return call successfully (${param1.join(', ')}, ${JSON.stringify(param2)})`;
-  };
-
-  unregisterPlugin() {
-    console.log(`${this.name} Unregistering`);
-
-    // Be sure to unregister our Event Listeners, or we'll create a Memory Leak with orphaned Event Listeners
-    this.emitter.removeListener('test-event', this.testEventHandler);
-  }
+  getRegistrationOptions = () => ({
+    settings: this._getSettings(),
+    middlewarePipelines: this._getMiddleware(),
+    stylesheet: new URL(`${import.meta.url.split('/').slice(0, -1).join('/')}/plugin.css`)
+  });
 
   /**
    * @returns {FormEntryFieldGroup}
    */
-  registerPluginSettings() {
+  _getSettings() {
     console.log(`${this.name} [injectSettingsSchema]`);
 
     return {
@@ -78,17 +63,10 @@ export default class Plugin_Example {
     };
   }
 
-  registerPluginMiddleware() {
-    const middleware = [
-      this.middlewareSkipCurrent,
-      this.middlewareSkipChain1_next,
-      this.middlewareSkipChain2_error,
-      this.middlewareTransient,
-      this.middlewareNextError,
-      this.middlewareThrowError,
-      this.middlewareFinal
-    ];
-
+  /**
+   * @returns {PluginMiddlewareMap}
+   */
+  _getMiddleware() {
     // This should error, since this isn't the first plugin to register the chain pipeline
     setTimeout(() => {
       /** @type {BusManagerContext_Init} */
@@ -100,19 +78,42 @@ export default class Plugin_Example {
 
       console.info('About to execute a middleware that this plugin did not register. Expect an error!');
 
-      this.emitter.emit('middleware-execute', ctx);
+      this.options.emitter.emit('middleware-execute', ctx);
     }, 3000);
+
+    const middleware = [
+      this.middlewareSkipCurrent,
+      this.middlewareSkipChain1_next,
+      this.middlewareSkipChain2_error,
+      this.middlewareTransient,
+      this.middlewareNextError,
+      this.middlewareThrowError,
+      this.middlewareFinal
+    ];
 
     console.log(`Registering ${middleware.length} Middleware!`);
 
-    /** @type {Map<string, MiddlewareContextBase>} */
-    return new Map(
-      Object.entries({
-        // prettier-ignore
-        'chat:twitch': middleware
-      })
-    );
+    return {
+      // prettier-ignore
+      'chat:twitch': middleware
+    };
   }
+
+  unregisterPlugin() {
+    console.log(`${this.name} Unregistering`);
+
+    // Be sure to unregister our Event Listeners, or we'll create a Memory Leak with orphaned Event Listeners
+    this.options.emitter.removeListener('test-event', this.testEventHandler);
+  }
+
+  /**
+   * @param {string[]} param1
+   * @param {object} param2
+   * @returns
+   */
+  testEventHandler = (param1, param2) => {
+    return `${this.name} TEST return call successfully (${param1.join(', ')}, ${JSON.stringify(param2)})`;
+  };
 
   /**
    * @param {Context} context
@@ -131,7 +132,7 @@ export default class Plugin_Example {
 
     context.message += ' [MW 1 Exec] ';
 
-    const settings = this.getSettings();
+    const settings = this.options.getSettings();
     if (settings.exampleSettings) {
       context.message += `[${settings.exampleSettings}] `;
     }
@@ -156,7 +157,7 @@ export default class Plugin_Example {
 
     context.message += ' [MW 2 Exec] ';
 
-    const settings = this.getSettings();
+    const settings = this.options.getSettings();
     if (settings.exampleSettings) {
       context.message += `[${settings.exampleSettings}] `;
     }
@@ -180,7 +181,7 @@ export default class Plugin_Example {
 
     context.message += ' [MW 3 Exec] ';
 
-    const settings = this.getSettings();
+    const settings = this.options.getSettings();
     if (settings.exampleSettings) {
       context.message += `[${settings.exampleSettings}] `;
     }
@@ -217,7 +218,7 @@ export default class Plugin_Example {
 
     context.message += ' [MW 5] ';
 
-    const settings = this.getSettings();
+    const settings = this.options.getSettings();
     if (settings.exampleSettings) {
       context.message += `[${settings.exampleSettings}] `;
     }
@@ -240,7 +241,7 @@ export default class Plugin_Example {
 
     context.message += ' [MW 6] ';
 
-    const settings = this.getSettings();
+    const settings = this.options.getSettings();
     if (settings.exampleSettings) {
       context.message += `[${settings.exampleSettings}] `;
     }
@@ -263,8 +264,8 @@ export default class Plugin_Example {
   renderSettings() {
     console.log(`${this.name} [renderSettings]`);
 
-    this.emitter.emit('test-event', ['Some Test Value'], { foo: true, bar: false });
-    const val = this.emitter.call('test-event', ['Some Test Value'], { foo: true, bar: false });
+    this.options.emitter.emit('test-event', ['Some Test Value'], { foo: true, bar: false });
+    const val = this.options.emitter.call('test-event', ['Some Test Value'], { foo: true, bar: false });
     console.log('Event Output:', val);
   }
 

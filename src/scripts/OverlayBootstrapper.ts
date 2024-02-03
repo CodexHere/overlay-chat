@@ -3,45 +3,60 @@ import { PluginManager } from './managers/PluginManager.js';
 import { SettingsManager } from './managers/SettingsManager.js';
 import { OverlayRenderer } from './renderers/OverlayRenderer.js';
 import { SettingsRenderer } from './renderers/SettingsRenderer.js';
-import { BootstrapOptions, ErrorManager, OverlaySettings, RendererConstructor, RendererInstance } from './types.js';
+import { BootstrapOptions, ErrorManager, PluginManagerEmitter, PluginManagerEvents } from './types/Managers.js';
+import { PluginSettingsBase } from './types/Plugin.js';
+import { RendererConstructor, RendererInstance } from './types/Renderers.js';
+import { AddStylesheet } from './utils/misc.js';
 
-export class OverlayBootstrapper<OS extends OverlaySettings> implements ErrorManager {
-  settingsManager: SettingsManager<OS>;
-  pluginManager: PluginManager<OS>;
+export class OverlayBootstrapper<OS extends PluginSettingsBase> implements ErrorManager {
   busManager: BusManager<OS>;
+  settingsManager: SettingsManager<OS>;
+  pluginManager: PluginManagerEmitter<OS>;
 
   constructor(public bootstrapOptions: BootstrapOptions<OS>) {
     this.busManager = new BusManager();
 
-    this.settingsManager = new SettingsManager<OS>({
-      locationHref: globalThis.location.href,
-      settingsValidator: bootstrapOptions.settingsValidator
-    });
+    this.settingsManager = new SettingsManager<OS>(globalThis.location.href);
 
     this.pluginManager = new PluginManager({
       defaultPlugin: bootstrapOptions.defaultPlugin,
-      renderOptions: bootstrapOptions.renderOptions,
-      settingsManager: this.settingsManager,
-      busManager: this.busManager,
-      errorManager: this
+      getSettings: this.settingsManager.getSettings,
+
+      pluginRegistrar: {
+        registerMiddleware: this.busManager.registerMiddleware,
+        registerSettings: this.settingsManager.registerSettings,
+        registerStylesheet: AddStylesheet
+      },
+      pluginOptions: {
+        emitter: this.busManager.emitter,
+        getSettings: this.settingsManager.getSettings,
+        renderOptions: bootstrapOptions.renderOptions
+      }
     });
   }
 
   async init() {
-    const { needsSettingsRenderer, needsOverlayRenderer } = this.bootstrapOptions;
-    let hasErrors: Error[] = [];
-
     try {
-      await this.settingsManager.init();
-      await this.busManager.init();
-      await this.pluginManager.init();
+      this.bindManagerEvents();
+      await this.initManagers();
+      await this.initRenderer();
     } catch (err) {
-      hasErrors.push(err as Error);
+      this.showError(err as Error);
     }
+  }
 
+  private async initManagers() {
+    await this.settingsManager.init();
+    await this.busManager.init();
+    await this.pluginManager.init();
+  }
+
+  private async initRenderer() {
     // Determine if `SettingsManager` is configured by way of `SettingsValidator`
     const isConfigured =
-      (!this.settingsManager.getSettings().forceShowSettings && this.settingsManager?.isConfigured) || false;
+      (!this.settingsManager.getSettings().forceShowSettings && true === this.pluginManager.validateSettings()) ||
+      false;
+    const { needsSettingsRenderer, needsOverlayRenderer } = this.bootstrapOptions;
     // Wants a `SettingsRenderer`, and `SettingsManager::isConfigured()` returns `false`
     const shouldRenderSettings = false === isConfigured && needsSettingsRenderer;
     // Wants an `OverlayRenderer`, and `SettingsManager::isConfigured()` returns `true`
@@ -54,22 +69,34 @@ export class OverlayBootstrapper<OS extends OverlaySettings> implements ErrorMan
       : undefined;
 
     // Any Renderer selected and existing, init to perform Render
-    if (rendererClass) {
-      const renderer: RendererInstance = new rendererClass({
-        renderOptions: this.bootstrapOptions.renderOptions,
-        pluginManager: this.pluginManager,
-        settingsManager: this.settingsManager,
-        errorManager: this
-      });
-
-      try {
-        await renderer.init();
-      } catch (err) {
-        hasErrors.push(err as Error);
-      }
+    if (!rendererClass) {
+      return;
     }
 
-    this.showError(hasErrors);
+    const renderer: RendererInstance = new rendererClass({
+      renderOptions: this.bootstrapOptions.renderOptions,
+      errorDisplay: this,
+      getSettings: this.settingsManager.getSettings,
+      getMaskedSettings: this.settingsManager.getMaskedSettings,
+      setSettings: this.settingsManager.setSettings,
+      getParsedJsonResults: this.settingsManager.getParsedJsonResults,
+      getPlugins: this.pluginManager.getPlugins,
+      validateSettings: this.pluginManager.validateSettings,
+      pluginLoader: this.pluginManager.loadPlugins
+    });
+
+    await renderer.init();
+  }
+
+  private bindManagerEvents() {
+    this.pluginManager.addListener(PluginManagerEvents.LOADED, () => {
+      this.settingsManager.updateParsedJsonResults();
+    });
+
+    this.pluginManager.addListener(PluginManagerEvents.UNLOADED, () => {
+      this.settingsManager.resetSettingsSchema();
+      this.busManager.reset();
+    });
   }
 
   showError = (err: Error | Error[]) => {
@@ -79,9 +106,8 @@ export class OverlayBootstrapper<OS extends OverlaySettings> implements ErrorMan
       return;
     }
 
-    if (false === Array.isArray(err)) {
-      err = [err];
-    }
+    // Convert to Array
+    err = Array.isArray(err) ? err : [err];
 
     if (0 === err.length) {
       return;

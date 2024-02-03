@@ -1,22 +1,96 @@
+import { EventEmitter } from 'events';
 import {
-  OverlayPluginConstructor,
-  OverlayPluginInstance,
-  OverlaySettings,
-  PluginImports,
+  PluginManagerEmitter,
+  PluginManagerEvents,
+  PluginManagerOptions,
+  SettingsValidatorResults
+} from '../types/Managers.js';
+import {
+  PluginConstructor,
+  PluginImportResults,
+  PluginInstance,
   PluginInstances,
   PluginLoaders,
-  PluginManagerOptions
-} from '../types.js';
+  PluginSettingsBase
+} from '../types/Plugin.js';
 import * as URI from '../utils/URI.js';
 
-export class PluginManager<OS extends OverlaySettings> {
-  private plugins: PluginInstances<OS> = [];
+export class PluginManager<OS extends PluginSettingsBase> extends EventEmitter implements PluginManagerEmitter<OS> {
+  private _plugins: PluginInstances<OS> = [];
 
-  constructor(private options: PluginManagerOptions<OS>) {}
-
-  getPlugins(): PluginInstances<OS> {
-    return this.plugins;
+  constructor(private options: PluginManagerOptions<OS>) {
+    super();
   }
+
+  getPlugins = (): PluginInstances<OS> => {
+    return this._plugins;
+  };
+
+  async init() {
+    // Load and register new plugin
+    await this.loadPlugins();
+  }
+
+  unregisterPlugins() {
+    const numPlugins = this._plugins.length;
+
+    // Unregister existing plugins, and remove from list
+    for (let idx = numPlugins - 1; idx >= 0; idx--) {
+      const plugin = this._plugins[idx];
+      plugin.unregisterPlugin?.();
+      this._plugins.splice(idx, 1);
+    }
+
+    // Delete all link[data-plugin] nodes
+    const links = globalThis.document.querySelectorAll('head link[data-plugin]');
+    links.forEach(link => link.remove());
+
+    this.emit(PluginManagerEvents.UNLOADED);
+  }
+
+  loadPlugins = async () => {
+    // Unregister Plugins before loading any new ones
+    this.unregisterPlugins();
+
+    const { defaultPlugin } = this.options;
+
+    // Load all URLs for desired plugins
+    const pluginLoaders: PluginLoaders<OS> = this.pluginBaseUrls() as PluginLoaders<OS>;
+    // Prepend Default plugin to instantiate/import
+    pluginLoaders.unshift(defaultPlugin);
+    // Perform Imports/Intantiations
+    const importResults = await this.importModules(pluginLoaders);
+
+    // Bootstrap the Plugins loaded
+    await this.bootstrapPlugins(importResults);
+
+    this.emit(PluginManagerEvents.LOADED, this._plugins);
+
+    if (0 !== importResults.bad.length) {
+      // TODO: Turn (imports) into a return value and handle in Renderers/etc to call showError
+      throw new Error(importResults.bad.join('<br /><br />'));
+    }
+  };
+
+  validateSettings = (): SettingsValidatorResults<OS> => {
+    let errorMapping = {};
+
+    this._plugins.forEach(plugin => {
+      const error = plugin.isConfigured?.();
+
+      if (!error || true === error) {
+        return;
+      }
+
+      errorMapping = {
+        ...errorMapping,
+        [plugin.name]: error
+      };
+    });
+
+    // Return Error Map if
+    return 0 !== Object.keys(errorMapping).length ? errorMapping : true;
+  };
 
   private getPluginPath = (pluginName: string) => {
     return pluginName.startsWith('http') ? pluginName : `${URI.BaseUrl()}/plugins/${pluginName}`;
@@ -25,7 +99,7 @@ export class PluginManager<OS extends OverlaySettings> {
   private pluginBaseUrls() {
     let pluginUrls: string[] = [];
 
-    const { customPlugins, plugins } = this.options.settingsManager.getSettings();
+    const { customPlugins, plugins } = this.options.getSettings();
 
     if (customPlugins) {
       pluginUrls = customPlugins;
@@ -40,74 +114,6 @@ export class PluginManager<OS extends OverlaySettings> {
     }
 
     return pluginUrls;
-  }
-
-  async init() {
-    // Load and register new plugin
-    await this.loadPlugins();
-  }
-
-  unregisterPlugins() {
-    const numPlugins = this.plugins.length;
-
-    // Unregister existing plugins, and remove from list
-    for (let idx = numPlugins - 1; idx >= 0; idx--) {
-      const plugin = this.plugins[idx];
-      plugin.unregisterPlugin?.(this.options.renderOptions);
-      this.plugins.splice(idx, 1);
-    }
-
-    // Delete all link[data-plugin] nodes
-    const links = globalThis.document.querySelectorAll('head link[data-plugin]');
-    links.forEach(link => link.remove());
-  }
-
-  async loadPlugins() {
-    // Unregister Plugins before loading any new ones
-    this.unregisterPlugins();
-    this.options.busManager.clearPluginRegistrations();
-
-    const { defaultPlugin, settingsManager, busManager } = this.options;
-
-    // Load all URLs for desired plugins
-    const pluginLoaders: PluginLoaders<OS> = this.pluginBaseUrls() as PluginLoaders<OS>;
-    // Prepend Default plugin to instantiate/import
-    pluginLoaders.unshift(defaultPlugin);
-    // Perform Imports/Intantiations
-    const imports = await this.importModules(pluginLoaders);
-    // Assign Plugins as the "Good" imports
-    imports.good.forEach(imported => this.plugins.push(imported));
-
-    // Sort Plugins by Priority
-    this.plugins.sort(this.sortPlugins);
-    // Load Settings for Plugins
-    settingsManager.registerPluginSettings(this.plugins, imports);
-    // Load Style for Plugin
-    this.loadPluginStyles(pluginLoaders);
-    // Bind Middleware
-    busManager.registerPluginMiddleware(this.plugins as PluginInstances<OS>);
-
-    if (0 !== imports.bad.length) {
-      // TODO: Turn (imports) into a return value and handle in Renderers/etc to call showError
-      throw new Error(imports.bad.join('<br /><br />'));
-    }
-  }
-
-  private sortPlugins(a: OverlayPluginInstance<OverlaySettings>, b: OverlayPluginInstance<OverlaySettings>) {
-    if (!a.priority) {
-      return 1;
-    }
-
-    if (!b.priority) {
-      return -1;
-    }
-
-    const sortval =
-      b.priority < a.priority ? 1
-      : b.priority > a.priority ? -1
-      : 0;
-
-    return sortval;
   }
 
   private async importModules(pluginLoaders: PluginLoaders<OS>) {
@@ -131,30 +137,23 @@ export class PluginManager<OS extends OverlaySettings> {
           {
             good: [],
             bad: []
-          } as PluginImports<OS>
+          } as PluginImportResults<OS>
         )
     );
   }
 
-  private async loadPluginInstance(pluginLoadValue: string | OverlayPluginConstructor<OS>) {
-    let pluginClass: OverlayPluginConstructor<OS> | undefined;
+  private async loadPluginInstance(pluginLoadValue: string | PluginConstructor<OS>) {
+    let pluginClass: PluginConstructor<OS> | undefined;
 
     if (typeof pluginLoadValue === 'string') {
       pluginClass = await this.importPlugin(pluginLoadValue as string);
     } else {
-      pluginClass = pluginLoadValue as OverlayPluginConstructor<OS>;
+      pluginClass = pluginLoadValue as PluginConstructor<OS>;
     }
 
     // Instantiate Plugin
     try {
-      // prettier-ignore
-      const pluginInstance: OverlayPluginInstance<OS> = 
-        new pluginClass!(
-          this.options.busManager.events, 
-          this.options.settingsManager.getSettings
-        );
-
-      return pluginInstance;
+      return new pluginClass!(this.options.pluginOptions);
     } catch (err) {
       if (err instanceof Error) {
         throw new Error(`Plugin could not be instantiated:<br />${pluginLoadValue}<br /><br /><pre>${err.stack}</pre>`);
@@ -164,7 +163,7 @@ export class PluginManager<OS extends OverlaySettings> {
 
   private async importPlugin(pluginBaseUrl: string) {
     try {
-      let pluginClass: OverlayPluginConstructor<OS> | undefined;
+      let pluginClass: PluginConstructor<OS> | undefined;
 
       // If a Custom Theme is supplied, we'll expect it to be a full URL, otherwise we'll formulate a URL.
       // This allows us to ensure vite will not attempt to package the plugin on our behalf, and will truly
@@ -188,22 +187,57 @@ export class PluginManager<OS extends OverlaySettings> {
     }
   }
 
-  private loadPluginStyles(pluginLoaders: PluginLoaders<OS>) {
-    for (let idx = 0; idx < pluginLoaders.length; idx++) {
-      const pluginLoader = pluginLoaders[idx];
+  private sortPlugins(a: PluginInstance<PluginSettingsBase>, b: PluginInstance<PluginSettingsBase>) {
+    if (!a.priority) {
+      return 1;
+    }
 
-      if (typeof pluginLoader !== 'string') {
+    if (!b.priority) {
+      return -1;
+    }
+
+    const sortval =
+      b.priority < a.priority ? 1
+      : b.priority > a.priority ? -1
+      : 0;
+
+    return sortval;
+  }
+
+  private async bootstrapPlugins(importResults: PluginImportResults<OS>) {
+    const { pluginRegistrar } = this.options;
+
+    // Assign Plugins from the "Good" imports
+    this._plugins.push(...importResults.good);
+    // Sort Plugins by Priority
+    this._plugins.sort(this.sortPlugins);
+
+    // Iterate over every loaded plugin, and bootstrap in appropriate order
+    for (const plugin of this._plugins) {
+      const registration = await plugin.registerPlugin?.();
+
+      if (!registration) {
         continue;
       }
 
-      const head = globalThis.document.getElementsByTagName('head')[0];
-      const link = globalThis.document.createElement('link');
-      link.rel = 'stylesheet';
-      link.type = 'text/css';
-      link.href = `${pluginLoader}/plugin.css`;
-      link.setAttribute('data-plugin', 'true');
+      // Load Settings Schemas from Plugins
+      try {
+        pluginRegistrar.registerSettings(registration.settings);
+      } catch (err) {
+        importResults.bad.push(new Error(`Could not inject Settings Schema for Plugin: ${plugin.name}`));
+      }
 
-      head.appendChild(link);
+      // Register Middleware Pipelines from Plugins
+      try {
+        pluginRegistrar.registerMiddleware(plugin, registration.middlewarePipelines);
+      } catch (err) {
+        importResults.bad.push(new Error(`Could not Register Middleware for Plugin: ${plugin.name}`));
+      }
+
+      // Load Styles from Plugins
+      if (registration.stylesheet) {
+        pluginRegistrar.registerStylesheet(registration.stylesheet.href);
+      }
     }
   }
 }

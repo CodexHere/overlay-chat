@@ -1,11 +1,6 @@
-import {
-  BusManagerContext_Init,
-  BusManagerEmitter,
-  BusManagerEvents,
-  ContextBase,
-  OverlaySettings,
-  PluginInstances
-} from '../types.js';
+import { BusManagerContext_Init, BusManagerEmitter, BusManagerEvents } from '../types/Managers.js';
+import { ContextBase, PluginMiddlewareMap } from '../types/Middleware.js';
+import { PluginInstance, PluginSettingsBase } from '../types/Plugin.js';
 import { EnhancedEventEmitter } from '../utils/EnhancedEventEmitter.js';
 import { Middleware, Pipeline } from '../utils/Middleware.js';
 
@@ -32,63 +27,58 @@ export class BusError_ForceFailPipeline extends Error {
   }
 }
 
-export class BusManager<OS extends OverlaySettings> {
+export class BusManager<OS extends PluginSettingsBase> {
   private pipelineRegistrations: Map<Pipeline<ContextBase>, Symbol> = new Map();
   private pipelines: Map<string, Pipeline<ContextBase>> = new Map();
-  private _events: BusManagerEmitter;
+  private _emitter: BusManagerEmitter;
 
-  get events(): Readonly<BusManagerEmitter> {
-    return this._events;
+  get emitter(): Readonly<BusManagerEmitter> {
+    return this._emitter;
   }
 
   constructor() {
-    this._events = new EnhancedEventEmitter();
+    this._emitter = new EnhancedEventEmitter();
   }
 
   async init() {
     // Register "Middleware Execute" event to execute pipeline
-    this.events.on(BusManagerEvents.MIDDLEWARE_EXECUTE, this.startMiddlewareChainByName);
+    this.emitter.on(BusManagerEvents.MIDDLEWARE_EXECUTE, this.startMiddlewareChainByName);
   }
 
-  clearPluginRegistrations() {
+  reset = () => {
     this.pipelines = new Map();
     this.pipelineRegistrations = new Map();
-    this._events.removeAllListeners();
-  }
+    this._emitter.removeAllListeners();
+  };
 
-  registerPluginMiddleware(plugins: PluginInstances<OS>) {
-    // Register each plugin (in assumed Priority-sort order) for their desired Middleware Chains
-    for (const plugin of plugins) {
-      if (!plugin.registerPluginMiddleware) {
-        continue;
+  registerMiddleware = (plugin: PluginInstance<OS>, queriedMiddleware: PluginMiddlewareMap | undefined) => {
+    if (!queriedMiddleware) {
+      return;
+    }
+
+    for (const [middlewareName, middlwareFunction] of Object.entries(queriedMiddleware)) {
+      let chosenPipeline = this.pipelines.get(middlewareName);
+
+      // This is the first registration for the pipeline
+      if (!chosenPipeline) {
+        // Create a new pipeline to be chosen
+        chosenPipeline = new Pipeline();
+        // Register this plugin as the leader for this pipeline
+        this.pipelineRegistrations.set(chosenPipeline, plugin.ref);
+        // Register this pipeline for the middlewareName
+        this.pipelines.set(middlewareName, chosenPipeline);
+
+        console.info(`Registering '${plugin.name}' as leader of chain: ${middlewareName}`);
       }
 
-      const queriedMiddleware = plugin.registerPluginMiddleware();
-
-      for (const [middlewareName, middlwareFunction] of queriedMiddleware.entries()) {
-        let chosenPipeline = this.pipelines.get(middlewareName);
-
-        // This is the first registration for the pipeline
-        if (!chosenPipeline) {
-          // Create a new pipeline to be chosen
-          chosenPipeline = new Pipeline();
-          // Register this plugin as the leader for this pipeline
-          this.pipelineRegistrations.set(chosenPipeline, plugin.ref);
-          // Register this pipeline for the middlewareName
-          this.pipelines.set(middlewareName, chosenPipeline);
-
-          console.info(`Registering '${plugin.name}' as leader of chain: ${middlewareName}`);
-        }
-
-        chosenPipeline.use(...middlwareFunction);
-      }
+      chosenPipeline.use(...middlwareFunction);
     }
 
     // Register each Middleware Chain with an Error Middleware
     for (const pipeline of this.pipelines.values()) {
       pipeline.use(this.errorMiddleware);
     }
-  }
+  };
 
   private startMiddlewareChainByName = async (ctx: BusManagerContext_Init<ContextBase>) => {
     const pipeline = this.pipelines.get(ctx.chainName);
@@ -121,7 +111,7 @@ export class BusManager<OS extends OverlaySettings> {
     if (err) {
       throw err;
     } else {
-      next();
+      await next();
     }
   };
 }

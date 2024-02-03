@@ -1,6 +1,7 @@
-import { OverlaySettings, RendererInstance, RendererInstanceOptions } from '../types.js';
+import { PluginSettingsBase } from '../types/Plugin.js';
+import { RendererInstance, RendererInstanceOptions } from '../types/Renderers.js';
 
-export class OverlayRenderer<OS extends OverlaySettings> implements RendererInstance {
+export class OverlayRenderer<OS extends PluginSettingsBase> implements RendererInstance {
   constructor(private options: RendererInstanceOptions<OS>) {}
 
   async init() {
@@ -10,9 +11,9 @@ export class OverlayRenderer<OS extends OverlaySettings> implements RendererInst
 
   private renderOverlay() {
     // Iterate over every loaded plugin, and call `renderOverlay` to manipulate the Overlay view
-    this.options.pluginManager.getPlugins().forEach(plugin => {
+    this.options.getPlugins().forEach(plugin => {
       try {
-        plugin.renderOverlay?.(this.options.renderOptions);
+        plugin.renderOverlay?.();
       } catch (err) {
         if (err instanceof Error) {
           throw new Error(
@@ -25,7 +26,7 @@ export class OverlayRenderer<OS extends OverlaySettings> implements RendererInst
 
   injectSettingsIntoCSS() {
     const style = globalThis.document.documentElement.style;
-    const settings = this.options.settingsManager.getSettings();
+    const settings = this.options.getSettings();
 
     Object.keys(settings).forEach(key => {
       style.setProperty(`--${key}`, settings[key as keyof OS] as string);

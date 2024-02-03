@@ -1,3 +1,6 @@
+export const BOOLEAN_TRUES = ['true', 'yes', 't', 'y', 'on', 'enable', 'enabled'];
+export const BOOLEAN_FALSES = ['false', 'no', 'f', 'n', 'off', 'disable', 'disabled'];
+
 export const DEFAULT_COLORS = [
   '#b52d2d',
   '#5e5ef2',
@@ -46,3 +49,14 @@ export const GetLocalStorageItem = (name: string) => {
 
 export const SetLocalStorageItem = (name: string, value: any) =>
   globalThis.localStorage.setItem(name, JSON.stringify(value));
+
+export const AddStylesheet = (href: string) => {
+  const head = globalThis.document.getElementsByTagName('head')[0];
+  const link = globalThis.document.createElement('link');
+  link.rel = 'stylesheet';
+  link.type = 'text/css';
+  link.href = href;
+  link.setAttribute('data-plugin', 'true');
+
+  head.appendChild(link);
+};

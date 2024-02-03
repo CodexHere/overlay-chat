@@ -2,12 +2,6 @@
 
 ## TODO
 
-* ALL Plugins need chance to implement `isConfigured`
-	* If not, there's no way to know if the overlay is ACTUALLY configured
-	* No longer should be an injection to Bootstrapper since it's now plugin-based, and will be part of Core Plugin
-* Plugins should have configs returned as it currently is, or a URL to load on behalf of the plugin
-* Plugins should have injection points for style URL object
-  * Don't auto assume!
 * Need new custom error type: `ForceShowUser`
   * Enforces calling `showError` so the user can see
   * Discretionary use, specifically for when plugins/chains/etc simply CANNOT work and it breaks the entire everything. IE, user auth fails at some point?
@@ -24,6 +18,15 @@
 * Ability to compress (`lz-string`) url params
   * `&compressed=true&data=<data_here>`
   * Will need to decompress in settings as well
+* Add Reset capability
+  * Delete localStorage
+  * Wipe URI params and reload page
+* Find and Fix all `TODO` and `FIXME` comments in entire source!
+  * Do not leave any! Finish ALL of them at once!
+  * Add missing HTMLInput Elements:
+    * File
+    * DateTime/Calendar
+    * https://www.w3schools.com/html/html_form_input_types.asp
 * Heavily Document everything
 * Create some cool examples:
 	* Generally where I come up with ideas and flesh them out before moving into final plugin
@@ -47,14 +50,18 @@
 * Build a dropdown to jump to a plugins' settings
   * Plugin will need more contextual data:
     * Name
-* Convert to use `hh-util`
-  * `hh-util` needs proper publishing
-* SimpleReply
-  * Simple mapping of `!command` to "Reply Text"
 * Event Sub Response:
   * Output simple message (customizable) indicating an event was triggered
   * Needs a tokenized mapping of event sub properties
     * https://dev.twitch.tv/docs/eventsub/eventsub-subscription-types/#channelhype_trainbegin
+* Convert to use `hh-util`
+  * `hh-util` needs proper publishing
+  * `hh-util` needs proper lifecycle support
+    * Named Volumes for triggers, etc
+  * Docker Support
+  * Typescript/Build/etc Support normalized
+    * Path aliases!
+  * Misc configs like prettier normalized
 
 ## Application Lifecycle
 
@@ -95,6 +102,8 @@
   * Reveal animation
     * Per Word vs Per Character
   * Remove animation
+* SimpleReply
+  * Simple mapping of `!command` to "Reply Text"
 * Ignore Chatter
 * Sound Effects - Sound on Message
 * Sound Effects - User Entrance
@@ -124,6 +133,8 @@
 
 
 ### Tree Code
+
+No clue what this was for???
 
 ```js
 function TreeNode(value) {

@@ -1,6 +1,5 @@
 import set from 'lodash.set';
-import { BOOLEAN_FALSES, BOOLEAN_TRUES } from '../types.js';
-import { IsValidValue } from './misc.js';
+import { BOOLEAN_FALSES, BOOLEAN_TRUES, IsValidValue } from './misc.js';
 
 export const BaseUrl = () => {
   const url = new URL(location.href.replaceAll('#', ''));

@@ -1,78 +1,69 @@
 import get from 'lodash.get';
 import set from 'lodash.set';
-import { OverlaySettings, PluginImports, PluginInstances, SettingsManagerOptions } from '../types.js';
-import { FormEntry, FromJson, ParsedJsonResults } from '../utils/Forms.js';
+import { PluginSettingsBase } from '../types/Plugin.js';
+import { FormEntry, FormEntryGrouping, FromJson, ParsedJsonResults } from '../utils/Forms.js';
 import * as URI from '../utils/URI.js';
 
-export class SettingsManager<OS extends OverlaySettings> {
-  parsedJsonResults: ParsedJsonResults | undefined;
-  private settingsSchema: FormEntry[] = [];
-  private settings: OS = {} as OS;
-  private settingsSchemaDefault: FormEntry[] = [];
+export class SettingsManager<OS extends PluginSettingsBase> {
+  private _parsedJsonResults: ParsedJsonResults | undefined;
+  private _settings: OS = {} as OS;
+  private _settingsSchema: FormEntry[] = [];
+  private _settingsSchemaDefault: FormEntry[] = [];
 
-  get isConfigured() {
-    return this.options.settingsValidator(this.settings);
-  }
-
-  constructor(private options: SettingsManagerOptions<OS>) {}
-
-  getSettings = (unmask: boolean = true): OS => {
-    const settings = structuredClone(this.settings);
-
-    return unmask ? this.toggleMaskSettings(settings, false) : settings;
-  };
-
-  setSettings = (settings: OS) => {
-    this.settings = settings;
-
-    this.updateParsedJsonResults(settings);
-
-    this.toggleMaskSettings(settings, true);
-  };
-
-  getSettingsSchema(): Readonly<FormEntry[]> {
-    return structuredClone(this.settingsSchema);
-  }
+  constructor(private locationHref: string) {}
 
   async init() {
     this.loadSettingsFromUri();
     // Load Core Settings Schema
-    this.settingsSchemaDefault = await (await fetch('../../schemaSettingsCore.json')).json();
+    this._settingsSchemaDefault = await (await fetch('../../schemaSettingsCore.json')).json();
     this.resetSettingsSchema();
   }
 
-  loadSettingsFromUri() {
-    // Load Settings from URI (injected from Window HREF)
-    this.settings = URI.QueryStringToJson(this.options.locationHref);
+  getSettings = (): OS => {
+    return structuredClone(this._settings);
+  };
+
+  getMaskedSettings = (): OS => {
+    return this.toggleMaskSettings(this.getSettings(), true);
+  };
+
+  setSettings = (settings: OS) => {
+    this._settings = settings;
+    this.updateParsedJsonResults(settings);
+    this.toggleMaskSettings(settings, true);
+  };
+
+  getSettingsSchema(): Readonly<FormEntry[]> {
+    return structuredClone(this._settingsSchema);
   }
+
+  getParsedJsonResults = (): ParsedJsonResults | undefined => {
+    return this._parsedJsonResults;
+  };
 
   resetSettingsSchema() {
-    this.settingsSchema = structuredClone(this.settingsSchemaDefault);
+    this._settingsSchema = structuredClone(this._settingsSchemaDefault);
   }
 
-  registerPluginSettings(plugins: PluginInstances<OS>, imports: PluginImports<OS>) {
-    // Iterate over every loaded plugin, and call `loadSettings` to manipulate the Settings Schema
-    plugins.forEach(plugin => {
-      try {
-        const fieldGroup = plugin.registerPluginSettings?.();
-        if (fieldGroup) {
-          this.settingsSchema.push(fieldGroup);
-        }
-      } catch (err) {
-        imports.bad.push(new Error(`Could not inject Settings Schema for Plugin: ${plugin.name}`));
-      }
-    });
+  registerSettings = (fieldGroup?: FormEntryGrouping) => {
+    if (!fieldGroup) {
+      return;
+    }
 
-    // After we've finished modifying the SettingsSchema, we can parse and cache
-    this.updateParsedJsonResults();
+    this._settingsSchema.push(fieldGroup);
+  };
+
+  updateParsedJsonResults = (settings: OS = this._settings) => {
+    this._parsedJsonResults = FromJson(this.getSettingsSchema(), settings);
+  };
+
+  private loadSettingsFromUri() {
+    // Load Settings from URI (injected from Window HREF)
+    this._settings = URI.QueryStringToJson(this.locationHref);
   }
 
-  updateParsedJsonResults(settings: OS = this.settings) {
-    this.parsedJsonResults = FromJson(this.getSettingsSchema(), settings);
-  }
-
-  toggleMaskSettings(settings: OS, mask: boolean) {
-    const passwordEntries = this.parsedJsonResults?.mapping?.password;
+  private toggleMaskSettings(settings: OS, mask: boolean) {
+    const passwordEntries = this._parsedJsonResults?.mapping?.password;
 
     Object.keys(passwordEntries ?? {}).forEach(settingName => {
       const val = get(settings, settingName);

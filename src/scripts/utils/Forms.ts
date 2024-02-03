@@ -377,9 +377,9 @@ export const Populate = (form: HTMLFormElement, formData: FormData) => {
   }
 };
 
-export const GetData = (formElement: HTMLFormElement) => {
+export const GetData = <Data extends {}>(formElement: HTMLFormElement): Data => {
   const formData = new FormData(formElement);
-  const json: any = {};
+  const json: Data = {} as Data;
 
   for (let [name, value] of formData.entries()) {
     if (false === IsValidValue(value)) {

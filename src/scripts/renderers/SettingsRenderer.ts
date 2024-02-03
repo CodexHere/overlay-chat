@@ -1,11 +1,13 @@
-import { OverlaySettings, PluginInstances, RendererInstance, RendererInstanceOptions } from '../types.js';
+import { PluginInstances, PluginSettingsBase } from '../types/Plugin.js';
+import { RendererInstance, RendererInstanceOptions } from '../types/Renderers.js';
 import * as Forms from '../utils/Forms.js';
 import { RenderTemplate } from '../utils/Templating.js';
 import * as URI from '../utils/URI.js';
 import { GetLocalStorageItem, RemoveArrayIndex, SetLocalStorageItem, debounce } from '../utils/misc.js';
 
-const shouldReloadPlugins = ['plugins', 'customPlugins'];
-const detailsTypes = ['DETAILS:', 'SUMMARY:', 'DIV:label-wrapper'];
+// These settings should restart the PluginManager
+const settingsShouldRetartPluginManager = ['plugins', 'customPlugins'];
+const detailsTagTypes = ['DETAILS:', 'SUMMARY:', 'DIV:label-wrapper'];
 
 const ScrollTTY = 20; // in seconds
 const isScrollTTYExpired = () => {
@@ -16,7 +18,7 @@ const isScrollTTYExpired = () => {
   return elapsed >= ScrollTTY * 1000;
 };
 
-export class SettingsRenderer<OS extends OverlaySettings> implements RendererInstance {
+export class SettingsRenderer<OS extends PluginSettingsBase> implements RendererInstance {
   private _onOverlaySettingsChanged: (event: Event) => Promise<void>;
   private _onFormScrolled: (event: Event) => void;
 
@@ -30,8 +32,8 @@ export class SettingsRenderer<OS extends OverlaySettings> implements RendererIns
   }
 
   private renderFormData() {
-    const settings = this.options.settingsManager.getSettings();
-    const plugins = this.options.pluginManager.getPlugins();
+    const settings = this.options.getSettings();
+    const plugins = this.options.getPlugins();
 
     this.unbindFormEvents();
     this.renderSettings(settings);
@@ -44,21 +46,23 @@ export class SettingsRenderer<OS extends OverlaySettings> implements RendererIns
   }
 
   private updateUrlAndResults() {
-    const settings = this.options.settingsManager.getSettings(false);
-    const url = this.generateUrl(settings);
+    const url = this.generateUrl();
     this.updateLinkResults(url);
   }
 
   private renderSettings(settings: OS) {
-    const elems = this.options.renderOptions.elements!;
-    const templs = this.options.renderOptions.templates!;
+    const { elements: elems, templates: templs } = this.options.renderOptions;
+
+    if (!elems || !templs) {
+      return;
+    }
 
     // Ensure no elements in the Root so we can display settings
     const root = elems['root'];
     root.innerHTML = '';
 
     RenderTemplate(root, templs['settings'], {
-      formElements: this.options.settingsManager.parsedJsonResults!.results
+      formElements: this.options.getParsedJsonResults?.()?.results
     });
 
     // Establish `elements` now that the Settings Form has been injected into DOM
@@ -73,7 +77,7 @@ export class SettingsRenderer<OS extends OverlaySettings> implements RendererIns
     // Iterate over every loaded plugin, and call `renderSettings` to manipulate the Settings view
     plugins.forEach(plugin => {
       try {
-        plugin.renderSettings?.(this.options.renderOptions);
+        plugin.renderSettings?.();
       } catch (err) {
         if (err instanceof Error) {
           throw new Error(
@@ -184,7 +188,7 @@ export class SettingsRenderer<OS extends OverlaySettings> implements RendererIns
     const tagAndClass = `${event.target.tagName}:${event.target.className}`;
 
     // User clicked a valid tag/class combo for a Details capture
-    if (detailsTypes.includes(tagAndClass)) {
+    if (detailsTagTypes.includes(tagAndClass)) {
       this.trackDetailsClicks(event);
     }
   };
@@ -234,6 +238,7 @@ export class SettingsRenderer<OS extends OverlaySettings> implements RendererIns
     event.preventDefault();
     event.stopImmediatePropagation();
 
+    const settings = this.options.getSettings();
     const isAdd = btn.name.startsWith('add');
     const content = btn.closest('.content');
     const tableBody = content?.querySelector('table tbody');
@@ -262,7 +267,7 @@ export class SettingsRenderer<OS extends OverlaySettings> implements RendererIns
                 name: `${fe.name}[${rowCount}]`
               }
             ],
-            this.options.settingsManager.getSettings()
+            settings
           ).results;
         });
 
@@ -327,18 +332,16 @@ export class SettingsRenderer<OS extends OverlaySettings> implements RendererIns
     const target = event.target! as HTMLInputElement;
     const form = target.form!;
 
-    const formData = Forms.GetData(form);
+    const formData = Forms.GetData<OS>(form);
     const targetName = RemoveArrayIndex(target.name);
-    this.options.settingsManager.setSettings(formData);
+    this.options.setSettings(formData);
 
-    if (shouldReloadPlugins.includes(targetName)) {
-      this.options.settingsManager.resetSettingsSchema();
-
+    if (settingsShouldRetartPluginManager.includes(targetName)) {
       try {
-        await this.options.pluginManager.loadPlugins();
+        await this.options.pluginLoader();
         await this.renderFormData();
       } catch (err) {
-        this.options.errorManager.showError(err as Error);
+        this.options.errorDisplay.showError(err as Error);
       }
     } else {
       form.reportValidity();
@@ -346,7 +349,11 @@ export class SettingsRenderer<OS extends OverlaySettings> implements RendererIns
     }
   };
 
-  private generateUrl(settings: OS) {
+  private generateUrl() {
+    const settings = this.options.getMaskedSettings();
+
+    delete settings.forceShowSettings;
+
     const baseUrl = URI.BaseUrl();
     const querystring = URI.JsonToQuerystring(settings);
 
@@ -359,7 +366,8 @@ export class SettingsRenderer<OS extends OverlaySettings> implements RendererIns
     const linkButton: HTMLInputElement = elems['button-load-overlay'] as HTMLInputElement;
 
     linkResultsOutput.value = url;
-    linkButton.disabled = !this.options.settingsManager.isConfigured;
+    // TODO: Handle results from `this.options.settingsValidator`
+    linkButton.disabled = true !== this.options.validateSettings();
   }
 
   private onClickLoadOverlay = (_event: Event) => {
@@ -367,10 +375,9 @@ export class SettingsRenderer<OS extends OverlaySettings> implements RendererIns
       '[name="new-window"]'
     ) as HTMLInputElement;
 
-    const settings = this.options.settingsManager.getSettings();
-    this.options.settingsManager.toggleMaskSettings(settings, true);
+    const settings = this.options.getMaskedSettings();
     delete settings['forceShowSettings'];
-    const url = this.generateUrl(settings);
+    const url = this.generateUrl();
 
     if (newWindowCheck && newWindowCheck.checked) {
       window.open(url, 'overlay');

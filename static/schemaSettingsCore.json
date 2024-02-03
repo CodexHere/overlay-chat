@@ -6,32 +6,6 @@
     "tooltip": "These are settings that generally apply to the entire Overlay.",
     "values": [
       {
-        "name": "channelSettings",
-        "label": "Channel Settings",
-        "inputType": "fieldgroup",
-        "description": "Enter your channel settings for Chat. If you do not supply a <a href=\"https://twitchapps.com/tmi/\" target=\"_new\">Token</a> for the Streamer or Bot User <i>each</i>, then the connection will be Anonymous and you cannot send messages.",
-        "values": [
-          {
-            "name": "nameStreamer",
-            "label": "Channel Name (Streamer)",
-            "inputType": "text",
-            "isRequired": true,
-            "tooltip": "This is the channel you want to display in the overlay!"
-          },
-          {
-            "name": "tokenStreamer",
-            "label": "Chat Token (Streamer)",
-            "inputType": "password"
-          },
-          {
-            "name": "tokenBot",
-            "label": "Chat Token (Bot)",
-            "inputType": "password"
-          }
-        ]
-      },
-
-      {
         "name": "fontSettings",
         "label": "Font Settings",
         "inputType": "fieldgroup",

@@ -1,64 +1,52 @@
 /**
- * @typedef {import('../../../src/scripts/types.js').OverlaySettings} OS_Core
- * @typedef {Object} OS_Base
+ * @typedef {import('../../../src/scripts/types/Plugin.js').PluginSettingsBase} OS_Base
+ * @typedef {Object} OS_Plugin
  * @property {string} colorLeading
  * @property {string} colorMod
  * @property {string} colorVip
- * @typedef {OS_Base & OS_Core} OS
+ * @typedef {OS_Plugin & OS_Base} OS
  *
- * @typedef {import('../../../src/scripts/managers/BusManager.js').BusError_ForceFailPipeline} BusError_ForceFailPipeline
- * @typedef {import('../../../src/scripts/types.js').ContextBase} ContextBase
- * @typedef {import('../../../src/scripts/Plugin_Core.js').MiddewareContext_Chat} ConcreteContext
  * @typedef {ContextBase & Partial<ConcreteContext>} Context
- * @typedef {import('../../../src/scripts/utils/EnhancedEventEmitter.js').EnhancedEventEmitter} EnhancedEventEmitter
+ * @typedef {import('../../../src/scripts/Plugin_Core.js').MiddewareContext_Chat} ConcreteContext
  * @typedef {import('../../../src/scripts/utils/Forms.js').FormEntryGrouping} FormEntryFieldGroup
+ * @typedef {import('../../../src/scripts/types/Managers.js').BusManagerContext_Init<ContextBase>} BusManagerContext_Init
+ * @typedef {import('../../../src/scripts/types/Middleware.js').ContextBase} ContextBase
+ * @typedef {import('../../../src/scripts/types/Middleware.js').PluginMiddlewareMap} PluginMiddlewareMap
+ * @typedef {import('../../../src/scripts/types/Plugin.js').PluginOptions<OS>} PluginInjectables
+ * @typedef {import('../../../src/scripts/types/Plugin.js').PluginInstance<OS>} PluginInstance
+ * @typedef {import('../../../src/scripts/types/Plugin.js').PluginRegistrationOptions} PluginRegistrationOptions
  * @typedef {import('../../../src/scripts/utils/Middleware.js').Next<Context>} Next
- * @typedef {import('../../../src/scripts/utils/Middleware.js').Middleware<Context>} MiddlewareContext
- * @typedef {import('../../../src/scripts/utils/Middleware.js').Middleware<ContextBase>} MiddlewareContextBase
- * @typedef {import('../../../src/scripts/types.js').RenderOptions} RenderOptions
- * @typedef {import('../../../src/scripts/types.js').SettingsInjector} SettingsInjector
- * @typedef {import('../../../src/scripts/types.js').OverlayPluginInstance<OS>} OverlayPluginInstance
- * @typedef {import('../../../src/scripts/types.js').SettingsRetriever<OS>} SettingsRetriever
- * @typedef {import('../../../src/scripts/types.js').BusManagerEvents} BusManagerEvents
- * @typedef {import('../../../src/scripts/types.js').BusManagerEmitter} BusManagerEmitter
- * @typedef {import('../../../src/scripts/types.js').BusManagerContext_Init<ContextBase>} BusManagerContext_Init
  *
- * @implements {OverlayPluginInstance}
+ * @implements {PluginInstance}
  */
 export default class Plugin_HangoutHereTheme {
   name = 'HangoutHere Theme';
   ref = Symbol(this.name);
 
   /**
-   * @param {BusManagerEmitter} emitter
-   * @param {SettingsRetriever} getSettings
+   * @param {PluginInjectables} options
    */
-  constructor(emitter, getSettings) {
-    this.emitter = emitter;
-    this.getSettings = getSettings;
+  constructor(options) {
+    this.options = options;
 
     console.log(`${this.name} instantiated`);
 
-    this.emitter.addListener('test-event', this.testEventHandler);
+    this.options.emitter.addListener('test-event', this.testEventHandler);
   }
 
   /**
-   * @param {string[]} param1
-   * @param {object} param2
-s   */
-  testEventHandler = (param1, param2) => {
-    return `${this.name} TEST return call successfully (${param1.join(', ')}, ${JSON.stringify(param2)})`;
-  };
-
-  unregisterPlugin() {
-    console.log(`${this.name} Unregistering`);
-    this.emitter.removeListener('test-event', this.testEventHandler);
-  }
+   * @returns {PluginRegistrationOptions}
+   */
+  getRegistrationOptions = () => ({
+    settings: this._getSettings(),
+    middlewarePipelines: this._getMiddleware(),
+    stylesheet: new URL(`${import.meta.url.split('/').slice(0, -1).join('/')}/plugin.css`)
+  });
 
   /**
    * @returns {FormEntryFieldGroup}
    */
-  registerPluginSettings() {
+  _getSettings() {
     console.log(`${this.name} [injectSettingsSchema]`);
 
     return {
@@ -99,6 +87,18 @@ s   */
     };
   }
 
+  /**
+   * @returns {PluginMiddlewareMap}
+   */
+  _getMiddleware = () => ({
+    'chat:twitch': [this.middleware]
+  });
+
+  unregisterPlugin() {
+    console.log(`${this.name} Unregistering`);
+    this.options.emitter.removeListener('test-event', this.testEventHandler);
+  }
+
   renderSettings() {
     console.log(`${this.name} [renderSettings]`);
   }
@@ -108,18 +108,18 @@ s   */
 
     setTimeout(() => {
       console.log('Sending message');
-      this.emitter.emit('chat:twitch--send', '[from Bot] Hello from HangoutHere Theme!');
-      this.emitter.emit('chat:twitch--send', '[from Streamer] Hello from HangoutHere Theme!', 'streamer');
+      this.options.emitter.emit('chat:twitch--send', '[from Bot] Hello from HangoutHere Theme!');
+      this.options.emitter.emit('chat:twitch--send', '[from Streamer] Hello from HangoutHere Theme!', 'streamer');
     }, 3000);
   }
 
-  registerPluginMiddleware() {
-    return new Map(
-      Object.entries({
-        'chat:twitch': [this.middleware]
-      })
-    );
-  }
+  /**
+   * @param {string[]} param1
+   * @param {object} param2
+s   */
+  testEventHandler = (param1, param2) => {
+    return `${this.name} TEST return call successfully (${param1.join(', ')}, ${JSON.stringify(param2)})`;
+  };
 
   /**
    * @param {Context} context

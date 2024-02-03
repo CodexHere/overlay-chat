@@ -24,10 +24,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     needsOverlayRenderer: true,
     needsSettingsRenderer: true,
-    settingsValidator: settings => {
-      return !!settings.fontSize && !!settings.nameStreamer;
-    },
-
     defaultPlugin: Plugin_Core
   });
 
