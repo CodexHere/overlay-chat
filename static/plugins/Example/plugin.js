@@ -68,20 +68,6 @@ export default class Plugin_Example {
    * @returns {PluginMiddlewareMap}
    */
   _getMiddleware() {
-    // This should error, since this isn't the first plugin to register the chain
-    setTimeout(() => {
-      /** @type {BusManagerContext_Init} */
-      const ctx = {
-        chainName: 'chat:twitch',
-        initialContext: { runningErrors: [] },
-        initiatingPlugin: this
-      };
-
-      console.info(`[${this.name}] About to execute a middleware that this plugin did not register. Expect an error!`);
-
-      this.options.emitter.emit('middleware-execute', ctx);
-    }, 3000);
-
     const middleware = [
       this.middlewareSkipCurrent,
       this.middlewareSkipChain1_next,
@@ -161,7 +147,7 @@ export default class Plugin_Example {
 
     if (context.message?.includes('skipChain1')) {
       console.log('[MW 2] - Next - Skipping the rest of Chain');
-      await next(new Error('', { cause: { forceFailChain: true } }));
+      await next(new Error('', { cause: { silentlyFailChain: true } }));
       return;
     }
 
@@ -186,7 +172,7 @@ export default class Plugin_Example {
 
     if (context.message?.includes('skipChain2')) {
       console.log('[MW 3] - Error - [Incorrectly] Skipping the rest of Chain');
-      throw new Error('', { cause: { forceFailChain: true } });
+      throw new Error('', { cause: { silentlyFailChain: true } });
     }
 
     console.log('[MW 3] - Error - Not skipping the rest of Chain, mutate and continue');
@@ -280,10 +266,31 @@ export default class Plugin_Example {
     const val = this.options.emitter.call('test-event', ['Some Test Value'], { foo: true, bar: false });
     console.log(`[${this.name}] Event Output:`, val);
 
-    console.log(`[${this.name}] Attempting to register a new event on the eventbus, this should fail with an error`);
-
+    // This should error, since this isn't the first plugin to register the chain
     setTimeout(() => {
-      this.options.emitter.addListener('thisShouldFail', () => {});
+      /** @type {BusManagerContext_Init} */
+      const ctx = {
+        chainName: 'chat:twitch',
+        initialContext: { runningErrors: [] },
+        initiatingPlugin: this
+      };
+
+      // Fails because we didn't initially register this middleware chain
+      console.warn(`[${this.name}] About to execute a middleware that this plugin did not register. Expect an error!`);
+      this.options.emitter.emit('middleware-execute', ctx);
+
+      // Fails because the emitter is locked down after plugins are registered
+      console.warn(`[${this.name}] Attempting to register a new event on the eventbus, this should fail with an error`);
+      try {
+        this.options.emitter.addListener('thisShouldFail', () => {});
+      } catch (err) {
+        console.warn('Swallowing error, but showing, for example only!');
+        console.error(err);
+      }
+
+      // Shows an error to the user as an example
+      console.warn(`[${this.name}] Show an error to the user`);
+      this.options.errorDisplay.showError(new Error('This error should be shown to the user!'));
     }, 3000);
   }
 

@@ -1,6 +1,6 @@
 import { Listener } from 'events';
 import { FormEntryGrouping } from '../utils/Forms.js';
-import { BusManagerEmitter, RenderOptions, SettingsValidatorResults } from './Managers.js';
+import { BusManagerEmitter, ErrorManager, RenderOptions, SettingsValidatorResults } from './Managers.js';
 import { PluginMiddlewareMap } from './Middleware.js';
 
 export type PluginInstances<OS extends PluginSettingsBase> = PluginInstance<OS>[];
@@ -41,6 +41,7 @@ export type PluginOptions<OS extends PluginSettingsBase> = {
   getSettings: () => OS;
   emitter: Readonly<BusManagerEmitter>;
   renderOptions: RenderOptions;
+  errorDisplay: ErrorManager;
 };
 
 export type PluginConstructor<OS extends PluginSettingsBase> = {

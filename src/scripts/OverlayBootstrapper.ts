@@ -31,7 +31,8 @@ export class OverlayBootstrapper<OS extends PluginSettingsBase> implements Error
       pluginOptions: {
         emitter: this.busManager.emitter,
         getSettings: this.settingsManager.getSettings,
-        renderOptions: bootstrapOptions.renderOptions
+        renderOptions: bootstrapOptions.renderOptions,
+        errorDisplay: this
       }
     });
   }
@@ -76,14 +77,14 @@ export class OverlayBootstrapper<OS extends PluginSettingsBase> implements Error
 
     const renderer: RendererInstance = new rendererClass({
       renderOptions: this.bootstrapOptions.renderOptions,
-      errorDisplay: this,
-      getSettings: this.settingsManager.getSettings,
       getMaskedSettings: this.settingsManager.getMaskedSettings,
-      setSettings: this.settingsManager.setSettings,
       getParsedJsonResults: this.settingsManager.getParsedJsonResults,
+      getSettings: this.settingsManager.getSettings,
+      setSettings: this.settingsManager.setSettings,
       getPlugins: this.pluginManager.getPlugins,
+      pluginLoader: this.pluginManager.loadPlugins,
       validateSettings: this.pluginManager.validateSettings,
-      pluginLoader: this.pluginManager.loadPlugins
+      errorDisplay: this
     });
 
     await renderer.init();
@@ -91,8 +92,9 @@ export class OverlayBootstrapper<OS extends PluginSettingsBase> implements Error
 
   private bindManagerEvents() {
     this.pluginManager.addListener(PluginManagerEvents.LOADED, () => {
-      this.settingsManager.updateParsedJsonResults();
+      this.busManager.init();
       this.busManager.disableAddingListeners();
+      this.settingsManager.updateParsedJsonResults();
     });
 
     this.pluginManager.addListener(PluginManagerEvents.UNLOADED, () => {

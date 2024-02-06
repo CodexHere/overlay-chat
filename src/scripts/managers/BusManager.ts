@@ -4,26 +4,26 @@ import { PluginEventMap, PluginInstance, PluginSettingsBase } from '../types/Plu
 import { EnhancedEventEmitter } from '../utils/EnhancedEventEmitter.js';
 import { Middleware, MiddlewareChain } from '../utils/Middleware.js';
 
-function isForceFailChainError(err: unknown): err is ForceFailChainError {
+function isSilentlyFailChainError(err: unknown): err is SilentlyFailChainError {
   if (!err || false === err instanceof Error) {
     return false;
   }
 
   if (err && err.cause) {
-    return Object.hasOwn((err as ForceFailChainError).cause, 'forceFailChain');
+    return Object.hasOwn((err as SilentlyFailChainError).cause, 'silentlyFailChain');
   }
 
   return false;
 }
 
-export class ForceFailChainError extends Error {
+export class SilentlyFailChainError extends Error {
   cause = {
-    forceFailChain: true
+    silentlyFailChain: true
   };
 
   constructor(message: string) {
     super(message);
-    (Error as any).captureStackTrace(this, ForceFailChainError);
+    (Error as any).captureStackTrace(this, SilentlyFailChainError);
   }
 }
 
@@ -40,7 +40,7 @@ export class BusManager<OS extends PluginSettingsBase> {
     this._emitter = new EnhancedEventEmitter();
   }
 
-  async init() {
+  init() {
     // Register "Middleware Execute" event to execute Chain
     this.emitter.on(BusManagerEvents.MIDDLEWARE_EXECUTE, this.startMiddlewareChainByName);
   }
@@ -113,7 +113,7 @@ export class BusManager<OS extends PluginSettingsBase> {
       await chain.execute(ctx.initialContext);
       console.log(`Ending Chain: ${ctx.initiatingPlugin.name}`);
     } catch (err) {
-      if (true === isForceFailChainError(err)) {
+      if (true === isSilentlyFailChainError(err)) {
         console.log(`Chain Catch - Force Fail Chain: ${ctx.initiatingPlugin.name}`);
       } else {
         console.log(`Error in Chain: ${ctx.initiatingPlugin.name}`);

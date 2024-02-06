@@ -264,37 +264,37 @@ export class PluginManager<OS extends PluginSettingsBase> extends EventEmitter i
     return [
       {
         inputType: 'text',
-        name: 'name-' + pluginName,
+        name: ' ',
         label: 'Name',
         defaultValue: plugin.name
       },
       {
         inputType: 'text',
-        name: 'version-' + pluginName,
+        name: ' ',
         label: 'Version',
         defaultValue: plugin.version
       },
       {
         inputType: 'text',
-        name: 'priority-' + pluginName,
+        name: ' ',
         label: 'Priority',
         defaultValue: plugin.priority || 'N/A'
       },
       {
         inputType: 'text',
-        name: 'middleware chain(s)-' + pluginName,
+        name: ' ',
         label: 'Middleware Chain(s)',
         defaultValue: registration.middlewares && Object.keys(registration.middlewares).join(', ')
       },
       {
         inputType: 'text',
-        name: 'event(s) listening-' + pluginName,
+        name: ' ',
         label: 'Event(s) Listening',
         defaultValue: registration.events?.receives && Object.keys(registration.events?.receives).join(', ')
       },
       {
         inputType: 'text',
-        name: 'event(s) sent-' + pluginName,
+        name: ' ',
         label: 'Event(s) Sent',
         defaultValue: registration.events?.sends && registration.events?.sends.join(', ')
       }

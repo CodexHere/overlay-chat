@@ -3,10 +3,6 @@ import { ErrorManager, RenderOptions, SettingsValidatorResults } from './Manager
 import { PluginInstances, PluginSettingsBase } from './Plugin.js';
 
 export type RendererInstanceOptions<OS extends PluginSettingsBase> = {
-  // busManager: BusManager<OS>;
-  // pluginManager: PluginManager<OS>;
-  // settingsManager: SettingsManager<OS>;
-
   renderOptions: RenderOptions;
 
   getParsedJsonResults?: () => ParsedJsonResults | undefined;
