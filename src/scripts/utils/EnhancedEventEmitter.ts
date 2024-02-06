@@ -1,10 +1,16 @@
 import { EventEmitter, Listener } from 'events';
 
 export class EnhancedEventEmitter extends EventEmitter {
-  _storeListenersMap: Record<string, [Listener, Listener][]> = {};
-  _storeValuesMap: Record<string, [Listener, any][]> = {};
+  disableAddingListeners = false;
+
+  private _storeListenersMap: Record<string, [Listener, Listener][]> = {};
+  private _storeValuesMap: Record<string, [Listener, any][]> = {};
 
   override addListener = (type: string | number, listener: Listener): this => {
+    if (true === this.disableAddingListeners) {
+      throw new Error('The EventEmitter is marked as disallowing adding new Listeners!');
+    }
+
     const newListener = (...args: any[]) => {
       this._storeValuesMap[type] = this._storeValuesMap[type] ?? [];
       const val = listener.apply(listener, args);
@@ -71,8 +77,11 @@ export class EnhancedEventEmitter extends EventEmitter {
     if (type) {
       delete this._storeValuesMap[type];
       delete this._storeListenersMap[type];
+    } else {
+      this._storeValuesMap = {};
+      this._storeListenersMap = {};
     }
 
-    return super.removeAllListeners(type);
+    return super.removeAllListeners();
   }
 }

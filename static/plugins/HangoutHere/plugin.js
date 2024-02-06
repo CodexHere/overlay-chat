@@ -12,6 +12,7 @@
  * @typedef {import('../../../src/scripts/types/Managers.js').BusManagerContext_Init<ContextBase>} BusManagerContext_Init
  * @typedef {import('../../../src/scripts/types/Middleware.js').ContextBase} ContextBase
  * @typedef {import('../../../src/scripts/types/Middleware.js').PluginMiddlewareMap} PluginMiddlewareMap
+ * @typedef {import('../../../src/scripts/types/Plugin.js').PluginEventRegistration} PluginEventMap
  * @typedef {import('../../../src/scripts/types/Plugin.js').PluginOptions<OS>} PluginInjectables
  * @typedef {import('../../../src/scripts/types/Plugin.js').PluginInstance<OS>} PluginInstance
  * @typedef {import('../../../src/scripts/types/Plugin.js').PluginRegistrationOptions} PluginRegistrationOptions
@@ -21,6 +22,7 @@
  */
 export default class Plugin_HangoutHereTheme {
   name = 'HangoutHere Theme';
+  version = '1.0.0';
   ref = Symbol(this.name);
 
   /**
@@ -30,16 +32,15 @@ export default class Plugin_HangoutHereTheme {
     this.options = options;
 
     console.log(`${this.name} instantiated`);
-
-    this.options.emitter.addListener('test-event', this.testEventHandler);
   }
 
   /**
    * @returns {PluginRegistrationOptions}
    */
-  getRegistrationOptions = () => ({
+  registerPlugin = () => ({
     settings: this._getSettings(),
-    middlewarePipelines: this._getMiddleware(),
+    middlewares: this._getMiddleware(),
+    events: this._getEvents(),
     stylesheet: new URL(`${import.meta.url.split('/').slice(0, -1).join('/')}/plugin.css`)
   });
 
@@ -94,9 +95,22 @@ export default class Plugin_HangoutHereTheme {
     'chat:twitch': [this.middleware]
   });
 
+  /**
+   * @returns {PluginEventMap}
+   */
+  _getEvents() {
+    console.log(`[${this.name}] Registering Events`);
+
+    return {
+      receives: {
+        'test-event': this.testEventHandler
+      },
+      sends: ['chat:twitch--send']
+    };
+  }
+
   unregisterPlugin() {
     console.log(`${this.name} Unregistering`);
-    this.options.emitter.removeListener('test-event', this.testEventHandler);
   }
 
   renderSettings() {

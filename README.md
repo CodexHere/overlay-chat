@@ -5,12 +5,6 @@
 * Need new custom error type: `ForceShowUser`
   * Enforces calling `showError` so the user can see
   * Discretionary use, specifically for when plugins/chains/etc simply CANNOT work and it breaks the entire everything. IE, user auth fails at some point?
-* Move existing Twitch Chat stuff over to it's own Chat: Core plugin
-  * Include Authentication w/Twitch
-    * Look more into: https://twitchtokengenerator.com/
-  * Needs refresh capabilities
-  * Event:SendMessage (if auth'd properly) - Sends a simple message to chat
-  * Event:HasAuth - ?? returns bool if auth'd
 * Figure out debouncing on Settings... There's some annoyance with UX and jumping to a required input
 * Bootstrapper should load HTML Template file
 * Handle error responses from `SettingsValidator`
@@ -21,6 +15,12 @@
 * Add Reset capability
   * Delete localStorage
   * Wipe URI params and reload page
+* Move existing Twitch Chat stuff over to it's own Chat: Core plugin
+  * Include Authentication w/Twitch
+    * Look more into: https://twitchtokengenerator.com/
+  * Needs refresh capabilities
+  * Event:SendMessage (if auth'd properly) - Sends a simple message to chat
+  * Event:HasAuth - ?? returns bool if auth'd
 * Find and Fix all `TODO` and `FIXME` comments in entire source!
   * Do not leave any! Finish ALL of them at once!
   * Add missing HTMLInput Elements:
@@ -50,10 +50,6 @@
 * Build a dropdown to jump to a plugins' settings
   * Plugin will need more contextual data:
     * Name
-* Event Sub Response:
-  * Output simple message (customizable) indicating an event was triggered
-  * Needs a tokenized mapping of event sub properties
-    * https://dev.twitch.tv/docs/eventsub/eventsub-subscription-types/#channelhype_trainbegin
 * Convert to use `hh-util`
   * `hh-util` needs proper publishing
   * `hh-util` needs proper lifecycle support
@@ -95,6 +91,10 @@
 
 * Chat Core
 * EventSub Core
+* Event Sub Response:
+  * Output simple message (customizable) indicating an event was triggered
+  * Needs a tokenized mapping of event sub properties
+    * https://dev.twitch.tv/docs/eventsub/eventsub-subscription-types/#channelhype_trainbegin
 * OBS WS Core
 * Chat Animations
   * https://www.minimamente.com/project/magic/
@@ -117,80 +117,15 @@
   * VIP/Mod/etc get style treatments?
   * This is basically a theme with minimal purpose
   * Might have multiple versions of this theme
-* Ad Detection
-  * Sends Message
-  * Needs Auth
 * Top Chatter
   * Special Badge?
   * Some kind of color/etc treatment
+* Ad Detection
+  * Sends Message
+  * Needs Auth
 * Follower Stuff
   * Border/glow animations?
   * Confetti around follow message in chat?
   * Send message welcoming viewer
 * History Plugin:
   * Stores chats in localStorage to be retrieved on load, so chat isn't empty on first load
-
-
-
-### Tree Code
-
-No clue what this was for???
-
-```js
-function TreeNode(value) {
-  this.value = value;
-  this.left = null;
-  this.right = null;
-}
-
-function constructBinaryTree(sortedArray, start, end) {
-  if (start > end) {
-    return null;
-  }
-
-  const middle = Math.floor((start + end) / 2);
-  const node = new TreeNode(sortedArray[middle]);
-
-  node.left = constructBinaryTree(sortedArray, start, middle - 1);
-  node.right = constructBinaryTree(sortedArray, middle + 1, end);
-
-  return node;
-}
-
-function findNode(root, value) {
-  if (root === null || root.value === value) {
-    return root;
-  }
-
-  // Recursively search in the left subtree
-  const leftResult = findNode(root.left, value);
-  if (leftResult !== null) {
-    return leftResult;
-  }
-
-  // Recursively search in the right subtree
-  const rightResult = findNode(root.right, value);
-  if (rightResult !== null) {
-    return rightResult;
-  }
-
-  return null; // Node not found
-}
-
-// Example usage
-const array = ['apple', 'banana', 'cherry', 'date', 'elderberry'];
-const sortedArray = array.sort();
-
-const binaryTree = constructBinaryTree(sortedArray, 0, sortedArray.length - 1);
-console.log(binaryTree);
-
-const nodeToFind = 'banana';
-const foundNode = findNode(binaryTree, nodeToFind);
-
-if (foundNode !== null) {
-  console.log(`Node '${nodeToFind}' found in the binary tree.`);
-} else {
-  console.log(`Node '${nodeToFind}' not found in the binary tree.`);
-}
-
-```
