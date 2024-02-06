@@ -8,7 +8,13 @@ import {
   SettingsValidatorResults
 } from './types/Managers.js';
 import { ContextBase, PluginMiddlewareMap } from './types/Middleware.js';
-import { PluginInstance, PluginOptions, PluginRegistrationOptions, PluginSettingsBase } from './types/Plugin.js';
+import {
+  PluginEventRegistration,
+  PluginInstance,
+  PluginOptions,
+  PluginRegistrationOptions,
+  PluginSettingsBase
+} from './types/Plugin.js';
 import { FormEntryGrouping } from './utils/Forms.js';
 import { Middleware } from './utils/Middleware.js';
 import { RenderTemplate } from './utils/Templating.js';
@@ -35,9 +41,10 @@ type Context = ContextBase & Partial<MiddewareContext_Chat>;
 type ClientTypes = 'streamer' | 'bot';
 
 export default class Plugin_Core<OS extends OverlaySettings_Chat> implements PluginInstance<OS> {
-  priority = -Number.MAX_SAFE_INTEGER;
   name = 'Core Plugin';
+  version = '1.0.0';
   ref = Symbol(this.name);
+  priority = -Number.MAX_SAFE_INTEGER;
 
   private clients: Record<ClientTypes, tmiJs.Client | undefined> = {
     streamer: undefined,
@@ -54,9 +61,9 @@ export default class Plugin_Core<OS extends OverlaySettings_Chat> implements Plu
 
   constructor(public options: PluginOptions<OS>) {}
 
-  getRegistrationOptions = (): PluginRegistrationOptions => ({
+  registerPlugin = (): PluginRegistrationOptions => ({
     middlewares: this._getMiddleware(),
-    //TODO Move to Twitch Chat Plugin
+    events: this._getEvents(),
     settings: this._getSettings()
   });
 
@@ -75,6 +82,13 @@ export default class Plugin_Core<OS extends OverlaySettings_Chat> implements Plu
 
   private _getMiddleware = (): PluginMiddlewareMap => ({
     'chat:twitch': [this.middleware]
+  });
+
+  private _getEvents = (): PluginEventRegistration => ({
+    receives: {
+      'chat:twitch--send': this._onBusSendMessage
+    },
+    sends: [BusManagerEvents.MIDDLEWARE_EXECUTE]
   });
 
   private _getSettings = (): FormEntryGrouping => ({
@@ -106,8 +120,6 @@ export default class Plugin_Core<OS extends OverlaySettings_Chat> implements Plu
 
   async renderOverlay(): Promise<void> {
     await this.initChatListen();
-
-    this.options.emitter.on('chat:twitch--send', this._onBusSendMessage);
   }
 
   private generateTmiOptions() {

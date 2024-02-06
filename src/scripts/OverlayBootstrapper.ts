@@ -24,6 +24,7 @@ export class OverlayBootstrapper<OS extends PluginSettingsBase> implements Error
 
       pluginRegistrar: {
         registerMiddleware: this.busManager.registerMiddleware,
+        registerEvents: this.busManager.registerEvents,
         registerSettings: this.settingsManager.registerSettings,
         registerStylesheet: AddStylesheet
       },
@@ -91,6 +92,7 @@ export class OverlayBootstrapper<OS extends PluginSettingsBase> implements Error
   private bindManagerEvents() {
     this.pluginManager.addListener(PluginManagerEvents.LOADED, () => {
       this.settingsManager.updateParsedJsonResults();
+      this.busManager.disableAddingListeners();
     });
 
     this.pluginManager.addListener(PluginManagerEvents.UNLOADED, () => {

@@ -1,6 +1,6 @@
 import { BusManagerContext_Init, BusManagerEmitter, BusManagerEvents } from '../types/Managers.js';
 import { ContextBase, PluginMiddlewareMap } from '../types/Middleware.js';
-import { PluginInstance, PluginSettingsBase } from '../types/Plugin.js';
+import { PluginEventMap, PluginInstance, PluginSettingsBase } from '../types/Plugin.js';
 import { EnhancedEventEmitter } from '../utils/EnhancedEventEmitter.js';
 import { Middleware, MiddlewareChain } from '../utils/Middleware.js';
 
@@ -45,9 +45,14 @@ export class BusManager<OS extends PluginSettingsBase> {
     this.emitter.on(BusManagerEvents.MIDDLEWARE_EXECUTE, this.startMiddlewareChainByName);
   }
 
+  disableAddingListeners() {
+    this._emitter.disableAddingListeners = true;
+  }
+
   reset = () => {
     this.chains = new Map();
     this.chainPluginMap = new Map();
+    this._emitter.disableAddingListeners = false;
     this._emitter.removeAllListeners();
   };
 
@@ -77,6 +82,16 @@ export class BusManager<OS extends PluginSettingsBase> {
     // Register each Middleware Chain with an Error Middleware
     for (const chain of this.chains.values()) {
       chain.use(this.errorMiddleware);
+    }
+  };
+
+  registerEvents = (plugin: PluginInstance<OS>, eventMap?: PluginEventMap) => {
+    if (!eventMap) {
+      return;
+    }
+
+    for (const [eventName, eventFunction] of Object.entries(eventMap)) {
+      this.emitter.addListener(eventName, eventFunction.bind(plugin));
     }
   };
 

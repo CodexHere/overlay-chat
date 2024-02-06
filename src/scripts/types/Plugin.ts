@@ -1,3 +1,4 @@
+import { Listener } from 'events';
 import { FormEntryGrouping } from '../utils/Forms.js';
 import { BusManagerEmitter, RenderOptions, SettingsValidatorResults } from './Managers.js';
 import { PluginMiddlewareMap } from './Middleware.js';
@@ -11,11 +12,10 @@ export type PluginImportResults<OS extends PluginSettingsBase> = {
 
 export type PluginRegistrar<OS extends PluginSettingsBase> = {
   registerMiddleware(plugin: PluginInstance<OS>, queriedMiddleware: PluginMiddlewareMap | undefined): void;
+  registerEvents(plugin: PluginInstance<OS>, eventMap?: PluginEventMap): void;
   registerSettings(fieldGroup?: FormEntryGrouping | undefined): void;
   registerStylesheet: (href: string) => void;
 };
-
-// Overlay Instance
 
 export type PluginSettingsBase = {
   forceShowSettings?: boolean;
@@ -23,15 +23,23 @@ export type PluginSettingsBase = {
   customPlugins?: string[];
 };
 
+export type PluginEventMap = Record<string, Listener>;
+
+export type PluginEventRegistration = {
+  receives?: PluginEventMap;
+  sends?: string[];
+};
+
 export type PluginRegistrationOptions = {
   middlewares?: PluginMiddlewareMap;
+  events?: PluginEventRegistration;
   settings?: FormEntryGrouping;
   stylesheet?: URL;
 };
 
 export type PluginOptions<OS extends PluginSettingsBase> = {
   getSettings: () => OS;
-  emitter: BusManagerEmitter;
+  emitter: Readonly<BusManagerEmitter>;
   renderOptions: RenderOptions;
 };
 
@@ -45,6 +53,7 @@ export type PluginInstance<OS extends PluginSettingsBase> = {
 
   // Plugin should define these
   name: string;
+  version: string;
   ref: Symbol;
   priority?: number;
 

@@ -10,6 +10,7 @@
  * @typedef {import('../../../src/scripts/types/Managers.js').BusManagerContext_Init<ContextBase>} BusManagerContext_Init
  * @typedef {import('../../../src/scripts/types/Middleware.js').ContextBase} ContextBase
  * @typedef {import('../../../src/scripts/types/Middleware.js').PluginMiddlewareMap} PluginMiddlewareMap
+ * @typedef {import('../../../src/scripts/types/Plugin.js').PluginEventRegistration} PluginEventMap
  * @typedef {import('../../../src/scripts/types/Plugin.js').PluginOptions<OS>} PluginInjectables
  * @typedef {import('../../../src/scripts/types/Plugin.js').PluginInstance<OS>} PluginInstance
  * @typedef {import('../../../src/scripts/types/Plugin.js').PluginRegistrationOptions} PluginRegistrationOptions
@@ -19,6 +20,7 @@
  */
 export default class Plugin_Example {
   name = 'Example Plugin';
+  version = '1.0.0';
   ref = Symbol(this.name);
   priority = 20;
 
@@ -28,17 +30,16 @@ export default class Plugin_Example {
   constructor(options) {
     this.options = options;
 
-    console.log(`${this.name} instantiated`);
-
-    this.options.emitter.addListener('test-event', this.testEventHandler);
+    console.log(`[${this.name}] instantiated`);
   }
 
   /**
    * @returns {PluginRegistrationOptions}
    */
-  getRegistrationOptions = () => ({
+  registerPlugin = () => ({
     settings: this._getSettings(),
     middlewares: this._getMiddleware(),
+    events: this._getEvents(),
     stylesheet: new URL(`${import.meta.url.split('/').slice(0, -1).join('/')}/plugin.css`)
   });
 
@@ -46,7 +47,7 @@ export default class Plugin_Example {
    * @returns {FormEntryFieldGroup}
    */
   _getSettings() {
-    console.log(`${this.name} [injectSettingsSchema]`);
+    console.log(`[${this.name}] [_getSettings]`);
 
     return {
       inputType: 'fieldgroup',
@@ -76,7 +77,7 @@ export default class Plugin_Example {
         initiatingPlugin: this
       };
 
-      console.info('About to execute a middleware that this plugin did not register. Expect an error!');
+      console.info(`[${this.name}] About to execute a middleware that this plugin did not register. Expect an error!`);
 
       this.options.emitter.emit('middleware-execute', ctx);
     }, 3000);
@@ -91,7 +92,7 @@ export default class Plugin_Example {
       this.middlewareFinal
     ];
 
-    console.log(`Registering ${middleware.length} Middleware!`);
+    console.log(`[${this.name}] Registering ${middleware.length} Middleware!`);
 
     return {
       // prettier-ignore
@@ -99,11 +100,22 @@ export default class Plugin_Example {
     };
   }
 
-  unregisterPlugin() {
-    console.log(`${this.name} Unregistering`);
+  /**
+   * @returns {PluginEventMap}
+   */
+  _getEvents() {
+    console.log(`[${this.name}] Registering Events`);
 
-    // Be sure to unregister our Event Listeners, or we'll create a Memory Leak with orphaned Event Listeners
-    this.options.emitter.removeListener('test-event', this.testEventHandler);
+    return {
+      receives: {
+        'test-event': this.testEventHandler
+      },
+      sends: ['test-event', 'middleware-execute']
+    };
+  }
+
+  unregisterPlugin() {
+    console.log(`[${this.name}] Unregistering Plugin`);
   }
 
   /**
@@ -112,7 +124,7 @@ export default class Plugin_Example {
    * @returns
    */
   testEventHandler = (param1, param2) => {
-    return `${this.name} TEST return call successfully (${param1.join(', ')}, ${JSON.stringify(param2)})`;
+    return `[${this.name}] TEST return call successfully (${param1.join(', ')}, ${JSON.stringify(param2)})`;
   };
 
   /**
@@ -262,14 +274,20 @@ export default class Plugin_Example {
   };
 
   renderSettings() {
-    console.log(`${this.name} [renderSettings]`);
+    console.log(`[${this.name}] [renderSettings]`);
 
     this.options.emitter.emit('test-event', ['Some Test Value'], { foo: true, bar: false });
     const val = this.options.emitter.call('test-event', ['Some Test Value'], { foo: true, bar: false });
-    console.log('Event Output:', val);
+    console.log(`[${this.name}] Event Output:`, val);
+
+    console.log(`[${this.name}] Attempting to register a new event on the eventbus, this should fail with an error`);
+
+    setTimeout(() => {
+      this.options.emitter.addListener('thisShouldFail', () => {});
+    }, 3000);
   }
 
   renderOverlay() {
-    console.log(`${this.name} [renderOverlay]`);
+    console.log(`[${this.name}] [renderOverlay]`);
   }
 }

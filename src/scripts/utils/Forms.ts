@@ -66,8 +66,8 @@ export const FromJson = <Settings extends {}>(
     const defaultData = (isButton && entry.defaultValue) ?? '';
     const required = isButton && entry.isRequired ? 'required' : '';
     const tooltip = isButton && entry.tooltip ? `title="${entry.tooltip}"` : '';
-    const uniqueId = `${entry.name}-${labelId++}`; // unique ID for labels
-    const nameOrLabelId = entry.name ?? entry.label?.toLocaleLowerCase().replaceAll(' ', '_');
+    const nameOrLabelId = (entry.name ?? entry.label)?.toLocaleLowerCase().replaceAll(' ', '_');
+    const uniqueId = `${nameOrLabelId}-${labelId++}`; // unique ID for labels
 
     let inputType = '';
     let recursedCall: ParsedJsonResults | undefined;
@@ -362,16 +362,26 @@ export const Populate = (form: HTMLFormElement, formData: FormData) => {
         const enabledIndices = (currValue as string[]).map(v => v.split(':')[0]);
         opts.forEach((opt, idx) => (opt.selected = enabledIndices.includes(idx.toString())));
       } else if (element instanceof RadioNodeList) {
-        const inputs = [...element.values()];
-        // `value` is a comma-separated string of selected indices
-        const enabledIndices = (currValue as string[]).map(v => v.split(':')[0]);
-        inputs.forEach((input, idx) => {
-          if (input instanceof HTMLInputElement) {
-            input.checked = enabledIndices.includes(idx.toString());
-          } else {
-            console.error(`Invalid Input Type: ${input}`);
+        try {
+          const inputs = [...element.values()];
+          // `value` is a comma-separated string of selected indices
+          const enabledIndices = (currValue as string[]).map(v => v.split(':')[0]);
+          inputs.forEach((input, idx) => {
+            if (input instanceof HTMLInputElement) {
+              input.checked = enabledIndices.includes(idx.toString());
+            } else {
+              console.error(`Invalid Input Type: ${input}`);
+            }
+          });
+        } catch (err) {
+          if (false === err instanceof Error) {
+            return;
           }
-        });
+
+          throw new Error(
+            'Supplied a single value where a list was expected. If this is unintentional, be sure to use unique names for your fields'
+          );
+        }
       }
     }
   }

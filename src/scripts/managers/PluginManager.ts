@@ -11,8 +11,10 @@ import {
   PluginInstance,
   PluginInstances,
   PluginLoaders,
+  PluginRegistrationOptions,
   PluginSettingsBase
 } from '../types/Plugin.js';
+import { FormEntry } from '../utils/Forms.js';
 import * as URI from '../utils/URI.js';
 
 export class PluginManager<OS extends PluginSettingsBase> extends EventEmitter implements PluginManagerEmitter<OS> {
@@ -62,7 +64,7 @@ export class PluginManager<OS extends PluginSettingsBase> extends EventEmitter i
     const importResults = await this.importModules(pluginLoaders);
 
     // Bootstrap the Plugins loaded
-    await this.bootstrapPlugins(importResults);
+    await this.registerPlugins(importResults);
 
     this.emit(PluginManagerEvents.LOADED, this._plugins);
 
@@ -204,7 +206,7 @@ export class PluginManager<OS extends PluginSettingsBase> extends EventEmitter i
     return sortval;
   }
 
-  private async bootstrapPlugins(importResults: PluginImportResults<OS>) {
+  private async registerPlugins(importResults: PluginImportResults<OS>) {
     const { pluginRegistrar } = this.options;
 
     // Assign Plugins from the "Good" imports
@@ -222,7 +224,15 @@ export class PluginManager<OS extends PluginSettingsBase> extends EventEmitter i
 
       // Load Settings Schemas from Plugins
       try {
-        pluginRegistrar.registerSettings(registration.settings);
+        const injectedSettings = structuredClone(registration.settings);
+        injectedSettings?.values.push({
+          inputType: 'fieldgroup',
+          label: 'Plugin Metadata',
+          name: `pluginMetadata-${plugin.name}`,
+          values: this.getPluginMetaInputs(plugin, registration)
+        });
+
+        pluginRegistrar.registerSettings(injectedSettings);
       } catch (err) {
         importResults.bad.push(new Error(`Could not inject Settings Schema for Plugin: ${plugin.name}`));
       }
@@ -234,10 +244,60 @@ export class PluginManager<OS extends PluginSettingsBase> extends EventEmitter i
         importResults.bad.push(new Error(`Could not Register Middleware for Plugin: ${plugin.name}`));
       }
 
+      // Register Events from Plugins
+      try {
+        pluginRegistrar.registerEvents(plugin, registration.events?.receives);
+      } catch (err) {
+        importResults.bad.push(new Error(`Could not Register Events for Plugin: ${plugin.name}`));
+      }
+
       // Load Styles from Plugins
       if (registration.stylesheet) {
         pluginRegistrar.registerStylesheet(registration.stylesheet.href);
       }
     }
+  }
+
+  getPluginMetaInputs(plugin: PluginInstance<OS>, registration: PluginRegistrationOptions): FormEntry[] {
+    const pluginName = plugin.name.toLocaleLowerCase().replaceAll(' ', '_');
+
+    return [
+      {
+        inputType: 'text',
+        name: 'name-' + pluginName,
+        label: 'Name',
+        defaultValue: plugin.name
+      },
+      {
+        inputType: 'text',
+        name: 'version-' + pluginName,
+        label: 'Version',
+        defaultValue: plugin.version
+      },
+      {
+        inputType: 'text',
+        name: 'priority-' + pluginName,
+        label: 'Priority',
+        defaultValue: plugin.priority || 'N/A'
+      },
+      {
+        inputType: 'text',
+        name: 'middleware chain(s)-' + pluginName,
+        label: 'Middleware Chain(s)',
+        defaultValue: registration.middlewares && Object.keys(registration.middlewares).join(', ')
+      },
+      {
+        inputType: 'text',
+        name: 'event(s) listening-' + pluginName,
+        label: 'Event(s) Listening',
+        defaultValue: registration.events?.receives && Object.keys(registration.events?.receives).join(', ')
+      },
+      {
+        inputType: 'text',
+        name: 'event(s) sent-' + pluginName,
+        label: 'Event(s) Sent',
+        defaultValue: registration.events?.sends && registration.events?.sends.join(', ')
+      }
+    ];
   }
 }
