@@ -227,9 +227,9 @@ export class PluginManager<OS extends PluginSettingsBase> extends EventEmitter i
         importResults.bad.push(new Error(`Could not inject Settings Schema for Plugin: ${plugin.name}`));
       }
 
-      // Register Middleware Pipelines from Plugins
+      // Register Middleware Chains from Plugins
       try {
-        pluginRegistrar.registerMiddleware(plugin, registration.middlewarePipelines);
+        pluginRegistrar.registerMiddleware(plugin, registration.middlewares);
       } catch (err) {
         importResults.bad.push(new Error(`Could not Register Middleware for Plugin: ${plugin.name}`));
       }

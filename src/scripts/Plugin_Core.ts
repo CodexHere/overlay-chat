@@ -55,7 +55,7 @@ export default class Plugin_Core<OS extends OverlaySettings_Chat> implements Plu
   constructor(public options: PluginOptions<OS>) {}
 
   getRegistrationOptions = (): PluginRegistrationOptions => ({
-    middlewarePipelines: this._getMiddleware(),
+    middlewares: this._getMiddleware(),
     //TODO Move to Twitch Chat Plugin
     settings: this._getSettings()
   });

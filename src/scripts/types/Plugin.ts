@@ -24,7 +24,7 @@ export type PluginSettingsBase = {
 };
 
 export type PluginRegistrationOptions = {
-  middlewarePipelines?: PluginMiddlewareMap;
+  middlewares?: PluginMiddlewareMap;
   settings?: FormEntryGrouping;
   stylesheet?: URL;
 };

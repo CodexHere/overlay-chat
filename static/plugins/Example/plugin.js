@@ -38,7 +38,7 @@ export default class Plugin_Example {
    */
   getRegistrationOptions = () => ({
     settings: this._getSettings(),
-    middlewarePipelines: this._getMiddleware(),
+    middlewares: this._getMiddleware(),
     stylesheet: new URL(`${import.meta.url.split('/').slice(0, -1).join('/')}/plugin.css`)
   });
 
@@ -67,7 +67,7 @@ export default class Plugin_Example {
    * @returns {PluginMiddlewareMap}
    */
   _getMiddleware() {
-    // This should error, since this isn't the first plugin to register the chain pipeline
+    // This should error, since this isn't the first plugin to register the chain
     setTimeout(() => {
       /** @type {BusManagerContext_Init} */
       const ctx = {
@@ -123,12 +123,12 @@ export default class Plugin_Example {
     console.log('[MW 1] - Start');
 
     if (context.message?.includes('skipCurrent')) {
-      console.log('[MW 1] - Skipping the rest of current Segment, move onto the next one');
+      console.log('[MW 1] - Skipping the rest of current Link, move onto the next one');
       await next();
       return;
     }
 
-    console.log('[MW 1] - Not skipping the current Segment, mutate and continue');
+    console.log('[MW 1] - Not skipping the current Link, mutate and continue');
 
     context.message += ' [MW 1 Exec] ';
 
@@ -149,7 +149,7 @@ export default class Plugin_Example {
 
     if (context.message?.includes('skipChain1')) {
       console.log('[MW 2] - Next - Skipping the rest of Chain');
-      await next(new Error('', { cause: { forceFailPipeline: true } }));
+      await next(new Error('', { cause: { forceFailChain: true } }));
       return;
     }
 
@@ -174,7 +174,7 @@ export default class Plugin_Example {
 
     if (context.message?.includes('skipChain2')) {
       console.log('[MW 3] - Error - [Incorrectly] Skipping the rest of Chain');
-      throw new Error('', { cause: { forceFailPipeline: true } });
+      throw new Error('', { cause: { forceFailChain: true } });
     }
 
     console.log('[MW 3] - Error - Not skipping the rest of Chain, mutate and continue');
@@ -209,7 +209,7 @@ export default class Plugin_Example {
     console.log('[MW 5] - Next Error');
 
     if (context.message?.includes('nextError')) {
-      console.log('[MW 5] - Next Error - Skipping the rest of Segment');
+      console.log('[MW 5] - Next Error - Skipping the rest of Link');
       await next(new Error('Not Skippable Error'));
       return;
     }
@@ -233,7 +233,7 @@ export default class Plugin_Example {
     console.log('[MW 6] - Throw Error');
 
     if (context.message?.includes('throwError')) {
-      console.log('[MW 6] - Throw Error - Skipping the rest of Segment');
+      console.log('[MW 6] - Throw Error - Skipping the rest of Link');
       throw new Error('Not Skippable Error');
     }
 

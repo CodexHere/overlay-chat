@@ -9,26 +9,25 @@ export type Middleware<Context extends {}> = (
 ) => Promise<void> | void;
 
 /**
- * Declare a new middleware Pipeline.
+ * Declare a new middleware Chain.
  */
-export class Pipeline<Context extends {}> {
+export class MiddlewareChain<Context extends {}> {
   /**
-   * @param stack A list of middlewares to add to the pipeline on instantiation.
+   * @param stack A list of middlewares to add to the Chain on instantiation.
    */
   constructor(protected stack: Middleware<Context>[] = []) {}
 
   /**
-   * Add middlewares to the pipeline.
-   * @param middlewares A list of middlewares to add to the current
-   * pipeline.
+   * Add middlewares to the Chain.
+   * @param middlewares A list of middlewares to add to the current Chain.
    */
   use(...middlewares: Middleware<Context>[]) {
     this.stack.push(...middlewares);
   }
 
   /**
-   * Execute a pipeline, and move context through each middleware in turn.
-   * @param context The contect object to be sent through the pipeline.
+   * Execute a Chain, and move context through each middleware in turn.
+   * @param context The contect object to be sent through the Chain.
    */
   async execute(ctx: Context) {
     return await this.executeMiddleware(ctx, this.stack);
@@ -40,7 +39,7 @@ export class Pipeline<Context extends {}> {
     // If an error is detected, skip to the end and attempt to handle the error before it throws.
     const slice: Middleware<Context> = error ? middlewares[middlewares.length - 1] : middlewares[0];
 
-    // If an error is detected, give the opportunity to continue the chain after testing error,
+    // If an error is detected, give the opportunity to continue the Chain after testing error,
     // otherwise skip to the next (and remainder of) list.
     const nextMiddlewares = error ? middlewares : middlewares.slice(1);
 

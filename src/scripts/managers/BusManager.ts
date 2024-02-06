@@ -2,34 +2,34 @@ import { BusManagerContext_Init, BusManagerEmitter, BusManagerEvents } from '../
 import { ContextBase, PluginMiddlewareMap } from '../types/Middleware.js';
 import { PluginInstance, PluginSettingsBase } from '../types/Plugin.js';
 import { EnhancedEventEmitter } from '../utils/EnhancedEventEmitter.js';
-import { Middleware, Pipeline } from '../utils/Middleware.js';
+import { Middleware, MiddlewareChain } from '../utils/Middleware.js';
 
-function isForceFailPipelineError(err: unknown): err is BusError_ForceFailPipeline {
+function isForceFailChainError(err: unknown): err is ForceFailChainError {
   if (!err || false === err instanceof Error) {
     return false;
   }
 
   if (err && err.cause) {
-    return Object.hasOwn((err as BusError_ForceFailPipeline).cause, 'forceFailPipeline');
+    return Object.hasOwn((err as ForceFailChainError).cause, 'forceFailChain');
   }
 
   return false;
 }
 
-export class BusError_ForceFailPipeline extends Error {
+export class ForceFailChainError extends Error {
   cause = {
-    forceFailPipeline: true
+    forceFailChain: true
   };
 
   constructor(message: string) {
     super(message);
-    (Error as any).captureStackTrace(this, BusError_ForceFailPipeline);
+    (Error as any).captureStackTrace(this, ForceFailChainError);
   }
 }
 
 export class BusManager<OS extends PluginSettingsBase> {
-  private pipelineRegistrations: Map<Pipeline<ContextBase>, Symbol> = new Map();
-  private pipelines: Map<string, Pipeline<ContextBase>> = new Map();
+  private chainPluginMap: Map<MiddlewareChain<ContextBase>, Symbol> = new Map();
+  private chains: Map<string, MiddlewareChain<ContextBase>> = new Map();
   private _emitter: BusManagerEmitter;
 
   get emitter(): Readonly<BusManagerEmitter> {
@@ -41,13 +41,13 @@ export class BusManager<OS extends PluginSettingsBase> {
   }
 
   async init() {
-    // Register "Middleware Execute" event to execute pipeline
+    // Register "Middleware Execute" event to execute Chain
     this.emitter.on(BusManagerEvents.MIDDLEWARE_EXECUTE, this.startMiddlewareChainByName);
   }
 
   reset = () => {
-    this.pipelines = new Map();
-    this.pipelineRegistrations = new Map();
+    this.chains = new Map();
+    this.chainPluginMap = new Map();
     this._emitter.removeAllListeners();
   };
 
@@ -57,37 +57,37 @@ export class BusManager<OS extends PluginSettingsBase> {
     }
 
     for (const [middlewareName, middlwareFunction] of Object.entries(queriedMiddleware)) {
-      let chosenPipeline = this.pipelines.get(middlewareName);
+      let chosenChain = this.chains.get(middlewareName);
 
-      // This is the first registration for the pipeline
-      if (!chosenPipeline) {
-        // Create a new pipeline to be chosen
-        chosenPipeline = new Pipeline();
-        // Register this plugin as the leader for this pipeline
-        this.pipelineRegistrations.set(chosenPipeline, plugin.ref);
-        // Register this pipeline for the middlewareName
-        this.pipelines.set(middlewareName, chosenPipeline);
+      // This is the first registration for the Chain
+      if (!chosenChain) {
+        // Create a new Chain to be chosen
+        chosenChain = new MiddlewareChain();
+        // Register this plugin as the leader for this Chain
+        this.chainPluginMap.set(chosenChain, plugin.ref);
+        // Register this Chain for the middlewareName
+        this.chains.set(middlewareName, chosenChain);
 
-        console.info(`Registering '${plugin.name}' as leader of chain: ${middlewareName}`);
+        console.info(`Registering '${plugin.name}' as leader of Chain: ${middlewareName}`);
       }
 
-      chosenPipeline.use(...middlwareFunction);
+      chosenChain.use(...middlwareFunction);
     }
 
     // Register each Middleware Chain with an Error Middleware
-    for (const pipeline of this.pipelines.values()) {
-      pipeline.use(this.errorMiddleware);
+    for (const chain of this.chains.values()) {
+      chain.use(this.errorMiddleware);
     }
   };
 
   private startMiddlewareChainByName = async (ctx: BusManagerContext_Init<ContextBase>) => {
-    const pipeline = this.pipelines.get(ctx.chainName);
+    const chain = this.chains.get(ctx.chainName);
 
-    if (!pipeline) {
+    if (!chain) {
       throw new Error('Middleware Chain does not exist: ' + ctx.chainName);
     }
 
-    const leaderPlugin = this.pipelineRegistrations.get(pipeline);
+    const leaderPlugin = this.chainPluginMap.get(chain);
 
     if (false === (ctx.initiatingPlugin.ref === leaderPlugin)) {
       throw new Error(`This Plugin did not initiate this middleware (${ctx.chainName}): ${ctx.initiatingPlugin.name}`);
@@ -95,10 +95,10 @@ export class BusManager<OS extends PluginSettingsBase> {
 
     try {
       console.log(`Starting Chain: ${ctx.initiatingPlugin.name}`);
-      await pipeline.execute(ctx.initialContext);
+      await chain.execute(ctx.initialContext);
       console.log(`Ending Chain: ${ctx.initiatingPlugin.name}`);
     } catch (err) {
-      if (true === isForceFailPipelineError(err)) {
+      if (true === isForceFailChainError(err)) {
         console.log(`Chain Catch - Force Fail Chain: ${ctx.initiatingPlugin.name}`);
       } else {
         console.log(`Error in Chain: ${ctx.initiatingPlugin.name}`);

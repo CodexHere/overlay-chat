@@ -2,15 +2,20 @@
 
 ## TODO
 
+* Register Events the same as Middleware
+	* ?? Semaphore should gate so they can't be registered later 
+* Show Plugin Metadata in Settings
+	* Name
+	* Version (needs added to Plugin Interface)
+	* Priority (if one)
+	* Middleware Chains
+	* Events Listening (get from registration)
+	* Events Emitted (atm looks to need explicit listing)
+	* Needs style that looks good/different, but understandable
+		* Mouse events disabled?
 * Need new custom error type: `ForceShowUser`
   * Enforces calling `showError` so the user can see
   * Discretionary use, specifically for when plugins/chains/etc simply CANNOT work and it breaks the entire everything. IE, user auth fails at some point?
-* Move existing Twitch Chat stuff over to it's own Chat: Core plugin
-  * Include Authentication w/Twitch
-    * Look more into: https://twitchtokengenerator.com/
-  * Needs refresh capabilities
-  * Event:SendMessage (if auth'd properly) - Sends a simple message to chat
-  * Event:HasAuth - ?? returns bool if auth'd
 * Figure out debouncing on Settings... There's some annoyance with UX and jumping to a required input
 * Bootstrapper should load HTML Template file
 * Handle error responses from `SettingsValidator`
@@ -21,6 +26,12 @@
 * Add Reset capability
   * Delete localStorage
   * Wipe URI params and reload page
+* Move existing Twitch Chat stuff over to it's own Chat: Core plugin
+  * Include Authentication w/Twitch
+    * Look more into: https://twitchtokengenerator.com/
+  * Needs refresh capabilities
+  * Event:SendMessage (if auth'd properly) - Sends a simple message to chat
+  * Event:HasAuth - ?? returns bool if auth'd
 * Find and Fix all `TODO` and `FIXME` comments in entire source!
   * Do not leave any! Finish ALL of them at once!
   * Add missing HTMLInput Elements:

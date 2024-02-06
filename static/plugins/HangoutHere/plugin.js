@@ -39,7 +39,7 @@ export default class Plugin_HangoutHereTheme {
    */
   getRegistrationOptions = () => ({
     settings: this._getSettings(),
-    middlewarePipelines: this._getMiddleware(),
+    middlewares: this._getMiddleware(),
     stylesheet: new URL(`${import.meta.url.split('/').slice(0, -1).join('/')}/plugin.css`)
   });
 
