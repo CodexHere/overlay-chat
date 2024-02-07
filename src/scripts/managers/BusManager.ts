@@ -27,7 +27,7 @@ export class SilentlyFailChainError extends Error {
   }
 }
 
-export class BusManager<OS extends PluginSettingsBase> {
+export class BusManager<PluginSettings extends PluginSettingsBase> {
   private chainPluginMap: Map<MiddlewareChain<ContextBase>, Symbol> = new Map();
   private chains: Map<string, MiddlewareChain<ContextBase>> = new Map();
   private _emitter: BusManagerEmitter;
@@ -56,7 +56,7 @@ export class BusManager<OS extends PluginSettingsBase> {
     this._emitter.removeAllListeners();
   };
 
-  registerMiddleware = (plugin: PluginInstance<OS>, queriedMiddleware: PluginMiddlewareMap | undefined) => {
+  registerMiddleware = (plugin: PluginInstance<PluginSettings>, queriedMiddleware: PluginMiddlewareMap | undefined) => {
     if (!queriedMiddleware) {
       return;
     }
@@ -85,7 +85,7 @@ export class BusManager<OS extends PluginSettingsBase> {
     }
   };
 
-  registerEvents = (plugin: PluginInstance<OS>, eventMap?: PluginEventMap) => {
+  registerEvents = (plugin: PluginInstance<PluginSettings>, eventMap?: PluginEventMap) => {
     if (!eventMap) {
       return;
     }
@@ -96,27 +96,27 @@ export class BusManager<OS extends PluginSettingsBase> {
   };
 
   private startMiddlewareChainByName = async (ctx: BusManagerContext_Init<ContextBase>) => {
-    const chain = this.chains.get(ctx.chainName);
+    const links = this.chains.get(ctx.chainName);
 
-    if (!chain) {
+    if (!links) {
       throw new Error('Middleware Chain does not exist: ' + ctx.chainName);
     }
 
-    const leaderPlugin = this.chainPluginMap.get(chain);
+    const leaderPlugin = this.chainPluginMap.get(links);
 
     if (false === (ctx.initiatingPlugin.ref === leaderPlugin)) {
       throw new Error(`This Plugin did not initiate this middleware (${ctx.chainName}): ${ctx.initiatingPlugin.name}`);
     }
 
     try {
-      console.log(`Starting Chain: ${ctx.initiatingPlugin.name}`);
-      await chain.execute(ctx.initialContext);
-      console.log(`Ending Chain: ${ctx.initiatingPlugin.name}`);
+      console.log(`Starting Chain: ${ctx.chainName}`);
+      await links.execute(ctx.initialContext);
+      console.log(`Ending Chain: ${ctx.chainName}`);
     } catch (err) {
       if (true === isSilentlyFailChainError(err)) {
-        console.log(`Chain Catch - Force Fail Chain: ${ctx.initiatingPlugin.name}`);
+        console.log(`Chain Catch - Force Fail Chain: ${ctx.chainName}`);
       } else {
-        console.log(`Error in Chain: ${ctx.initiatingPlugin.name}`);
+        console.log(`Error in Chain: ${ctx.chainName}`);
         throw err;
       }
     }

@@ -1,8 +1,8 @@
 @import url('@picocss/pico');
 @import url('./variables.scss');
+@import url('./app.scss');
 @import url('./details.scss');
 @import url('./settings.scss');
-@import url('./overlay.scss');
 
 * {
   box-sizing: border-box;

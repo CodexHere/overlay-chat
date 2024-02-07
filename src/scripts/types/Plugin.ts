@@ -1,18 +1,21 @@
 import { Listener } from 'events';
 import { FormEntryGrouping } from '../utils/Forms.js';
-import { BusManagerEmitter, ErrorManager, RenderOptions, SettingsValidatorResults } from './Managers.js';
+import { BusManagerEmitter, ErrorManager, SettingsValidatorResults } from './Managers.js';
 import { PluginMiddlewareMap } from './Middleware.js';
+import { RenderOptions } from './Renderers.js';
 
-export type PluginInstances<OS extends PluginSettingsBase> = PluginInstance<OS>[];
-export type PluginLoaders<OS extends PluginSettingsBase> = Array<string | PluginConstructor<OS>>;
-export type PluginImportResults<OS extends PluginSettingsBase> = {
-  good: PluginInstance<OS>[];
+export type PluginInstances<PluginSettings extends PluginSettingsBase> = PluginInstance<PluginSettings>[];
+export type PluginLoaders<PluginSettings extends PluginSettingsBase> = Array<
+  string | PluginConstructor<PluginSettings>
+>;
+export type PluginImportResults<PluginSettings extends PluginSettingsBase> = {
+  good: PluginInstance<PluginSettings>[];
   bad: Error[];
 };
 
-export type PluginRegistrar<OS extends PluginSettingsBase> = {
-  registerMiddleware(plugin: PluginInstance<OS>, queriedMiddleware: PluginMiddlewareMap | undefined): void;
-  registerEvents(plugin: PluginInstance<OS>, eventMap?: PluginEventMap): void;
+export type PluginRegistrar<PluginSettings extends PluginSettingsBase> = {
+  registerMiddleware(plugin: PluginInstance<PluginSettings>, queriedMiddleware: PluginMiddlewareMap | undefined): void;
+  registerEvents(plugin: PluginInstance<PluginSettings>, eventMap?: PluginEventMap): void;
   registerSettings(fieldGroup?: FormEntryGrouping | undefined): void;
   registerStylesheet: (href: string) => void;
 };
@@ -37,20 +40,20 @@ export type PluginRegistrationOptions = {
   stylesheet?: URL;
 };
 
-export type PluginOptions<OS extends PluginSettingsBase> = {
-  getSettings: () => OS;
+export type PluginOptions<PluginSettings extends PluginSettingsBase> = {
+  getSettings: () => PluginSettings;
   emitter: Readonly<BusManagerEmitter>;
   renderOptions: RenderOptions;
   errorDisplay: ErrorManager;
 };
 
-export type PluginConstructor<OS extends PluginSettingsBase> = {
-  new (options: PluginOptions<OS>): PluginInstance<OS>;
+export type PluginConstructor<PluginSettings extends PluginSettingsBase> = {
+  new (options: PluginOptions<PluginSettings>): PluginInstance<PluginSettings>;
 };
 
-export type PluginInstance<OS extends PluginSettingsBase> = {
+export type PluginInstance<PluginSettings extends PluginSettingsBase> = {
   // Injected
-  options: PluginOptions<OS>;
+  options: PluginOptions<PluginSettings>;
 
   // Plugin should define these
   name: string;
@@ -62,7 +65,7 @@ export type PluginInstance<OS extends PluginSettingsBase> = {
   registerPlugin?(): PluginRegistrationOptions | Promise<PluginRegistrationOptions>;
   unregisterPlugin?(): void;
 
-  isConfigured?(): SettingsValidatorResults<OS>;
+  isConfigured?(): SettingsValidatorResults<PluginSettings>;
   renderSettings?(): void;
   renderOverlay?(): void;
 };

@@ -1,17 +1,22 @@
 import { ParsedJsonResults } from '../utils/Forms.js';
-import { ErrorManager, RenderOptions, SettingsValidatorResults } from './Managers.js';
+import { ErrorManager, SettingsValidatorResults, TemplateMap } from './Managers.js';
 import { PluginInstances, PluginSettingsBase } from './Plugin.js';
 
-export type RendererInstanceOptions<OS extends PluginSettingsBase> = {
+export type RenderOptions = {
+  templates: TemplateMap;
+  rootContainer: HTMLElement;
+};
+
+export type RendererInstanceOptions<PluginSettings extends PluginSettingsBase> = {
   renderOptions: RenderOptions;
 
   getParsedJsonResults?: () => ParsedJsonResults | undefined;
 
-  validateSettings: () => SettingsValidatorResults<OS>;
-  getSettings: () => OS;
-  getMaskedSettings: () => OS;
-  setSettings: (settings: OS) => void;
-  getPlugins: () => PluginInstances<OS>;
+  validateSettings: () => SettingsValidatorResults<PluginSettings>;
+  getSettings: () => PluginSettings;
+  getMaskedSettings: () => PluginSettings;
+  setSettings: (settings: PluginSettings) => void;
+  getPlugins: () => PluginInstances<PluginSettings>;
 
   pluginLoader: () => void;
 
@@ -22,6 +27,6 @@ export type RendererInstance = {
   init(): Promise<void>;
 };
 
-export type RendererConstructor<OS extends PluginSettingsBase> = {
-  new (options: RendererInstanceOptions<OS>): RendererInstance;
+export type RendererConstructor<PluginSettings extends PluginSettingsBase> = {
+  new (options: RendererInstanceOptions<PluginSettings>): RendererInstance;
 };

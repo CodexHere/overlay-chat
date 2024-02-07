@@ -40,11 +40,19 @@ export type MiddewareContext_Chat = {
 type Context = ContextBase & Partial<MiddewareContext_Chat>;
 type ClientTypes = 'streamer' | 'bot';
 
-export default class Plugin_Core<OS extends OverlaySettings_Chat> implements PluginInstance<OS> {
+type ElementMap = {
+  container: HTMLElement;
+};
+
+export default class Plugin_Core<PluginSettings extends OverlaySettings_Chat>
+  implements PluginInstance<PluginSettings>
+{
   name = 'Core Plugin';
   version = '1.0.0';
   ref = Symbol(this.name);
   priority = -Number.MAX_SAFE_INTEGER;
+
+  private elements: ElementMap = {} as ElementMap;
 
   private clients: Record<ClientTypes, tmiJs.Client | undefined> = {
     streamer: undefined,
@@ -59,7 +67,7 @@ export default class Plugin_Core<OS extends OverlaySettings_Chat> implements Plu
     return this.clients.bot && false === this.clients.bot.getUsername().startsWith('justin');
   }
 
-  constructor(public options: PluginOptions<OS>) {}
+  constructor(public options: PluginOptions<PluginSettings>) {}
 
   registerPlugin = (): PluginRegistrationOptions => ({
     middlewares: this._getMiddleware(),
@@ -67,16 +75,18 @@ export default class Plugin_Core<OS extends OverlaySettings_Chat> implements Plu
     settings: this._getSettings()
   });
 
-  isConfigured(): true | SettingsValidatorResults<OS> {
-    const { customPlugins, plugins } = this.options.getSettings();
+  isConfigured(): true | SettingsValidatorResults<PluginSettings> {
+    const { customPlugins, plugins, nameStreamer } = this.options.getSettings();
     const hasAnyPlugins = (!!customPlugins && 0 !== customPlugins.length) || (!!plugins && 0 !== plugins.length);
 
+    const hasChannelName = !!nameStreamer;
+
     return (
-      hasAnyPlugins ||
+      (hasChannelName && hasAnyPlugins) ||
       ({
         customPlugins: 'Needs at least one Custom Plugin',
         plugins: 'Needs at least one Plugin'
-      } as SettingsValidatorResult<OS>)
+      } as SettingsValidatorResult<PluginSettings>)
     );
   }
 
@@ -103,7 +113,7 @@ export default class Plugin_Core<OS extends OverlaySettings_Chat> implements Plu
         label: 'Channel Name (Streamer)',
         inputType: 'text',
         isRequired: true,
-        tooltip: 'This is the channel you want to display in the overlay!'
+        tooltip: 'This is the channel you want to listen/send for Twitch Chat!'
       },
       {
         name: 'tokenStreamer',
@@ -119,7 +129,14 @@ export default class Plugin_Core<OS extends OverlaySettings_Chat> implements Plu
   });
 
   async renderOverlay(): Promise<void> {
+    this.buildElementMap();
     await this.initChatListen();
+  }
+
+  private buildElementMap() {
+    const root = this.options.renderOptions.rootContainer;
+
+    this.elements['container'] = root.querySelector('#container')!;
   }
 
   private generateTmiOptions() {
@@ -277,15 +294,16 @@ export default class Plugin_Core<OS extends OverlaySettings_Chat> implements Plu
   renderMessage(context: Context) {
     // prettier-ignore
     RenderTemplate(
-        this.options.renderOptions!.elements!['container'],
-        this.options.renderOptions!.templates!['chat-message'],
-    context);
+      this.elements['container'],
+      this.options.renderOptions.templates['chat-message'],
+      context
+    );
 
     Splitting({ target: `[data-message-id="${context.messageId}"]` });
   }
 
   removeOutOfBoundsMessages() {
-    const container = this.options.renderOptions!.elements!['container'];
+    const container = this.elements['container'];
 
     if (!container) {
       return;
@@ -305,14 +323,15 @@ export default class Plugin_Core<OS extends OverlaySettings_Chat> implements Plu
         event.currentTarget!.removeEventListener('animationend', removeChild, true);
       };
 
-      const parentNode = element.parentElement;
-      const parentRect = parentNode!.getBoundingClientRect();
+      const parentNode = element.parentElement as HTMLElement;
+      const parentRect = parentNode.getBoundingClientRect();
       const elementRect = element.getBoundingClientRect();
       const isOutOfBounds = elementRect.top < parentRect.top;
 
       if (isOutOfBounds) {
         const child = children.shift();
         child?.classList.add('removing');
+        // TODO: see how this works when there isn't an animation assigned/triggered
         child?.addEventListener('animationend', removeChild, true);
       }
     }

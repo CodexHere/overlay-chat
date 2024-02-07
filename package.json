@@ -1,6 +1,6 @@
 {
   "name": "overlay-chat",
-  "version": "0.0.96",
+  "version": "0.0.97",
   "description": "",
   "main": "dist/index.js",
   "types": "dist/types/index.d.ts",
@@ -16,6 +16,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@types/events": "^3.0.3",
     "@types/lodash.get": "^4.4.9",
     "@types/lodash.merge": "^4.6.9",
     "@types/lodash.set": "^4.3.9",
@@ -30,7 +31,6 @@
   },
   "dependencies": {
     "@picocss/pico": "^1.5.11",
-    "@types/events": "^3.0.3",
     "events": "^3.3.0",
     "handlebars": "^4.7.8",
     "lodash.get": "^4.4.2",

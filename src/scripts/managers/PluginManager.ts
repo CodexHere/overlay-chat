@@ -17,14 +17,17 @@ import {
 import { FormEntry } from '../utils/Forms.js';
 import * as URI from '../utils/URI.js';
 
-export class PluginManager<OS extends PluginSettingsBase> extends EventEmitter implements PluginManagerEmitter<OS> {
-  private _plugins: PluginInstances<OS> = [];
+export class PluginManager<PluginSettings extends PluginSettingsBase>
+  extends EventEmitter
+  implements PluginManagerEmitter<PluginSettings>
+{
+  private _plugins: PluginInstances<PluginSettings> = [];
 
-  constructor(private options: PluginManagerOptions<OS>) {
+  constructor(private options: PluginManagerOptions<PluginSettings>) {
     super();
   }
 
-  getPlugins = (): PluginInstances<OS> => {
+  getPlugins = (): PluginInstances<PluginSettings> => {
     return this._plugins;
   };
 
@@ -57,7 +60,7 @@ export class PluginManager<OS extends PluginSettingsBase> extends EventEmitter i
     const { defaultPlugin } = this.options;
 
     // Load all URLs for desired plugins
-    const pluginLoaders: PluginLoaders<OS> = this.pluginBaseUrls() as PluginLoaders<OS>;
+    const pluginLoaders: PluginLoaders<PluginSettings> = this.pluginBaseUrls() as PluginLoaders<PluginSettings>;
     // Prepend Default plugin to instantiate/import
     pluginLoaders.unshift(defaultPlugin);
     // Perform Imports/Intantiations
@@ -74,7 +77,7 @@ export class PluginManager<OS extends PluginSettingsBase> extends EventEmitter i
     }
   };
 
-  validateSettings = (): SettingsValidatorResults<OS> => {
+  validateSettings = (): SettingsValidatorResults<PluginSettings> => {
     let errorMapping = {};
 
     this._plugins.forEach(plugin => {
@@ -118,7 +121,7 @@ export class PluginManager<OS extends PluginSettingsBase> extends EventEmitter i
     return pluginUrls;
   }
 
-  private async importModules(pluginLoaders: PluginLoaders<OS>) {
+  private async importModules(pluginLoaders: PluginLoaders<PluginSettings>) {
     const promises = pluginLoaders.map(async pluginUrl => await this.loadPluginInstance(pluginUrl));
 
     return (
@@ -139,18 +142,18 @@ export class PluginManager<OS extends PluginSettingsBase> extends EventEmitter i
           {
             good: [],
             bad: []
-          } as PluginImportResults<OS>
+          } as PluginImportResults<PluginSettings>
         )
     );
   }
 
-  private async loadPluginInstance(pluginLoadValue: string | PluginConstructor<OS>) {
-    let pluginClass: PluginConstructor<OS> | undefined;
+  private async loadPluginInstance(pluginLoadValue: string | PluginConstructor<PluginSettings>) {
+    let pluginClass: PluginConstructor<PluginSettings> | undefined;
 
     if (typeof pluginLoadValue === 'string') {
       pluginClass = await this.importPlugin(pluginLoadValue as string);
     } else {
-      pluginClass = pluginLoadValue as PluginConstructor<OS>;
+      pluginClass = pluginLoadValue as PluginConstructor<PluginSettings>;
     }
 
     // Instantiate Plugin
@@ -165,7 +168,7 @@ export class PluginManager<OS extends PluginSettingsBase> extends EventEmitter i
 
   private async importPlugin(pluginBaseUrl: string) {
     try {
-      let pluginClass: PluginConstructor<OS> | undefined;
+      let pluginClass: PluginConstructor<PluginSettings> | undefined;
 
       // If a Custom Theme is supplied, we'll expect it to be a full URL, otherwise we'll formulate a URL.
       // This allows us to ensure vite will not attempt to package the plugin on our behalf, and will truly
@@ -206,7 +209,7 @@ export class PluginManager<OS extends PluginSettingsBase> extends EventEmitter i
     return sortval;
   }
 
-  private async registerPlugins(importResults: PluginImportResults<OS>) {
+  private async registerPlugins(importResults: PluginImportResults<PluginSettings>) {
     const { pluginRegistrar } = this.options;
 
     // Assign Plugins from the "Good" imports
@@ -258,9 +261,7 @@ export class PluginManager<OS extends PluginSettingsBase> extends EventEmitter i
     }
   }
 
-  getPluginMetaInputs(plugin: PluginInstance<OS>, registration: PluginRegistrationOptions): FormEntry[] {
-    const pluginName = plugin.name.toLocaleLowerCase().replaceAll(' ', '_');
-
+  getPluginMetaInputs(plugin: PluginInstance<PluginSettings>, registration: PluginRegistrationOptions): FormEntry[] {
     return [
       {
         inputType: 'text',

@@ -1,8 +1,4 @@
-// body:has(#container-settings) {
-//   background: #0b0b0b url('../../../images/bg_stone.jpg') center/cover no-repeat;
-// }
-
-#container-settings {
+#container.settings {
   display: flex;
   flex-direction: column;
   padding: 1rem;

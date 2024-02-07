@@ -42,7 +42,8 @@ export class MiddlewareChain<Context extends {}> {
     // If an error is detected, give the opportunity to continue the Chain after testing error,
     // otherwise skip to the next (and remainder of) list.
     const nextMiddlewares = error ? middlewares : middlewares.slice(1);
+    const nextNext = async (error?: Error) => await this.executeMiddleware(context, nextMiddlewares, error);
 
-    return await slice(context, async error => await this.executeMiddleware(context, nextMiddlewares, error), error);
+    return await slice(context, nextNext, error);
   }
 }

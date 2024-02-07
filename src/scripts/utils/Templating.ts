@@ -2,8 +2,8 @@ import Handlebars from 'handlebars';
 
 const DomParser = new DOMParser();
 
-export const PrepareTemplate = (templateId: string) =>
-  Handlebars.compile(document.getElementById(templateId)?.innerHTML, { noEscape: true });
+export const PrepareTemplate = (templateElement: HTMLElement) =>
+  Handlebars.compile(templateElement.innerHTML, { noEscape: true });
 
 export const RenderTemplate = (container: HTMLElement, template: Handlebars.TemplateDelegate, data = {}) => {
   if (!template) {

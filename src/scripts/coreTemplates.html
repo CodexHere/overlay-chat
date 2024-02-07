@@ -1,0 +1,25 @@
+<template id="app" type="text/x-handlebars-template">
+  <div id="container-wrapper">
+    <div id="container" class="app"></div>
+    <div id="show-settings">⚙️</div>
+  </div>
+</template>
+
+<template id="settings" type="text/x-handlebars-template">
+  <div id="container" class="settings">
+    <h1 class="container-title">Settings</h1>
+    <form id="settings">{{formElements}}</form>
+
+    <div class="link-results">
+      <textarea rows="4"></textarea>
+      <div class="load-options">
+        <button class="button-load-app" disabled>Load App</button>
+        <label><input type="checkbox" class="settings-option" name="new-window" /> New Window?</label>
+      </div>
+    </div>
+
+    <div class="settings-options"></div>
+
+    <footer class="version">v%PACKAGE_VERSION%</footer>
+  </div>
+</template>

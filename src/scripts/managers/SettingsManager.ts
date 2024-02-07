@@ -4,9 +4,9 @@ import { PluginSettingsBase } from '../types/Plugin.js';
 import { FormEntry, FormEntryGrouping, FromJson, ParsedJsonResults } from '../utils/Forms.js';
 import * as URI from '../utils/URI.js';
 
-export class SettingsManager<OS extends PluginSettingsBase> {
+export class SettingsManager<PluginSettings extends PluginSettingsBase> {
   private _parsedJsonResults: ParsedJsonResults | undefined;
-  private _settings: OS = {} as OS;
+  private _settings: PluginSettings = {} as PluginSettings;
   private _settingsSchema: FormEntry[] = [];
   private _settingsSchemaDefault: FormEntry[] = [];
 
@@ -19,15 +19,15 @@ export class SettingsManager<OS extends PluginSettingsBase> {
     this.resetSettingsSchema();
   }
 
-  getSettings = (): OS => {
+  getSettings = (): PluginSettings => {
     return structuredClone(this._settings);
   };
 
-  getMaskedSettings = (): OS => {
+  getMaskedSettings = (): PluginSettings => {
     return this.toggleMaskSettings(this.getSettings(), true);
   };
 
-  setSettings = (settings: OS) => {
+  setSettings = (settings: PluginSettings) => {
     this._settings = settings;
     this.updateParsedJsonResults(settings);
     this.toggleMaskSettings(settings, true);
@@ -53,7 +53,7 @@ export class SettingsManager<OS extends PluginSettingsBase> {
     this._settingsSchema.push(fieldGroup);
   };
 
-  updateParsedJsonResults = (settings: OS = this._settings) => {
+  updateParsedJsonResults = (settings: PluginSettings = this._settings) => {
     this._parsedJsonResults = FromJson(this.getSettingsSchema(), settings);
   };
 
@@ -62,7 +62,7 @@ export class SettingsManager<OS extends PluginSettingsBase> {
     this._settings = URI.QueryStringToJson(this.locationHref);
   }
 
-  private toggleMaskSettings(settings: OS, mask: boolean) {
+  private toggleMaskSettings(settings: PluginSettings, mask: boolean) {
     const passwordEntries = this._parsedJsonResults?.mapping?.password;
 
     Object.keys(passwordEntries ?? {}).forEach(settingName => {

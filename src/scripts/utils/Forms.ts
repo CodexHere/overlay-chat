@@ -321,7 +321,7 @@ export const FromJson = <Settings extends {}>(
   };
 };
 
-export const Populate = (form: HTMLFormElement, formData: FormData) => {
+export const Hydrate = (form: HTMLFormElement, formData: FormData) => {
   for (const [fieldName, fieldValue] of Object.entries(formData)) {
     const looseLookup = form.elements.namedItem(fieldName);
     let elements: Array<Element | RadioNodeList> = [looseLookup] as Array<Element | RadioNodeList>;

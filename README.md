@@ -2,11 +2,8 @@
 
 ## TODO
 
-* Need new custom error type: `ForceShowUser`
-  * Enforces calling `showError` so the user can see
-  * Discretionary use, specifically for when plugins/chains/etc simply CANNOT work and it breaks the entire everything. IE, user auth fails at some point?
-* Figure out debouncing on Settings... There's some annoyance with UX and jumping to a required input
-* Bootstrapper should load HTML Template file
+* Move/Create other template
+  * error dialogue
 * Handle error responses from `SettingsValidator`
   * This will show errors and possibly modify the form validity if necessary
 * Ability to compress (`lz-string`) url params
@@ -21,6 +18,7 @@
   * Needs refresh capabilities
   * Event:SendMessage (if auth'd properly) - Sends a simple message to chat
   * Event:HasAuth - ?? returns bool if auth'd
+* Consider allowing plugins to register a template to load up front
 * Find and Fix all `TODO` and `FIXME` comments in entire source!
   * Do not leave any! Finish ALL of them at once!
   * Add missing HTMLInput Elements:
@@ -29,6 +27,8 @@
     * https://www.w3schools.com/html/html_form_input_types.asp
 * Heavily Document everything
 * Create some cool examples:
+  * renderSettings, listen to click of button, show error
+    * This should replace the timeout errors
 	* Generally where I come up with ideas and flesh them out before moving into final plugin
 		* Just don't delete stuff!!!
 	* Custom Chains

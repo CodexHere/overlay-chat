@@ -1,0 +1,9 @@
+<template id="chat-message" type="text/x-handlebars-template">
+  <div class="chat-message">
+    <span class="leader">
+      <span class="badges">{{badges}}</span>
+      <span class="user" style="--userColor: {{userColor}}">{{user}}</span>:
+    </span>
+    <span class="message" data-splitting data-message-id="{{messageId}}">{{message}}</span>
+  </div>
+</template>

@@ -5,6 +5,13 @@ import { RenderTemplate } from '../utils/Templating.js';
 import * as URI from '../utils/URI.js';
 import { GetLocalStorageItem, RemoveArrayIndex, SetLocalStorageItem, debounce } from '../utils/misc.js';
 
+type ElementMap = {
+  form: HTMLFormElement;
+  'link-results': HTMLElement;
+  'link-results-output': HTMLTextAreaElement;
+  'button-load-app': HTMLInputElement;
+};
+
 // These settings should restart the PluginManager
 const settingsShouldRetartPluginManager = ['plugins', 'customPlugins'];
 const detailsTagTypes = ['DETAILS:', 'SUMMARY:', 'DIV:label-wrapper'];
@@ -18,30 +25,35 @@ const isScrollTTYExpired = () => {
   return elapsed >= ScrollTTY * 1000;
 };
 
-export class SettingsRenderer<OS extends PluginSettingsBase> implements RendererInstance {
+export class SettingsRenderer<PluginSettings extends PluginSettingsBase> implements RendererInstance {
   private _onOverlaySettingsChanged: (event: Event) => Promise<void>;
   private _onFormScrolled: (event: Event) => void;
 
-  constructor(private options: RendererInstanceOptions<OS>) {
-    this._onOverlaySettingsChanged = debounce(this.onOverlaySettingsChanged, 500);
+  private elements: ElementMap = {} as ElementMap;
+
+  constructor(private options: RendererInstanceOptions<PluginSettings>) {
+    this._onOverlaySettingsChanged = debounce(this.onOverlaySettingsChanged, 750);
     this._onFormScrolled = debounce(this.onFormScrolled, 100);
   }
 
   async init() {
-    this.renderFormData();
-  }
-
-  private renderFormData() {
-    const settings = this.options.getSettings();
     const plugins = this.options.getPlugins();
 
-    this.unbindFormEvents();
-    this.renderSettings(settings);
-    this.renderPluginSettings(plugins);
-    this.bindFormEvents();
+    this.unbindEvents();
+    this.renderOverlay();
+    this.renderPluginOverlay(plugins);
+    this.buildElementMap();
+    this.bindEvents();
+
+    this.subInit();
+  }
+
+  private subInit() {
+    const settings = this.options.getSettings();
+
+    Forms.Hydrate(this.elements['form'], settings);
 
     this.updateUrlAndResults();
-
     this.restoreViewState();
   }
 
@@ -50,30 +62,22 @@ export class SettingsRenderer<OS extends PluginSettingsBase> implements Renderer
     this.updateLinkResults(url);
   }
 
-  private renderSettings(settings: OS) {
-    const { elements: elems, templates: templs } = this.options.renderOptions;
+  private renderOverlay() {
+    const { rootContainer, templates } = this.options.renderOptions;
 
-    if (!elems || !templs) {
+    if (!rootContainer) {
       return;
     }
 
     // Ensure no elements in the Root so we can display settings
-    const root = elems['root'];
-    root.innerHTML = '';
+    rootContainer.innerHTML = '';
 
-    RenderTemplate(root, templs['settings'], {
+    RenderTemplate(rootContainer, templates['settings'], {
       formElements: this.options.getParsedJsonResults?.()?.results
     });
-
-    // Establish `elements` now that the Settings Form has been injected into DOM
-    const form = (elems['form'] = root.querySelector('form')!);
-    elems['link-results'] = root.querySelector('.link-results')!;
-    elems['link-results-output'] = elems['link-results'].querySelector('textarea')!;
-
-    Forms.Populate(form, settings);
   }
 
-  private renderPluginSettings(plugins: PluginInstances<OS>) {
+  private renderPluginOverlay(plugins: PluginInstances<PluginSettings>) {
     // Iterate over every loaded plugin, and call `renderSettings` to manipulate the Settings view
     plugins.forEach(plugin => {
       try {
@@ -88,27 +92,34 @@ export class SettingsRenderer<OS extends PluginSettingsBase> implements Renderer
     });
   }
 
-  private unbindFormEvents() {
-    const elems = this.options.renderOptions.elements!;
-    const form = elems['form'];
-    const linkResults = elems['link-results'];
-    const btnLoadOverlay = linkResults?.querySelector('.button-load-overlay');
+  private buildElementMap() {
+    const root = this.options.renderOptions.rootContainer;
 
-    if (form) {
-      form.removeEventListener('input', this._onOverlaySettingsChanged);
-      form.removeEventListener('click', this.onFormClicked);
-      form.removeEventListener('scroll', this._onFormScrolled);
-    }
+    const linkResults = root.querySelector<HTMLElement>('.link-results')!;
+
+    this.elements['form'] = root.querySelector('form#settings')!;
+    this.elements['link-results'] = linkResults;
+    this.elements['link-results-output'] = linkResults.querySelector('textarea')!;
+    this.elements['button-load-app'] = linkResults.querySelector('.button-load-app')!;
+  }
+
+  private unbindEvents() {
+    const form = this.elements['form'];
+    const linkResults = this.elements['link-results'];
+    const btnLoadOverlay = this.elements['button-load-app'];
+
+    form?.removeEventListener('input', this._onOverlaySettingsChanged);
+    form?.removeEventListener('click', this.onFormClicked);
+    form?.removeEventListener('scroll', this._onFormScrolled);
 
     btnLoadOverlay?.removeEventListener('click', this.onClickLoadOverlay);
     linkResults?.removeEventListener('click', this.onSettingsOptionChange);
   }
 
-  private bindFormEvents() {
-    const elems = this.options.renderOptions.elements!;
-    const form = elems['form'];
-    const linkResults = elems['link-results'];
-    const btnLoadOverlay = linkResults?.querySelector('.button-load-overlay')!;
+  private bindEvents() {
+    const form = this.elements['form'];
+    const linkResults = this.elements['link-results'];
+    const btnLoadOverlay = this.elements['button-load-app'];
 
     linkResults?.addEventListener('click', this.onSettingsOptionChange);
 
@@ -119,17 +130,18 @@ export class SettingsRenderer<OS extends PluginSettingsBase> implements Renderer
     }
 
     if (btnLoadOverlay) {
-      elems['button-load-overlay'] = btnLoadOverlay as HTMLElement;
       btnLoadOverlay.addEventListener('click', this.onClickLoadOverlay);
     }
   }
 
   private restoreViewState() {
+    const root = this.options.renderOptions.rootContainer!;
+
     // Re-open Details groups
     const openDetails = GetLocalStorageItem('openDetails') as string[];
     if (!openDetails || 0 === openDetails.length) {
       // Open first one if state is missing
-      this.options.renderOptions.elements?.['root'].querySelector('details')?.setAttribute('open', '');
+      root.querySelector('details')?.setAttribute('open', '');
     } else {
       openDetails.forEach(id => document.querySelector(`#${id}`)?.setAttribute('open', ''));
     }
@@ -137,7 +149,7 @@ export class SettingsRenderer<OS extends PluginSettingsBase> implements Renderer
     // Scroll Height
     const scrollHeight = GetLocalStorageItem('scrollHeight');
     if (scrollHeight && false === isScrollTTYExpired()) {
-      this.options.renderOptions.elements!['form'].scrollTo({
+      this.elements['form'].scrollTo({
         top: scrollHeight
       });
     }
@@ -145,7 +157,7 @@ export class SettingsRenderer<OS extends PluginSettingsBase> implements Renderer
     // Settings Options
     const settingsOptions = GetLocalStorageItem('settingsOptions') as Record<string, any>;
     if (settingsOptions) {
-      this.options.renderOptions.elements!['root'].querySelectorAll('.settings-option').forEach(opt => {
+      root.querySelectorAll('.settings-option').forEach(opt => {
         if (false === opt instanceof HTMLInputElement) {
           return;
         }
@@ -155,6 +167,8 @@ export class SettingsRenderer<OS extends PluginSettingsBase> implements Renderer
           return;
         }
 
+        // TODO: Consider other types we need to eval before checking?
+        // Might figure a way to call Forms.Hydrate
         switch (opt.type) {
           case 'checkbox':
           case 'radio':
@@ -301,10 +315,8 @@ export class SettingsRenderer<OS extends PluginSettingsBase> implements Renderer
 
     // Settings Option was changed
 
-    const elems = this.options.renderOptions.elements!;
-
     // Ensure no elements in the Root so we can display settings
-    const root = elems['root'];
+    const root = this.options.renderOptions.rootContainer!;
 
     const settingsOptions: Record<string, any> = {};
 
@@ -332,14 +344,14 @@ export class SettingsRenderer<OS extends PluginSettingsBase> implements Renderer
     const target = event.target! as HTMLInputElement;
     const form = target.form!;
 
-    const formData = Forms.GetData<OS>(form);
+    const formData = Forms.GetData<PluginSettings>(form);
     const targetName = RemoveArrayIndex(target.name);
     this.options.setSettings(formData);
 
     if (settingsShouldRetartPluginManager.includes(targetName)) {
       try {
         await this.options.pluginLoader();
-        await this.renderFormData();
+        await this.init();
       } catch (err) {
         this.options.errorDisplay.showError(err as Error);
       }
@@ -361,9 +373,8 @@ export class SettingsRenderer<OS extends PluginSettingsBase> implements Renderer
   }
 
   private updateLinkResults(url: string) {
-    const elems = this.options.renderOptions.elements!;
-    const linkResultsOutput: HTMLInputElement = elems['link-results-output'] as HTMLInputElement;
-    const linkButton: HTMLInputElement = elems['button-load-overlay'] as HTMLInputElement;
+    const linkResultsOutput = this.elements['link-results-output'];
+    const linkButton = this.elements['button-load-app'];
 
     linkResultsOutput.value = url;
     // TODO: Handle results from `this.options.settingsValidator`
@@ -371,9 +382,7 @@ export class SettingsRenderer<OS extends PluginSettingsBase> implements Renderer
   }
 
   private onClickLoadOverlay = (_event: Event) => {
-    const newWindowCheck = this.options.renderOptions.elements!['link-results'].querySelector(
-      '[name="new-window"]'
-    ) as HTMLInputElement;
+    const newWindowCheck = this.elements['link-results'].querySelector('[name="new-window"]') as HTMLInputElement;
 
     const settings = this.options.getMaskedSettings();
     delete settings['forceShowSettings'];
