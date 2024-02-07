@@ -15,7 +15,7 @@ body:has(#container-settings) {
   background: #0b0b0b var(--hhtheme-background) center/cover no-repeat;
 }
 
-#container-overlay {
+#container.app {
   font-family: 'Dongle';
 
   background: #000000cc;
@@ -26,15 +26,15 @@ body:has(#container-settings) {
   mask-image: linear-gradient(to bottom, transparent 4.5vmin, black 20vmin);
 }
 
-#container-overlay .chat-message {
+#container.app .chat-message {
   margin-bottom: 2vmin;
 }
 
-#container-overlay .chat-message.removing {
+#container.app .chat-message.removing {
   transform-origin: top left;
 }
 
-#container-overlay .chat-message .leader {
+#container.app .chat-message .leader {
   font-size: 6.1vmin;
   margin-right: 1vmin;
   height: 4.9vmin;
@@ -42,16 +42,16 @@ body:has(#container-settings) {
   width: 25vmin;
 }
 
-#container-overlay .chat-message .message {
+#container.app .chat-message .message {
   gap: 0 0.6vmin;
 }
 
-#container-overlay .chat-message .word,
-#container-overlay .chat-message .whitespace {
+#container.app .chat-message .word,
+#container.app .chat-message .whitespace {
   height: 6.7vmin;
 }
 
-#container-overlay .chat-message [data-splitting] .char {
+#container.app .chat-message [data-splitting] .char {
   background: linear-gradient(
     0deg,
     var(--hhtheme-colorRevealText0) 40%,
@@ -68,7 +68,7 @@ body:has(#container-settings) {
   -webkit-text-fill-color: transparent;
 }
 
-#container-overlay .chat-message .message-emote {
+#container.app .chat-message .message-emote {
   width: 5vmin;
 }
 

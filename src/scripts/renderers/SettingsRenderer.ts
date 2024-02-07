@@ -1,3 +1,4 @@
+import { SettingsValidatorResults } from '../types/Managers.js';
 import { PluginInstances, PluginSettingsBase } from '../types/Plugin.js';
 import { RendererInstance, RendererInstanceOptions } from '../types/Renderers.js';
 import * as Forms from '../utils/Forms.js';
@@ -53,13 +54,22 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
 
     Forms.Hydrate(this.elements['form'], settings);
 
-    this.updateUrlAndResults();
+    // Update URL-based state data only if we're starting with settings
+    if (Object.keys(settings).length > 0) {
+      this.updateUrlState();
+    }
+
     this.restoreViewState();
   }
 
-  private updateUrlAndResults() {
+  private updateUrlState() {
     const url = this.generateUrl();
     this.updateLinkResults(url);
+
+    const validations = this.options.validateSettings();
+    if (true !== validations) {
+      this.updateFormValidations(validations);
+    }
   }
 
   private renderOverlay() {
@@ -357,7 +367,7 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
       }
     } else {
       form.reportValidity();
-      this.updateUrlAndResults();
+      this.updateUrlState();
     }
   };
 
@@ -377,8 +387,22 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
     const linkButton = this.elements['button-load-app'];
 
     linkResultsOutput.value = url;
-    // TODO: Handle results from `this.options.settingsValidator`
     linkButton.disabled = true !== this.options.validateSettings();
+  }
+
+  private updateFormValidations(validations: SettingsValidatorResults<PluginSettings>) {
+    const root = this.options.renderOptions.rootContainer;
+
+    // Unmark Invalid inputs
+    root.querySelectorAll<HTMLInputElement>('input:invalid').forEach(elem => {
+      elem?.setCustomValidity('');
+    });
+
+    Object.entries(validations).forEach(([settingName, error]) => {
+      const input = root.querySelector(`[name*=${settingName}]`) as HTMLInputElement;
+      input?.setCustomValidity(error);
+      input?.reportValidity();
+    });
   }
 
   private onClickLoadOverlay = (_event: Event) => {

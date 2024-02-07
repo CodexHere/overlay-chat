@@ -2,10 +2,6 @@
 
 ## TODO
 
-* Move/Create other template
-  * error dialogue
-* Handle error responses from `SettingsValidator`
-  * This will show errors and possibly modify the form validity if necessary
 * Ability to compress (`lz-string`) url params
   * `&compressed=true&data=<data_here>`
   * Will need to decompress in settings as well
@@ -18,6 +14,8 @@
   * Needs refresh capabilities
   * Event:SendMessage (if auth'd properly) - Sends a simple message to chat
   * Event:HasAuth - ?? returns bool if auth'd
+* Move/Create other template
+  * error dialogue
 * Consider allowing plugins to register a template to load up front
 * Find and Fix all `TODO` and `FIXME` comments in entire source!
   * Do not leave any! Finish ALL of them at once!

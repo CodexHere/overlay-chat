@@ -81,13 +81,22 @@ export default class Plugin_Core<PluginSettings extends OverlaySettings_Chat>
 
     const hasChannelName = !!nameStreamer;
 
-    return (
-      (hasChannelName && hasAnyPlugins) ||
-      ({
-        customPlugins: 'Needs at least one Custom Plugin',
-        plugins: 'Needs at least one Plugin'
-      } as SettingsValidatorResult<PluginSettings>)
-    );
+    if (hasChannelName && hasAnyPlugins) {
+      return true;
+    }
+
+    let retMap: SettingsValidatorResult<PluginSettings> = {};
+
+    if (false === hasChannelName) {
+      retMap['nameStreamer'] = 'Please supply a Channel Name';
+    }
+
+    if (false === hasAnyPlugins) {
+      retMap['plugins'] = 'Needs at least one Custom Plugin';
+      retMap['customPlugins'] = 'Needs at least one Custom Plugin';
+    }
+
+    return retMap;
   }
 
   private _getMiddleware = (): PluginMiddlewareMap => ({

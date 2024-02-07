@@ -102,7 +102,7 @@ export class Bootstrapper<PluginSettings extends PluginSettingsBase> implements 
     const settings = this.settingsManager!.getSettings();
     const areSettingsValid = this.pluginManager!.validateSettings();
 
-    // Determine if `SettingsManager` is configured by way of `SettingsValidator`
+    // TODO: Determine if `SettingsManager` is configured by way of `SettingsValidator`
     const isConfigured = (!settings.forceShowSettings && true === areSettingsValid) || false;
     const { needsSettingsRenderer, needsAppRenderer } = this.bootstrapOptions;
     // Wants a `SettingsRenderer`, and `SettingsManager::isConfigured()` returns `false`

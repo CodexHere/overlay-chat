@@ -89,7 +89,7 @@ export class PluginManager<PluginSettings extends PluginSettingsBase>
 
       errorMapping = {
         ...errorMapping,
-        [plugin.name]: error
+        ...error
       };
     });
 
