@@ -1,18 +1,18 @@
 /**
- * @typedef {import('../../../src/scripts/types/Plugin.js').PluginSettingsBase} OS_Base
- * @typedef {Object} OS_Plugin
+ * @typedef {import('../../../src/scripts/types/Plugin.js').PluginSettingsBase} PluginSettingsBase
+ * @typedef {Object} PluginSettings_Extra
  * @property {string} exampleSettings
- * @typedef {OS_Plugin & OS_Base} OS
+ * @typedef {PluginSettings_Extra & PluginSettingsBase} PluginSettings
  *
- * @typedef {ContextBase & Partial<ConcreteContext>} Context
  * @typedef {import('../../../src/scripts/Plugin_Core.js').MiddewareContext_Chat} ConcreteContext
+ * @typedef {Partial<ConcreteContext>} Context
  * @typedef {import('../../../src/scripts/utils/Forms.js').FormEntryGrouping} FormEntryFieldGroup
- * @typedef {import('../../../src/scripts/types/Managers.js').BusManagerContext_Init<ContextBase>} BusManagerContext_Init
- * @typedef {import('../../../src/scripts/types/Middleware.js').ContextBase} ContextBase
+ * @typedef {import('../../../src/scripts/types/Managers.js').SettingsValidatorResults<PluginSettings>} SettingsValidatorResults
+ * @typedef {import('../../../src/scripts/types/Managers.js').BusManagerContext_Init<{}>} BusManagerContext_Init
  * @typedef {import('../../../src/scripts/types/Middleware.js').PluginMiddlewareMap} PluginMiddlewareMap
  * @typedef {import('../../../src/scripts/types/Plugin.js').PluginEventRegistration} PluginEventMap
- * @typedef {import('../../../src/scripts/types/Plugin.js').PluginOptions<OS>} PluginInjectables
- * @typedef {import('../../../src/scripts/types/Plugin.js').PluginInstance<OS>} PluginInstance
+ * @typedef {import('../../../src/scripts/types/Plugin.js').PluginOptions<PluginSettings>} PluginInjectables
+ * @typedef {import('../../../src/scripts/types/Plugin.js').PluginInstance<PluginSettings>} PluginInstance
  * @typedef {import('../../../src/scripts/types/Plugin.js').PluginRegistrationOptions} PluginRegistrationOptions
  * @typedef {import('../../../src/scripts/utils/Middleware.js').Next<Context>} Next
  *
@@ -271,7 +271,7 @@ export default class Plugin_Example {
       /** @type {BusManagerContext_Init} */
       const ctx = {
         chainName: 'chat:twitch',
-        initialContext: { runningErrors: [] },
+        initialContext: {},
         initiatingPlugin: this
       };
 

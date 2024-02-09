@@ -1,4 +1,3 @@
-import { SettingsValidatorResults } from '../types/Managers.js';
 import { PluginInstances, PluginSettingsBase } from '../types/Plugin.js';
 import { RendererInstance, RendererInstanceOptions } from '../types/Renderers.js';
 import { IsInViewPort } from '../utils/DOM.js';
@@ -58,10 +57,12 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
 
     Forms.Hydrate(this.elements['form'], settings);
 
-    // Update URL-based state data only if we're starting with settings
+    this.updateUrlState();
+
+    // Update Form Validity state data only if we're starting with settings
     // > 1, because a 'format' is enforced on the settings object
     if (Object.keys(settings).length > 1) {
-      this.updateUrlState();
+      this.updateFormValidations();
     }
 
     this.restoreViewState();
@@ -70,11 +71,6 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
   private updateUrlState() {
     const url = this.generateUrl();
     this.updateLinkResults(url);
-
-    const validations = this.options.validateSettings();
-    if (true !== validations) {
-      this.updateFormValidations(validations);
-    }
   }
 
   private renderApp() {
@@ -322,7 +318,6 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
     // Settings Option was changed
 
     this.updateSettingsOptions();
-
     this.updateUrlState();
   };
 
@@ -352,6 +347,7 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
     } else {
       form.reportValidity();
       this.updateUrlState();
+      this.updateFormValidations();
     }
   };
 
@@ -378,13 +374,19 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
     linkResultsOutput.parentElement?.setAttribute('data-char-count', linkResultsOutput.value.length.toString());
   }
 
-  private updateFormValidations(validations: SettingsValidatorResults<PluginSettings>) {
+  private updateFormValidations() {
     const root = this.options.renderOptions.rootContainer;
 
     // Unmark Invalid inputs
     root.querySelectorAll<HTMLInputElement>('input:invalid').forEach(elem => {
       elem?.setCustomValidity('');
     });
+
+    const validations = this.options.validateSettings();
+
+    if (true === validations) {
+      return;
+    }
 
     Object.entries(validations).forEach(([settingName, error]) => {
       const input = root.querySelector(`[name*=${settingName}]`) as HTMLInputElement;

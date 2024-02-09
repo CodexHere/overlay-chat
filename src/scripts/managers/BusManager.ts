@@ -1,5 +1,5 @@
 import { BusManagerContext_Init, BusManagerEmitter, BusManagerEvents } from '../types/Managers.js';
-import { ContextBase, PluginMiddlewareMap } from '../types/Middleware.js';
+import { PluginMiddlewareMap } from '../types/Middleware.js';
 import { PluginEventMap, PluginInstance, PluginSettingsBase } from '../types/Plugin.js';
 import { EnhancedEventEmitter } from '../utils/EnhancedEventEmitter.js';
 import { Middleware, MiddlewareChain } from '../utils/Middleware.js';
@@ -28,8 +28,8 @@ export class SilentlyFailChainError extends Error {
 }
 
 export class BusManager<PluginSettings extends PluginSettingsBase> {
-  private chainPluginMap: Map<MiddlewareChain<ContextBase>, Symbol> = new Map();
-  private chains: Map<string, MiddlewareChain<ContextBase>> = new Map();
+  private chainPluginMap: Map<MiddlewareChain<{}>, Symbol> = new Map();
+  private chains: Map<string, MiddlewareChain<{}>> = new Map();
   private _emitter: BusManagerEmitter;
 
   get emitter(): Readonly<BusManagerEmitter> {
@@ -95,7 +95,7 @@ export class BusManager<PluginSettings extends PluginSettingsBase> {
     }
   };
 
-  private startMiddlewareChainByName = async (ctx: BusManagerContext_Init<ContextBase>) => {
+  private startMiddlewareChainByName = async (ctx: BusManagerContext_Init<{}>) => {
     const links = this.chains.get(ctx.chainName);
 
     if (!links) {
@@ -122,7 +122,7 @@ export class BusManager<PluginSettings extends PluginSettingsBase> {
     }
   };
 
-  private errorMiddleware: Middleware<ContextBase> = async (_ctx, next, err) => {
+  private errorMiddleware: Middleware<{}> = async (_ctx, next, err) => {
     if (err) {
       throw err;
     } else {

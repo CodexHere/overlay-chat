@@ -2,8 +2,8 @@
   <div class="chat-message">
     <span class="leader">
       <span class="badges">{{badges}}</span>
-      <span class="user" style="--userColor: {{userColor}}">{{user}}</span>:
+      <span class="user" style="--userColor: {{userState.color}}">{{userState.username}}</span>:
     </span>
-    <span class="message" data-splitting data-message-id="{{messageId}}">{{message}}</span>
+    <span class="message" data-splitting data-message-id="{{userState.id}}">{{message}}</span>
   </div>
 </template>

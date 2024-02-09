@@ -1,7 +1,6 @@
 import { Listener } from 'events';
 import { PluginManager } from '../managers/PluginManager.js';
 import { EnhancedEventEmitter } from '../utils/EnhancedEventEmitter.js';
-import { ContextBase } from './Middleware.js';
 import { PluginConstructor, PluginInstance, PluginOptions, PluginRegistrar, PluginSettingsBase } from './Plugin.js';
 
 export type TemplateMap = Record<string, HandlebarsTemplateDelegate<any>>;
@@ -52,7 +51,7 @@ export type PluginManagerEmitter<PluginSettings extends PluginSettingsBase> = Pl
 
 // BusManager
 
-export type BusManagerContext_Init<Context extends ContextBase> = {
+export type BusManagerContext_Init<Context extends {}> = {
   chainName: string;
   initialContext: Context;
   initiatingPlugin: PluginInstance<PluginSettingsBase>;
@@ -66,7 +65,7 @@ export type BusManagerEmitter = EnhancedEventEmitter & {
   addListener(eventType: BusManagerEvents, listener: Listener): void;
   on(eventType: BusManagerEvents, listener: Listener): void;
 
-  emit<Context extends ContextBase>(
+  emit<Context extends {}>(
     eventType: typeof BusManagerEvents.MIDDLEWARE_EXECUTE,
     ctx: (ctx: BusManagerContext_Init<Context>) => void
   ): void;
