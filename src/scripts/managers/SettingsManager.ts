@@ -13,7 +13,8 @@ export class SettingsManager<PluginSettings extends PluginSettingsBase> {
   constructor(private locationHref: string) {}
 
   async init() {
-    this.loadSettingsFromUri();
+    this._settings = URI.QueryStringToJson(this.locationHref);
+
     // Load Core Settings Schema
     this._settingsSchemaDefault = await (await fetch('../../schemaSettingsCore.json')).json();
     this.resetSettingsSchema();
@@ -29,8 +30,7 @@ export class SettingsManager<PluginSettings extends PluginSettingsBase> {
 
   setSettings = (settings: PluginSettings) => {
     this._settings = settings;
-    this.updateParsedJsonResults(settings);
-    this.toggleMaskSettings(settings, true);
+    this.updateParsedJsonResults();
   };
 
   getSettingsSchema(): Readonly<FormEntry[]> {
@@ -53,14 +53,15 @@ export class SettingsManager<PluginSettings extends PluginSettingsBase> {
     this._settingsSchema.push(fieldGroup);
   };
 
-  updateParsedJsonResults = (settings: PluginSettings = this._settings) => {
-    this._parsedJsonResults = FromJson(this.getSettingsSchema(), settings);
-  };
+  updateParsedJsonResults = (pluginsLoaded: boolean = false) => {
+    this._parsedJsonResults = FromJson(this.getSettingsSchema(), this._settings);
 
-  private loadSettingsFromUri() {
-    // Load Settings from URI (injected from Window HREF)
-    this._settings = URI.QueryStringToJson(this.locationHref);
-  }
+    // Plugins just loaded, and we want to now use a fully parsedJsonResult
+    // too unmask our settings correctly and completely
+    if (pluginsLoaded) {
+      this.toggleMaskSettings(this._settings, false);
+    }
+  };
 
   private toggleMaskSettings(settings: PluginSettings, mask: boolean) {
     const passwordEntries = this._parsedJsonResults?.mapping?.password;

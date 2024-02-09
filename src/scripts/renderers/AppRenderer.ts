@@ -6,7 +6,7 @@ type ElementMap = {
   'show-settings': HTMLElement;
 };
 
-export class OverlayRenderer<PluginSettings extends PluginSettingsBase> implements RendererInstance {
+export class AppRenderer<PluginSettings extends PluginSettingsBase> implements RendererInstance {
   private elements: ElementMap = {} as ElementMap;
 
   constructor(private options: RendererInstanceOptions<PluginSettings>) {}
@@ -15,8 +15,8 @@ export class OverlayRenderer<PluginSettings extends PluginSettingsBase> implemen
     const plugins = this.options.getPlugins();
 
     // this.unbindEvents();
-    this.renderOverlay();
-    this.renderPluginOverlay(plugins);
+    this.renderApp();
+    this.renderPluginApp(plugins);
     this.buildElementMap();
     this.bindEvents();
 
@@ -27,7 +27,7 @@ export class OverlayRenderer<PluginSettings extends PluginSettingsBase> implemen
     this.injectSettingsIntoCSS();
   }
 
-  private renderOverlay() {
+  private renderApp() {
     const { rootContainer, templates } = this.options.renderOptions;
 
     if (!rootContainer) {
@@ -39,15 +39,15 @@ export class OverlayRenderer<PluginSettings extends PluginSettingsBase> implemen
     RenderTemplate(rootContainer, templates['app']);
   }
 
-  private renderPluginOverlay(plugins: PluginInstances<PluginSettings>) {
-    // Iterate over every loaded plugin, and call `renderOverlay` to manipulate the Overlay view
+  private renderPluginApp(plugins: PluginInstances<PluginSettings>) {
+    // Iterate over every loaded plugin, and call `renderApp` to manipulate the App view
     plugins.forEach(plugin => {
       try {
-        plugin.renderOverlay?.();
+        plugin.renderApp?.();
       } catch (err) {
         if (err instanceof Error) {
           throw new Error(
-            `Failed hook into \`renderOverlay\` for Plugin: ${plugin.name}<br /><br /><pre>${err.stack}</pre>`
+            `Failed hook into \`renderApp\` for Plugin: ${plugin.name}<br /><br /><pre>${err.stack}</pre>`
           );
         }
       }

@@ -1,7 +1,7 @@
 #container.settings {
   display: flex;
   flex-direction: column;
-  padding: 1rem;
+  padding: 1rem 1rem 0.125rem 1rem;
   height: 100%;
 
   h1 {
@@ -122,7 +122,26 @@
     }
   }
 
-  form {
+  [title]:after {
+    --size: 0.75rem;
+    display: inline-flex;
+    content: 'i';
+    background: var(--primary);
+    border-radius: 50%;
+    border: 1px solid #fff;
+    font-size: var(--size);
+    width: var(--size);
+    height: var(--size);
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    top: -0.55em;
+    left: 0.25em;
+    opacity: 0.5;
+    cursor: help;
+  }
+
+  form#settings {
     display: flex;
     flex-direction: column;
     flex: 1;
@@ -194,50 +213,84 @@
     }
   }
 
-  .link-results {
-    display: flex;
-    gap: 1rem;
+  form#settings-options {
+    margin: 0;
 
-    textarea {
-      flex: 1;
-      resize: none;
-      margin: 0;
-    }
-
-    .load-options {
+    .link-results {
       display: flex;
-      flex-direction: column;
+      gap: 1rem;
+      position: relative;
+
+      textarea {
+        height: 100%;
+        resize: none;
+        margin: 0;
+      }
+
+      .load-options {
+        display: flex;
+        flex-direction: column;
+
+        .button-load-app {
+          margin-bottom: calc(var(--spacing) * 0.25);
+        }
+
+        .button-settings-reset {
+          margin-top: var(--spacing);
+          margin-bottom: 0;
+        }
+      }
+
+      button {
+        width: auto;
+        flex: 1;
+      }
+
+      .textarea-wrapper {
+        position: relative;
+        flex: 1;
+        margin: 0;
+
+        &:after {
+          --inset: 0.2em;
+          content: attr(data-char-count);
+          display: block;
+          position: absolute;
+          top: var(--inset);
+          right: var(--inset);
+          font-size: 0.75em;
+          line-height: 0.75em;
+        }
+      }
     }
 
-    button {
-      width: auto;
-      flex: 1;
-    }
-  }
+    .settings-options {
+      --font-size: 0.85em;
+      font-size: var(--font-size);
 
-  .settings-options {
-    &:has(*) {
-      padding: calc(var(--spacing) / 2);
-    }
-  }
+      &:has(*) {
+        padding: calc(var(--spacing) / 2);
+        margin-bottom: 0;
+      }
 
-  [title]:after {
-    --size: 0.75rem;
-    display: inline-flex;
-    content: 'i';
-    background: var(--primary);
-    border-radius: 50%;
-    border: 1px solid #fff;
-    font-size: var(--size);
-    width: var(--size);
-    height: var(--size);
-    justify-content: center;
-    align-items: center;
-    position: relative;
-    top: -0.55em;
-    left: 0.25em;
-    opacity: 0.5;
-    cursor: help;
+      input,
+      select {
+        width: auto;
+        min-width: 8em;
+        margin: 0;
+        font-size: inherit;
+        padding: 0.25em;
+
+        &:not(:last-child) {
+          margin-right: calc(var(--spacing) * 2);
+        }
+      }
+
+      label {
+        display: inline-block;
+        margin-right: calc(var(--spacing) / 3);
+      }
+    }
   }
 
   footer.version {

@@ -117,8 +117,8 @@ export default class Plugin_HangoutHereTheme {
     console.log(`${this.name} [renderSettings]`);
   }
 
-  renderOverlay() {
-    console.log(`${this.name} [renderOverlay]`);
+  renderApp() {
+    console.log(`${this.name} [renderApp]`);
 
     setTimeout(() => {
       console.log('Sending message');

@@ -10,15 +10,24 @@
     <h1 class="container-title">Settings</h1>
     <form id="settings">{{formElements}}</form>
 
-    <div class="link-results">
-      <textarea rows="4"></textarea>
-      <div class="load-options">
-        <button class="button-load-app" disabled>Load App</button>
-        <label><input type="checkbox" class="settings-option" name="new-window" /> New Window?</label>
+    <form id="settings-options">
+      <div class="link-results">
+        <div class="textarea-wrapper"><textarea rows="4"></textarea></div>
+        <div class="load-options">
+          <button class="button-load-app" disabled>Load App</button>
+          <label><input type="checkbox" class="settings-option" name="new-window" /> New Window?</label>
+          <button class="button-settings-reset secondary">Reset Settings</button>
+        </div>
       </div>
-    </div>
 
-    <div class="settings-options"></div>
+      <div class="settings-options">
+        <label for="settings-options-format"> Format: </label>
+        <select id="settings-options-format" name="format" class="settings-option">
+          <option>uri</option>
+          <option>compressed</option>
+        </select>
+      </div>
+    </form>
 
     <footer class="version">v%PACKAGE_VERSION%</footer>
   </div>

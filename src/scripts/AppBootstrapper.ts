@@ -2,7 +2,7 @@ import coreTemplate from './coreTemplates.html?raw';
 import { BusManager } from './managers/BusManager.js';
 import { PluginManager } from './managers/PluginManager.js';
 import { SettingsManager } from './managers/SettingsManager.js';
-import { OverlayRenderer } from './renderers/OverlayRenderer.js';
+import { AppRenderer } from './renderers/AppRenderer.js';
 import { SettingsRenderer } from './renderers/SettingsRenderer.js';
 import {
   BootstrapOptions,
@@ -13,8 +13,8 @@ import {
 } from './types/Managers.js';
 import { PluginSettingsBase } from './types/Plugin.js';
 import { RendererConstructor, RendererInstance } from './types/Renderers.js';
+import { AddStylesheet } from './utils/DOM.js';
 import { PrepareTemplate } from './utils/Templating.js';
-import { AddStylesheet } from './utils/misc.js';
 
 export class Bootstrapper<PluginSettings extends PluginSettingsBase> implements ErrorManager {
   busManager?: BusManager<PluginSettings>;
@@ -107,13 +107,13 @@ export class Bootstrapper<PluginSettings extends PluginSettingsBase> implements 
     const { needsSettingsRenderer, needsAppRenderer } = this.bootstrapOptions;
     // Wants a `SettingsRenderer`, and `SettingsManager::isConfigured()` returns `false`
     const shouldRenderSettings = false === isConfigured && needsSettingsRenderer;
-    // Wants an `OverlayRenderer`, and `SettingsManager::isConfigured()` returns `true`
-    const shouldRenderOverlay = true === isConfigured && needsAppRenderer;
+    // Wants an `AppRenderer`, and `SettingsManager::isConfigured()` returns `true`
+    const shouldRenderApp = true === isConfigured && needsAppRenderer;
 
     // Select which Renderer to load...
     let rendererClass: RendererConstructor<PluginSettings> | undefined =
       shouldRenderSettings ? SettingsRenderer
-      : shouldRenderOverlay ? OverlayRenderer
+      : shouldRenderApp ? AppRenderer
       : undefined;
 
     // Any Renderer selected and existing, init to perform Render
@@ -140,7 +140,7 @@ export class Bootstrapper<PluginSettings extends PluginSettingsBase> implements 
     this.pluginManager!.addListener(PluginManagerEvents.LOADED, () => {
       this.busManager!.init();
       this.busManager!.disableAddingListeners();
-      this.settingsManager!.updateParsedJsonResults();
+      this.settingsManager!.updateParsedJsonResults(true);
     });
 
     this.pluginManager!.addListener(PluginManagerEvents.UNLOADED, () => {

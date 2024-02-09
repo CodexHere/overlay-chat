@@ -3,7 +3,7 @@
     "name": "globalSettings",
     "inputType": "fieldgroup",
     "label": "Global Settings",
-    "tooltip": "These are settings that generally apply to the entire Overlay.",
+    "tooltip": "These are settings that generally apply to the entire App.",
     "values": [
       {
         "name": "fontSettings",
@@ -24,7 +24,7 @@
         "name": "pluginLoadSettings",
         "label": "Plugins",
         "inputType": "fieldgroup",
-        "description": "Select the Plugins you'd like to load at the startup of the Overlay! These may perform operations on data, the way the Overlay renders, or supply additional Settings! You can use built-in Plugins, or supply your own!",
+        "description": "Select the Plugins you'd like to load at the startup of the App! These may perform operations on data, the way the App renders, or supply additional Settings! You can use built-in Plugins, or supply your own!",
         "values": [
           {
             "name": "pluginSettings",

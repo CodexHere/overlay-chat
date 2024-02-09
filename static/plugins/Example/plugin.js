@@ -294,7 +294,7 @@ export default class Plugin_Example {
     }, 3000);
   }
 
-  renderOverlay() {
-    console.log(`[${this.name}] [renderOverlay]`);
+  renderApp() {
+    console.log(`[${this.name}] [renderApp]`);
   }
 }

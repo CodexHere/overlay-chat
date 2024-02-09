@@ -1,5 +1,6 @@
 import { Listener } from 'events';
 import { FormEntryGrouping } from '../utils/Forms.js';
+import { DefaultQueryString } from '../utils/URI.js';
 import { BusManagerEmitter, ErrorManager, SettingsValidatorResults } from './Managers.js';
 import { PluginMiddlewareMap } from './Middleware.js';
 import { RenderOptions } from './Renderers.js';
@@ -20,7 +21,7 @@ export type PluginRegistrar<PluginSettings extends PluginSettingsBase> = {
   registerStylesheet: (href: string) => void;
 };
 
-export type PluginSettingsBase = {
+export type PluginSettingsBase = DefaultQueryString & {
   forceShowSettings?: boolean;
   plugins?: string[];
   customPlugins?: string[];
@@ -67,5 +68,5 @@ export type PluginInstance<PluginSettings extends PluginSettingsBase> = {
 
   isConfigured?(): SettingsValidatorResults<PluginSettings>;
   renderSettings?(): void;
-  renderOverlay?(): void;
+  renderApp?(): void;
 };

@@ -1,9 +1,9 @@
 version: '3.9'
 
 services:
-  overlay-dev:
+  app-dev:
     image: node:21-alpine
-    container_name: overlay-dev
+    container_name: app-dev
     profiles: ['dev']
     command: npm run start
     working_dir: /app
@@ -12,9 +12,9 @@ services:
     volumes:
       - .:/app
 
-  overlay-build:
+  app-build:
     image: node:21-alpine
-    container_name: overlay-build
+    container_name: app-build
     profiles: ['build']
     command: npm run build
     working_dir: /app
@@ -22,7 +22,7 @@ services:
     volumes:
       - .:/app
 
-  overlay-deploy:
+  app-deploy:
     image: local/act
     build:
       dockerfile: .docker/images/act.Dockerfile

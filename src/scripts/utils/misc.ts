@@ -41,22 +41,3 @@ export const RemoveArrayIndex = (paramName: string) => paramName.replace(indexRe
 
 export const IsValidValue = (value: any) =>
   (undefined !== value && null !== value && '' !== value) || (Array.isArray(value) && 0 == value.length);
-
-export const GetLocalStorageItem = (name: string) => {
-  const data = globalThis.localStorage.getItem(name);
-  return data ? JSON.parse(data) : null;
-};
-
-export const SetLocalStorageItem = (name: string, value: any) =>
-  globalThis.localStorage.setItem(name, JSON.stringify(value));
-
-export const AddStylesheet = (href: string) => {
-  const head = globalThis.document.getElementsByTagName('head')[0];
-  const link = globalThis.document.createElement('link');
-  link.rel = 'stylesheet';
-  link.type = 'text/css';
-  link.href = href;
-  link.setAttribute('data-plugin', 'true');
-
-  head.appendChild(link);
-};

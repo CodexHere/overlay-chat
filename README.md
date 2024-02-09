@@ -2,12 +2,6 @@
 
 ## TODO
 
-* Ability to compress (`lz-string`) url params
-  * `&compressed=true&data=<data_here>`
-  * Will need to decompress in settings as well
-* Add Reset capability
-  * Delete localStorage
-  * Wipe URI params and reload page
 * Move existing Twitch Chat stuff over to it's own Chat: Core plugin
   * Include Authentication w/Twitch
     * Look more into: https://twitchtokengenerator.com/
@@ -80,7 +74,7 @@
   - Init Plugin Settings from all loaded Plugins
   - App Start
     - Determine if Settings are configured
-      - If Configured, `init` the Overlay Renderer
+      - If Configured, `init` the App Renderer
       - If Unconfigured, `init` the Settings Renderer
 
 ## Plugins

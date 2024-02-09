@@ -1,5 +1,11 @@
 import set from 'lodash.set';
+import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from 'lz-string';
 import { BOOLEAN_FALSES, BOOLEAN_TRUES, IsValidValue } from './misc.js';
+
+export type DefaultQueryString = {
+  format?: 'compressed' | 'uri';
+  data?: string;
+};
 
 export const BaseUrl = () => {
   const url = new URL(location.href.replaceAll('#', ''));
@@ -7,22 +13,58 @@ export const BaseUrl = () => {
   return `${url.origin}${url.pathname}`.replace(/\/+$/, '');
 };
 
-export const QueryStringToJson = <SettingsType, SettingsKey extends keyof SettingsType>(
-  urlHref: string
-): SettingsType => {
-  const options: SettingsType = {} as SettingsType;
+export const QueryStringToJson = <SettingsType extends DefaultQueryString>(urlHref: string): SettingsType => {
   const params = new URL(urlHref.replaceAll('#', '')).searchParams;
 
-  const buildParam = (paramValue: SettingsType[SettingsKey]): SettingsType[SettingsKey] => {
-    const isTrue = BOOLEAN_TRUES.includes(paramValue as string);
-    const isFalse = BOOLEAN_FALSES.includes(paramValue as string);
+  const format = (params.get('format') as SettingsType['format']) ?? 'uri';
+  const data = params.get('data');
+  const formatIsParsed = ['base64', 'compressed', 'base64-compressed'].includes(format);
 
-    if (isTrue || isFalse) {
-      paramValue = ((isTrue && !isFalse) || !(!isTrue && isFalse)) as SettingsType[SettingsKey];
+  params.delete('data');
+  params.delete('format');
+
+  let settings = {} as SettingsType;
+
+  if (formatIsParsed && !data) {
+    throw new Error('URI Data Format is a compressed/processed format, and missing any actual Data');
+  }
+
+  try {
+    if ('compressed' === format) {
+      settings = JSON.parse(decompressFromEncodedURIComponent(data!)) as SettingsType;
     }
 
-    return paramValue;
-  };
+    // If we decompressed, then we also want to spread any other top-level params onto
+    // the JSON output object. Also ensure a good `format` value with fallback above.
+    settings = { ...settings, ...paramsToJson(params), format };
+
+    return settings;
+  } catch (error) {
+    throw new Error('Could not deserialize Query String to JSON');
+  }
+};
+
+/**
+ * Builds a final form of a param, coercing true/false values to actual booleans
+ */
+const buildParam = <SettingsType, SettingsKey extends keyof SettingsType>(
+  paramValue: SettingsType[SettingsKey]
+): SettingsType[SettingsKey] => {
+  const isTrue = BOOLEAN_TRUES.includes(paramValue as string);
+  const isFalse = BOOLEAN_FALSES.includes(paramValue as string);
+
+  if (isTrue || isFalse) {
+    paramValue = ((isTrue && !isFalse) || !(!isTrue && isFalse)) as SettingsType[SettingsKey];
+  }
+
+  return paramValue;
+};
+
+/**
+ * Converts a URLSearchParams to our desired JSON structure
+ */
+const paramsToJson = <SettingsType, SettingsKey extends keyof SettingsType>(params: URLSearchParams) => {
+  const options: SettingsType = {} as SettingsType;
 
   params.forEach((param, paramName) => {
     const builtParam = buildParam(param as SettingsType[SettingsKey]);
@@ -50,7 +92,32 @@ const buildObjectString = (prefix: string, propVal: any) => {
   return kvp;
 };
 
-export const JsonToQuerystring = (json: Record<string, any>) =>
+export const JsonToQueryString = <SettingsType extends DefaultQueryString>(json: SettingsType): string => {
+  const format = json.format ?? 'uri';
+  delete json.format;
+
+  try {
+    let settings = JSON.stringify(json);
+
+    switch (format) {
+      case 'compressed':
+        settings = 'data=' + compressToEncodedURIComponent(settings);
+        break;
+
+      case 'uri':
+      default:
+        settings = jsonToCustomQueryString(json);
+    }
+
+    settings += `&format=${format}`;
+
+    return settings;
+  } catch (err) {
+    throw new Error('Could not serialize JSON to Query String');
+  }
+};
+
+const jsonToCustomQueryString = <SettingsType extends DefaultQueryString>(json: SettingsType) =>
   Object.entries(json)
     .reduce<string[]>((kvp, [propName, propVal]) => {
       kvp.push(...buildObjectString(propName, propVal));

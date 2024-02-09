@@ -1,21 +1,24 @@
 import { SettingsValidatorResults } from '../types/Managers.js';
 import { PluginInstances, PluginSettingsBase } from '../types/Plugin.js';
 import { RendererInstance, RendererInstanceOptions } from '../types/Renderers.js';
+import { IsInViewPort } from '../utils/DOM.js';
 import * as Forms from '../utils/Forms.js';
+import { GetLocalStorageItem, SetLocalStorageItem } from '../utils/LocalStorage.js';
 import { RenderTemplate } from '../utils/Templating.js';
 import * as URI from '../utils/URI.js';
-import { GetLocalStorageItem, RemoveArrayIndex, SetLocalStorageItem, debounce } from '../utils/misc.js';
+import { RemoveArrayIndex, debounce } from '../utils/misc.js';
 
 type ElementMap = {
   form: HTMLFormElement;
+  'form-options': HTMLFormElement;
   'link-results': HTMLElement;
   'link-results-output': HTMLTextAreaElement;
-  'button-load-app': HTMLInputElement;
 };
 
 // These settings should restart the PluginManager
 const settingsShouldRetartPluginManager = ['plugins', 'customPlugins'];
 const detailsTagTypes = ['DETAILS:', 'SUMMARY:', 'DIV:label-wrapper'];
+const INPUT_VALIDATION_TTY = 500;
 
 const ScrollTTY = 20; // in seconds
 const isScrollTTYExpired = () => {
@@ -27,13 +30,14 @@ const isScrollTTYExpired = () => {
 };
 
 export class SettingsRenderer<PluginSettings extends PluginSettingsBase> implements RendererInstance {
-  private _onOverlaySettingsChanged: (event: Event) => Promise<void>;
+  private _onSettingsChanged: (event: Event) => Promise<void>;
   private _onFormScrolled: (event: Event) => void;
 
   private elements: ElementMap = {} as ElementMap;
+  private formOptionsCache: PluginSettings = {} as PluginSettings;
 
   constructor(private options: RendererInstanceOptions<PluginSettings>) {
-    this._onOverlaySettingsChanged = debounce(this.onOverlaySettingsChanged, 750);
+    this._onSettingsChanged = debounce(this.onSettingsChanged, 750);
     this._onFormScrolled = debounce(this.onFormScrolled, 100);
   }
 
@@ -41,8 +45,8 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
     const plugins = this.options.getPlugins();
 
     this.unbindEvents();
-    this.renderOverlay();
-    this.renderPluginOverlay(plugins);
+    this.renderApp();
+    this.renderPluginApp(plugins);
     this.buildElementMap();
     this.bindEvents();
 
@@ -55,7 +59,8 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
     Forms.Hydrate(this.elements['form'], settings);
 
     // Update URL-based state data only if we're starting with settings
-    if (Object.keys(settings).length > 0) {
+    // > 1, because a 'format' is enforced on the settings object
+    if (Object.keys(settings).length > 1) {
       this.updateUrlState();
     }
 
@@ -72,7 +77,7 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
     }
   }
 
-  private renderOverlay() {
+  private renderApp() {
     const { rootContainer, templates } = this.options.renderOptions;
 
     if (!rootContainer) {
@@ -87,7 +92,7 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
     });
   }
 
-  private renderPluginOverlay(plugins: PluginInstances<PluginSettings>) {
+  private renderPluginApp(plugins: PluginInstances<PluginSettings>) {
     // Iterate over every loaded plugin, and call `renderSettings` to manipulate the Settings view
     plugins.forEach(plugin => {
       try {
@@ -108,40 +113,35 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
     const linkResults = root.querySelector<HTMLElement>('.link-results')!;
 
     this.elements['form'] = root.querySelector('form#settings')!;
+    this.elements['form-options'] = root.querySelector('form#settings-options')!;
     this.elements['link-results'] = linkResults;
     this.elements['link-results-output'] = linkResults.querySelector('textarea')!;
-    this.elements['button-load-app'] = linkResults.querySelector('.button-load-app')!;
   }
 
   private unbindEvents() {
     const form = this.elements['form'];
-    const linkResults = this.elements['link-results'];
-    const btnLoadOverlay = this.elements['button-load-app'];
+    const formOptions = this.elements['form-options'];
 
-    form?.removeEventListener('input', this._onOverlaySettingsChanged);
+    form?.removeEventListener('input', this._onSettingsChanged);
     form?.removeEventListener('click', this.onFormClicked);
     form?.removeEventListener('scroll', this._onFormScrolled);
+    form?.removeEventListener('mousemove', this.onFormMouseMove);
 
-    btnLoadOverlay?.removeEventListener('click', this.onClickLoadOverlay);
-    linkResults?.removeEventListener('click', this.onSettingsOptionChange);
+    formOptions?.removeEventListener('click', this.onSettingsOptionClick);
+    formOptions?.removeEventListener('change', this.onSettingsOptionChange);
   }
 
   private bindEvents() {
     const form = this.elements['form'];
-    const linkResults = this.elements['link-results'];
-    const btnLoadOverlay = this.elements['button-load-app'];
+    const formOptions = this.elements['form-options'];
 
-    linkResults?.addEventListener('click', this.onSettingsOptionChange);
+    form?.addEventListener('input', this._onSettingsChanged);
+    form?.addEventListener('click', this.onFormClicked);
+    form?.addEventListener('scroll', this._onFormScrolled);
+    form?.addEventListener('mousemove', this.onFormMouseMove);
 
-    if (form) {
-      form.addEventListener('input', this._onOverlaySettingsChanged);
-      form.addEventListener('click', this.onFormClicked);
-      form.addEventListener('scroll', this._onFormScrolled);
-    }
-
-    if (btnLoadOverlay) {
-      btnLoadOverlay.addEventListener('click', this.onClickLoadOverlay);
-    }
+    formOptions?.addEventListener('click', this.onSettingsOptionClick);
+    formOptions?.addEventListener('change', this.onSettingsOptionChange);
   }
 
   private restoreViewState() {
@@ -161,34 +161,13 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
     if (scrollHeight && false === isScrollTTYExpired()) {
       this.elements['form'].scrollTo({
         top: scrollHeight
-      });
+      } as ScrollToOptions);
     }
 
     // Settings Options
-    const settingsOptions = GetLocalStorageItem('settingsOptions') as Record<string, any>;
+    const settingsOptions: PluginSettings = GetLocalStorageItem('settingsOptions');
     if (settingsOptions) {
-      root.querySelectorAll('.settings-option').forEach(opt => {
-        if (false === opt instanceof HTMLInputElement) {
-          return;
-        }
-
-        const storedSetting = settingsOptions[opt.name];
-        if (!storedSetting) {
-          return;
-        }
-
-        // TODO: Consider other types we need to eval before checking?
-        // Might figure a way to call Forms.Hydrate
-        switch (opt.type) {
-          case 'checkbox':
-          case 'radio':
-            opt.checked = storedSetting;
-            break;
-          default:
-            opt.value = storedSetting;
-            break;
-        }
-      });
+      Forms.Hydrate(this.elements['form-options'], settingsOptions);
     }
   }
 
@@ -201,6 +180,22 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
     const scrollHeight = event.target.scrollTop;
     SetLocalStorageItem('scrollHeight', scrollHeight);
     SetLocalStorageItem('lastScrolledAt', new Date().getTime());
+  };
+
+  private _timeoutId = 0;
+
+  private onFormMouseMove = (event: MouseEvent) => {
+    if (false === event.target instanceof HTMLSelectElement && false === event.target instanceof HTMLInputElement) {
+      clearTimeout(this._timeoutId);
+      this._timeoutId = 0;
+      return;
+    }
+
+    if (this._timeoutId) {
+      return;
+    }
+
+    this._timeoutId = setTimeout(() => (event.target as HTMLInputElement).reportValidity(), INPUT_VALIDATION_TTY);
   };
 
   private checkDetailsClicked = (event: MouseEvent) => {
@@ -243,7 +238,7 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
     const details = target.closest('details')!;
     const parentDetails = details.parentElement?.closest('details')!;
     const isOpening = false === details.hasAttribute('open');
-    const openDetailsArray = GetLocalStorageItem('openDetails') ?? [];
+    const openDetailsArray = GetLocalStorageItem<string[]>('openDetails') ?? [];
     const openDetails = new Set(openDetailsArray);
 
     if (isOpening) {
@@ -305,7 +300,8 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
     event.stopImmediatePropagation();
 
     const name = btn.name.replace('password-view-', '');
-    const input = btn.closest('div.password-wrapper')?.querySelector(`input[name="${name}"]`) as HTMLInputElement;
+    const wrapper = btn.closest('div.password-wrapper');
+    const input = wrapper?.querySelector(`input[name="${name}"]`) as HTMLInputElement;
 
     if (input) {
       input.type = 'text' === input.type ? 'password' : 'text';
@@ -325,34 +321,22 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
 
     // Settings Option was changed
 
-    // Ensure no elements in the Root so we can display settings
-    const root = this.options.renderOptions.rootContainer!;
+    this.updateSettingsOptions();
 
-    const settingsOptions: Record<string, any> = {};
-
-    root.querySelectorAll('.settings-option').forEach(elem => {
-      if (false == elem instanceof HTMLInputElement) {
-        return;
-      }
-
-      const settingName = elem.name;
-
-      switch (elem.type) {
-        case 'checkbox':
-          settingsOptions[settingName] = elem.checked;
-          break;
-        default:
-          settingsOptions[settingName] = elem.value;
-          break;
-      }
-    });
-
-    SetLocalStorageItem('settingsOptions', settingsOptions);
+    this.updateUrlState();
   };
 
-  private onOverlaySettingsChanged = async (event: Event) => {
+  private updateSettingsOptions() {
+    // Serialize Form into JSON and store in LocalStorage
+    this.formOptionsCache = Forms.GetData(this.elements['form-options']);
+    SetLocalStorageItem('settingsOptions', this.formOptionsCache);
+  }
+
+  private onSettingsChanged = async (event: Event) => {
     const target = event.target! as HTMLInputElement;
     const form = target.form!;
+
+    this.updateSettingsOptions();
 
     const formData = Forms.GetData<PluginSettings>(form);
     const targetName = RemoveArrayIndex(target.name);
@@ -376,18 +360,22 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
 
     delete settings.forceShowSettings;
 
+    settings.format = (this.formOptionsCache.format?.[0].split(':')[1] as PluginSettings['format']) ?? settings.format;
+
     const baseUrl = URI.BaseUrl();
-    const querystring = URI.JsonToQuerystring(settings);
+    const querystring = URI.JsonToQueryString(settings);
 
     return querystring ? `${baseUrl}?${querystring}`.replace(/\?+$/, '') : '';
   }
 
   private updateLinkResults(url: string) {
     const linkResultsOutput = this.elements['link-results-output'];
-    const linkButton = this.elements['button-load-app'];
+    const btnLoadApp = this.elements['form-options'].querySelector('.button-load-app') as HTMLButtonElement;
 
     linkResultsOutput.value = url;
-    linkButton.disabled = true !== this.options.validateSettings();
+    btnLoadApp.disabled = true !== this.options.validateSettings();
+
+    linkResultsOutput.parentElement?.setAttribute('data-char-count', linkResultsOutput.value.length.toString());
   }
 
   private updateFormValidations(validations: SettingsValidatorResults<PluginSettings>) {
@@ -400,23 +388,55 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
 
     Object.entries(validations).forEach(([settingName, error]) => {
       const input = root.querySelector(`[name*=${settingName}]`) as HTMLInputElement;
-      input?.setCustomValidity(error);
-      input?.reportValidity();
+
+      if (!input) {
+        return;
+      }
+
+      input.setCustomValidity(error);
+
+      // Use browser's `.closest()` to target top form element, that has a child of details, that :has() our input with the settings name. This is a crazy "from me to top to me again" 2-way recursive search 😆
+      const topDetails = input.closest(`form > details:has(input[name*=${settingName}])`) as HTMLElement;
+      const inFormViewPort = IsInViewPort(input, this.elements.form);
+      const inTopDetailsViewPort = IsInViewPort(input, topDetails);
+
+      if (inFormViewPort && inTopDetailsViewPort) {
+        input.reportValidity();
+      }
     });
   }
 
-  private onClickLoadOverlay = (_event: Event) => {
-    const newWindowCheck = this.elements['link-results'].querySelector('[name="new-window"]') as HTMLInputElement;
+  private onSettingsOptionClick = (event: Event) => {
+    if (false === event.target instanceof HTMLButtonElement) {
+      return;
+    }
+
+    // Don't let the form reload the page
+    event.stopImmediatePropagation();
+    event.preventDefault();
+
+    // Reset Button Clicked
+    if (event.target.classList.contains('button-load-app')) {
+      this.loadApp();
+    } else if (event.target.classList.contains('button-settings-reset')) {
+      localStorage.clear();
+      globalThis.location.href = URI.BaseUrl();
+    }
+  };
+
+  private loadApp() {
+    const form = this.elements['form-options'];
+    const newWindowCheck = form.querySelector('[name="new-window"]') as HTMLInputElement;
 
     const settings = this.options.getMaskedSettings();
     delete settings['forceShowSettings'];
     const url = this.generateUrl();
 
     if (newWindowCheck && newWindowCheck.checked) {
-      window.open(url, 'overlay');
+      window.open(url, 'app');
       history.replaceState(null, '', `${url}&forceShowSettings=true`);
     } else {
       window.location.href = url;
     }
-  };
+  }
 }

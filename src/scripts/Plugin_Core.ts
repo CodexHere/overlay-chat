@@ -20,7 +20,7 @@ import { Middleware } from './utils/Middleware.js';
 import { RenderTemplate } from './utils/Templating.js';
 import { GetColorForUsername } from './utils/misc.js';
 
-export type OverlaySettings_Chat = PluginSettingsBase & {
+export type AppSettings_Chat = PluginSettingsBase & {
   fontSize: number;
   nameStreamer?: string;
   tokenBot?: string;
@@ -44,9 +44,7 @@ type ElementMap = {
   container: HTMLElement;
 };
 
-export default class Plugin_Core<PluginSettings extends OverlaySettings_Chat>
-  implements PluginInstance<PluginSettings>
-{
+export default class Plugin_Core<PluginSettings extends AppSettings_Chat> implements PluginInstance<PluginSettings> {
   name = 'Core Plugin';
   version = '1.0.0';
   ref = Symbol(this.name);
@@ -92,8 +90,8 @@ export default class Plugin_Core<PluginSettings extends OverlaySettings_Chat>
     }
 
     if (false === hasAnyPlugins) {
-      retMap['plugins'] = 'Needs at least one Custom Plugin';
-      retMap['customPlugins'] = 'Needs at least one Custom Plugin';
+      retMap['plugins'] = 'Needs at least one Built-In or Custom Plugin';
+      retMap['customPlugins'] = 'Needs at least one Built-In or Custom Plugin';
     }
 
     return retMap;
@@ -115,7 +113,7 @@ export default class Plugin_Core<PluginSettings extends OverlaySettings_Chat>
     label: 'Channel Settings',
     inputType: 'fieldgroup',
     description:
-      'Enter your channel settings for Chat. If you do not supply a <a href="https://twitchapps.com/tmi/" target="_new">Token</a> for the Streamer or Bot User <i>each</i>, then the connection will be Anonymous and you cannot send messages.',
+      'Enter your channel settings for Chat. If you do not supply a Token (<a href="https://twitchtokengenerator.com/quick/jC2M9JIPpc" target="_new">Chat Only</a> | <a href="https://twitchtokengenerator.com/quick/w4cpCN4PAV" target="_new">Everything</a>) for the Streamer or Bot User <i>each</i>, then the connection will be Anonymous and you cannot send messages.',
     values: [
       {
         name: 'nameStreamer',
@@ -137,7 +135,7 @@ export default class Plugin_Core<PluginSettings extends OverlaySettings_Chat>
     ]
   });
 
-  async renderOverlay(): Promise<void> {
+  async renderApp(): Promise<void> {
     this.buildElementMap();
     await this.initChatListen();
   }
