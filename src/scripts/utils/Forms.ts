@@ -2,7 +2,6 @@ import merge from 'lodash.merge';
 import set from 'lodash.set';
 import { IsValidValue } from './misc.js';
 
-// TODO: Change to Map?
 export type FormData = Record<string, any>;
 
 type FormEntryBase = {
@@ -24,9 +23,16 @@ export type FormEntryInput = FormEntryBase & {
 };
 
 export type FormEntryGrouping = FormEntryBase & {
-  inputType: 'fieldgroup' | 'arraygroup';
+  inputType: 'fieldgroup' | 'arraygroup' | 'arraylist';
   label: string;
   values: FormEntry[];
+  description?: string;
+};
+
+export type FormEntryRow = FormEntryBase & {
+  inputType: 'array-row';
+  values: FormEntry[];
+  arrayIndex?: number;
   description?: string;
 };
 
@@ -35,7 +41,7 @@ export type FormEntrySelection = FormEntryBase & {
   values: string[];
 };
 
-export type FormEntry = FormEntryButton | FormEntrySelection | FormEntryInput | FormEntryGrouping;
+export type FormEntry = FormEntryButton | FormEntrySelection | FormEntryInput | FormEntryGrouping | FormEntryRow;
 
 let labelId = 0;
 
@@ -89,7 +95,33 @@ export const FromJson = <Settings extends {}>(
      * Input-level Generation
      */
     switch (entry.inputType) {
+      case 'array-row':
+        const rowEntries = entry.values;
+        // `entry.label` identifies array index access
+        const suffix = undefined !== entry.arrayIndex ? `[${entry.arrayIndex}]` : '';
+
+        const columns = rowEntries.map(fe => {
+          const processedJson = FromJson(
+            [
+              {
+                ...fe,
+                name: `${fe.name}${suffix}`
+              }
+            ],
+            settings
+          );
+
+          mapping = merge({}, mapping, processedJson.mapping);
+
+          return processedJson.results;
+        });
+
+        input += `<tr><td>${columns.join('</td><td>')}</td></tr>`;
+
+        break;
+      case 'arraylist':
       case 'arraygroup':
+        const isList = 'arraylist' === entry.inputType;
         const groupParamNames = entry.values.map(fe => fe.name);
         const numSettings = groupParamNames.reduce((maxCount, paramName) => {
           return Math.max(settingsMapCount[paramName] ?? 0, maxCount);
@@ -97,21 +129,22 @@ export const FromJson = <Settings extends {}>(
 
         const recursedCallArray = Array(numSettings)
           .fill(0)
-          .map((_settingCount, settingIdx) => {
-            return entry.values.map(fe => {
-              const processedJson = FromJson(
-                [
-                  {
-                    ...fe,
-                    name: `${fe.name}[${settingIdx}]`
-                  }
-                ],
-                settings
-              );
-              mapping = merge({}, mapping, processedJson.mapping);
+          .map((_empty, settingIdx) => {
+            const row = FromJson(
+              [
+                {
+                  inputType: 'array-row',
+                  name: 'array-row',
+                  arrayIndex: isList ? settingIdx : undefined,
+                  values: entry.values
+                }
+              ],
+              settings
+            );
 
-              return processedJson.results;
-            });
+            mapping = merge({}, mapping, row.mapping);
+
+            return row;
           });
 
         description = entry.description ? `<blockquote class="description">${entry.description}</blockquote>` : '';
@@ -124,23 +157,28 @@ export const FromJson = <Settings extends {}>(
               </tr>
             </thead>
             <tbody>
-              ${recursedCallArray.map(row => `<tr><td>${row.join('</td><td>')}</td></tr>`).join('')}
+              ${recursedCallArray.map(row => row.results).join('')}
             </tbody>
           </table>
         `;
 
-        input += `
+        const coreContent = `
+          ${description}
+
+          <div class="table-wrapper">
+            ${tableData}
+          </div>
+        `;
+
+        if (isList) {
+          input += `
             <details 
               id="${nameOrLabelId}" 
               data-input-type="${entry.inputType}"
             >
               <summary><div class="label-wrapper" ${tooltip}>${chosenLabel}</div></summary>
               <div class="content">
-                ${description}
-
-                <div class="table-wrapper">
-                  ${tableData}
-                </div>
+                ${coreContent}
 
                 <div class="arraygroup-controls" data-inputs='${JSON.stringify(entry.values)}'>
                   <button name="addentry-${nameOrLabelId}" class="add">+</button>
@@ -149,6 +187,19 @@ export const FromJson = <Settings extends {}>(
               </div>
             </details>
             `;
+        } else {
+          input += `
+            <div
+              id="${nameOrLabelId}" 
+              data-input-type="${entry.inputType}"
+            >
+              <div class="label-wrapper" ${tooltip}>${chosenLabel}</div>
+
+              ${coreContent}
+            </div>
+          `;
+        }
+
         break;
       case 'fieldgroup':
         recursedCall = FromJson(entry.values, settings);
@@ -293,6 +344,7 @@ export const FromJson = <Settings extends {}>(
       case 'button':
       case 'fieldgroup':
       case 'arraygroup':
+      case 'array-row':
         // noop
         break;
 

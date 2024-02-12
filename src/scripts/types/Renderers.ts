@@ -1,5 +1,6 @@
 import { ParsedJsonResults } from '../utils/Forms.js';
-import { ErrorManager, SettingsValidatorResults, TemplateMap } from './Managers.js';
+import { TemplateMap } from '../utils/Templating.js';
+import { ErrorManager, SettingsValidatorResults } from './Managers.js';
 import { PluginInstances, PluginSettingsBase } from './Plugin.js';
 
 export type RenderOptions = {
@@ -8,14 +9,15 @@ export type RenderOptions = {
 };
 
 export type RendererInstanceOptions<PluginSettings extends PluginSettingsBase> = {
-  renderOptions: RenderOptions;
+  templates: TemplateMap;
 
   getParsedJsonResults?: () => ParsedJsonResults | undefined;
 
   validateSettings: () => SettingsValidatorResults<PluginSettings>;
-  getSettings: () => PluginSettings;
   getMaskedSettings: () => PluginSettings;
-  setSettings: (settings: PluginSettings) => void;
+  getUnmaskedSettings: () => PluginSettings;
+  getSettings: () => PluginSettings;
+  setSettings: (settings: PluginSettings, forceEncode?: boolean) => void;
   getPlugins: () => PluginInstances<PluginSettings>;
 
   pluginLoader: () => void;

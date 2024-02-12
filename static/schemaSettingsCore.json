@@ -42,7 +42,7 @@
           },
           {
             "name": "customPlugins",
-            "inputType": "arraygroup",
+            "inputType": "arraylist",
             "label": "Custom Plugins",
             "description": "Enter a full URL to a Plugin path of a folder that has both <code>plugin.js</code> and <code>plugin.css</code>.<br />If this is supplied, the Plugins selection will be ignored.<br />Example: https://mywebsite.com/pluginFolder/",
             "values": [

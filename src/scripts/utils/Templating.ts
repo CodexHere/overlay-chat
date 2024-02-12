@@ -2,6 +2,8 @@ import Handlebars from 'handlebars';
 
 const DomParser = new DOMParser();
 
+export type TemplateMap = Record<string, HandlebarsTemplateDelegate<any>>;
+
 export const PrepareTemplate = (templateElement: HTMLElement) =>
   Handlebars.compile(templateElement.innerHTML, { noEscape: true });
 

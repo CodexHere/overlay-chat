@@ -2,12 +2,6 @@
 
 ## TODO
 
-* Move existing Twitch Chat stuff over to it's own Chat: Core plugin
-  * Include Authentication w/Twitch
-    * Look more into: https://twitchtokengenerator.com/
-  * Needs refresh capabilities
-  * Event:SendMessage (if auth'd properly) - Sends a simple message to chat
-  * Event:HasAuth - ?? returns bool if auth'd
 * Move/Create other template
   * error dialogue
 * Consider allowing plugins to register a template to load up front
@@ -42,6 +36,9 @@
 * Build a dropdown to jump to a plugins' settings
   * Plugin will need more contextual data:
     * Name
+* Common Plugin Deploy
+  * Twitch - Chat / PubSub, etc
+  * OBS WS Proxy
 * Convert to use `hh-util`
   * `hh-util` needs proper publishing
   * `hh-util` needs proper lifecycle support

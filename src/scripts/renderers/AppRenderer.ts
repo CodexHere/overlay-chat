@@ -16,11 +16,12 @@ export class AppRenderer<PluginSettings extends PluginSettingsBase> implements R
 
     // this.unbindEvents();
     this.renderApp();
-    this.renderPluginApp(plugins);
     this.buildElementMap();
     this.bindEvents();
 
     this.subInit();
+
+    this.renderPluginApp(plugins);
   }
 
   private subInit() {
@@ -28,7 +29,8 @@ export class AppRenderer<PluginSettings extends PluginSettingsBase> implements R
   }
 
   private renderApp() {
-    const { rootContainer, templates } = this.options.renderOptions;
+    const rootContainer = globalThis.document.body.querySelector('#root') as HTMLElement;
+    const { templates } = this.options;
 
     if (!rootContainer) {
       return;
@@ -55,10 +57,10 @@ export class AppRenderer<PluginSettings extends PluginSettingsBase> implements R
   }
 
   private buildElementMap() {
-    const root = this.options.renderOptions.rootContainer;
+    const body = globalThis.document.body;
 
     // Establish `elements` now that the Settings Form has been injected into DOM
-    this.elements['show-settings'] = root.querySelector('#show-settings')!;
+    this.elements['show-settings'] = body.querySelector('#show-settings')!;
   }
 
   private bindEvents() {
@@ -69,7 +71,7 @@ export class AppRenderer<PluginSettings extends PluginSettingsBase> implements R
 
   private injectSettingsIntoCSS() {
     const style = globalThis.document.documentElement.style;
-    const settings = this.options.getSettings();
+    const settings = this.options.getMaskedSettings();
 
     Object.keys(settings).forEach(key => {
       style.setProperty(`--${key}`, settings[key as keyof PluginSettings] as string);

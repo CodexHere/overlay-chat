@@ -3,8 +3,6 @@ import { PluginManager } from '../managers/PluginManager.js';
 import { EnhancedEventEmitter } from '../utils/EnhancedEventEmitter.js';
 import { PluginConstructor, PluginInstance, PluginOptions, PluginRegistrar, PluginSettingsBase } from './Plugin.js';
 
-export type TemplateMap = Record<string, HandlebarsTemplateDelegate<any>>;
-
 // Bootstrapping
 
 export type BootstrapOptions<PluginSettings extends PluginSettingsBase> = {
@@ -12,7 +10,6 @@ export type BootstrapOptions<PluginSettings extends PluginSettingsBase> = {
 
   needsSettingsRenderer?: true;
   needsAppRenderer?: true;
-  rootContainer: HTMLElement;
   templateFile?: URL;
 };
 

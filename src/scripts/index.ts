@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
     needsAppRenderer: true,
     needsSettingsRenderer: true,
     defaultPlugin: Plugin_Core,
-    rootContainer: document.getElementById('root')!,
+    // TODO This should move to the plugin-level via registration
     templateFile: new URL('/templates/template.html', Utils.BaseUrl())
   });
 

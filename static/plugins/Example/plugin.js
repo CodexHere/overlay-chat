@@ -96,7 +96,7 @@ export default class Plugin_Example {
       receives: {
         'test-event': this.testEventHandler
       },
-      sends: ['test-event', 'middleware-execute']
+      sends: ['test-event', 'middleware-execute', 'chat:twitch:sendMessage']
     };
   }
 
@@ -287,14 +287,25 @@ export default class Plugin_Example {
         console.warn('Swallowing error, but showing, for example only!');
         console.error(err);
       }
-
-      // Shows an error to the user as an example
-      console.warn(`[${this.name}] Show an error to the user`);
-      this.options.errorDisplay.showError(new Error('This error should be shown to the user!'));
     }, 3000);
   }
 
   renderApp() {
     console.log(`[${this.name}] [renderApp]`);
+
+    setTimeout(() => {
+      // Shows an error to the user as an example
+      console.warn(`[${this.name}] Show an error to the user`);
+      this.options.errorDisplay.showError(new Error('This error should be shown to the user!'));
+
+      console.log('Sending Messages to Chat');
+      this.options.emitter.emit('chat:twitch:sendMessage', '[from Bot] Hello from HangoutHere Theme!');
+      this.options.emitter.emit('chat:twitch:sendMessage', '[from Streamer] Hello from HangoutHere Theme!', 'streamer');
+
+      const hasAuth = this.options.emitter.call('chat:twitch:hasAuth').slice(-1)[0];
+      this.options.errorDisplay.showError(
+        new Error(`Do we have auth?<br/>* Streamer: ${hasAuth.streamer}<br/>* Bot: ${hasAuth.bot}`)
+      );
+    }, 3000);
   }
 }

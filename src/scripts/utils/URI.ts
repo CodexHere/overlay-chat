@@ -18,7 +18,7 @@ export const QueryStringToJson = <SettingsType extends DefaultQueryString>(urlHr
 
   const format = (params.get('format') as SettingsType['format']) ?? 'uri';
   const data = params.get('data');
-  const formatIsParsed = ['base64', 'compressed', 'base64-compressed'].includes(format);
+  const formatIsParsed = ['compressed'].includes(format);
 
   params.delete('data');
   params.delete('format');

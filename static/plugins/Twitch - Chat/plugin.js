@@ -20,7 +20,21 @@ import tmiJs from 'https://esm.sh/tmi.js@1.8.5';
  * @typedef {import('../../../src/scripts/types/Plugin.js').PluginInstance<PluginSettings>} PluginInstance
  * @typedef {import('../../../src/scripts/types/Plugin.js').PluginRegistrationOptions} PluginRegistrationOptions
  * @typedef {import('../../../src/scripts/utils/Middleware.js').Next<Context>} Next
- *
+ */
+
+const BaseUrl = () => import.meta.url.split('/').slice(0, -1).join('/');
+
+const API_BaseUrl = 'https://twitchtokengenerator.com/api';
+const API_TTL = 60 * 1000;
+const API_TTY = 2 * 1000;
+
+// prettier-ignore
+const SCOPES = [
+  'chat:read',
+  'chat:edit'
+]
+
+/**
  * @implements {PluginInstance}
  */
 export default class TwitchChat {
@@ -38,7 +52,7 @@ export default class TwitchChat {
     return this.clients.streamer && false === this.clients.streamer.getUsername().startsWith('justin');
   }
 
-  get hasClientBot() {
+  get hasAuthedClientBot() {
     return this.clients.bot && false === this.clients.bot.getUsername().startsWith('justin');
   }
 
@@ -54,8 +68,9 @@ export default class TwitchChat {
    */
   isConfigured() {
     const { nameStreamer } = this.options.getSettings();
-
     const hasChannelName = !!nameStreamer;
+
+    this.#updateSettingsUI();
 
     if (hasChannelName) {
       return true;
@@ -72,43 +87,29 @@ export default class TwitchChat {
   }
 
   /**
-   * @returns {PluginRegistrationOptions}
+   * @returns {Promise<PluginRegistrationOptions>}
    */
-  registerPlugin = () => ({
-    settings: this._getSettings(),
+  registerPlugin = async () => ({
+    settings: await this._getSettings(),
     events: this._getEvents(),
-    stylesheet: new URL(`${import.meta.url.split('/').slice(0, -1).join('/')}/plugin.css`)
+    stylesheet: new URL(`${BaseUrl()}/plugin.css`)
   });
 
+  unregisterPlugin() {
+    const body = globalThis.document.body;
+    const authButtons = body.querySelectorAll('[name*="btnAuth"]');
+    const refreshButtons = body.querySelectorAll('[name*="btnRefresh"]');
+
+    authButtons.forEach((btn, idx) => {
+      btn.removeEventListener('click', this.#onClickAuth);
+      refreshButtons[idx].removeEventListener('click', this.#onClickRefresh);
+    });
+  }
+
   /**
-   * @returns {FormEntryFieldGroup}
+   * @returns {Promise<FormEntryFieldGroup>}
    */
-  _getSettings = () => ({
-    name: 'channelSettings',
-    label: 'Channel Settings',
-    inputType: 'fieldgroup',
-    description:
-      'Enter your channel settings for Chat. If you do not supply a Token (<a href="https://twitchtokengenerator.com/quick/jC2M9JIPpc" target="_new">Chat Only</a> | <a href="https://twitchtokengenerator.com/quick/w4cpCN4PAV" target="_new">Everything</a>) for the Streamer or Bot User <i>each</i>, then the connection will be Anonymous and you cannot send messages.',
-    values: [
-      {
-        name: 'nameStreamer',
-        label: 'Channel Name (Streamer)',
-        inputType: 'text',
-        isRequired: true,
-        tooltip: 'This is the channel you want to listen/send for Twitch Chat!'
-      },
-      {
-        name: 'tokenStreamer',
-        label: 'Chat Token (Streamer)',
-        inputType: 'password'
-      },
-      {
-        name: 'tokenBot',
-        label: 'Chat Token (Bot)',
-        inputType: 'password'
-      }
-    ]
-  });
+  _getSettings = async () => await (await fetch(`${BaseUrl()}/settings.json`)).json();
 
   /**
    * @returns {PluginEventMap}
@@ -118,14 +119,181 @@ export default class TwitchChat {
 
     return {
       receives: {
-        'chat:twitch:sendMessage': this._onBusSendMessage
+        'chat:twitch:sendMessage': this._onBusSendMessage,
+        'chat:twitch:hasAuth': this._onBusHasAuth
       },
       sends: ['chat:twitch:onMessage']
     };
   }
 
   async renderApp() {
-    await this.initChatListen();
+    try {
+      await this.initChatListen();
+    } catch (err) {
+      const errInst = /** @type {Error} */ (/** @type {unknown} */ err);
+      const errors = [errInst];
+
+      if (errInst.message.includes('Login authentication failed')) {
+        errors.push(new Error('Try going to Settings, and refreshing your Auth Token!'));
+      }
+
+      this.options.errorDisplay.showError(errors);
+    }
+  }
+
+  /**
+   * @param {() => void} updateSettings
+   * @returns
+   */
+  async renderSettings(updateSettings) {
+    this.updateSettings = updateSettings;
+  }
+
+  #updateSettingsUI() {
+    const body = globalThis.document.body;
+
+    /** @type {NodeListOf<HTMLInputElement> | undefined} */
+    const authButtons = body.querySelectorAll('[name*="btnAuth"]');
+    /** @type {NodeListOf<HTMLInputElement> | undefined} */
+    const refreshButtons = body.querySelectorAll('[name*="btnRefresh"]');
+
+    if (0 === authButtons.length || 0 === refreshButtons.length) {
+      return;
+    }
+
+    authButtons.forEach((btn, idx) => {
+      btn.addEventListener('click', this.#onClickAuth);
+      refreshButtons[idx].addEventListener('click', this.#onClickRefresh);
+
+      const container = btn.closest('[data-input-type="arraygroup"]');
+      /** @type {NodeListOf<HTMLInputElement> | undefined} */
+      const inputs = container?.querySelectorAll('.password-wrapper input');
+
+      const hasBothTokens = !!(inputs && inputs[0] && inputs[0].value && inputs[1] && inputs[1].value);
+
+      btn.disabled = hasBothTokens;
+      refreshButtons[idx].disabled = !hasBothTokens;
+    });
+  }
+
+  /**
+   * @param {Event} event
+   */
+  #onClickAuth = async event => {
+    if (false === event.target instanceof HTMLButtonElement) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopImmediatePropagation();
+
+    const scopes = SCOPES.join('+');
+    const createResp = await fetch(`${API_BaseUrl}/create/${btoa('Twitch Chat by CodexHere')}/${scopes}`);
+
+    const create = await createResp.json();
+
+    event.target.disabled = true;
+
+    globalThis.window.open(create.message, '_new');
+
+    const tokens = await this.waitForAuth(create);
+
+    if (!tokens) {
+      event.target.disabled = false;
+      return;
+    }
+
+    const container = event.target.closest('[data-input-type="arraygroup"]');
+    /** @type {NodeListOf<HTMLInputElement> | undefined} */
+    const inputs = container?.querySelectorAll('.password-wrapper input');
+
+    if (inputs && inputs[0]) {
+      inputs[0].value = tokens.token;
+    }
+
+    if (inputs && inputs[1]) {
+      inputs[1].value = tokens.refresh;
+    }
+
+    this.updateSettings?.();
+  };
+
+  /**
+   * @param {Event} event
+   */
+  #onClickRefresh = async event => {
+    if (false === event.target instanceof HTMLButtonElement) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopImmediatePropagation();
+
+    event.target.disabled = true;
+
+    const container = event.target.closest('[data-input-type="arraygroup"]');
+    /** @type {NodeListOf<HTMLInputElement> | undefined} */
+    const inputs = container?.querySelectorAll('.password-wrapper input');
+
+    if (inputs && inputs[1]) {
+      const refreshToken = inputs[1].value;
+      const refreshResp = await fetch(`${API_BaseUrl}/refresh/${refreshToken}`);
+      const refresh = await refreshResp.json();
+
+      if (inputs && inputs[0]) {
+        inputs[0].value = refresh.token;
+      }
+
+      if (inputs && inputs[1]) {
+        inputs[1].value = refresh.refresh;
+      }
+    } else {
+      return false;
+    }
+
+    this.updateSettings?.();
+  };
+
+  /**
+   * @param {*} create
+   * @returns
+   */
+  async waitForAuth(create) {
+    const start = new Date().getTime();
+
+    return new Promise((resolve, reject) => {
+      const clear = () => {
+        clearInterval(intervalId);
+        intervalId = 0;
+      };
+
+      let intervalId = setInterval(async () => {
+        const statusResp = await fetch(`${API_BaseUrl}/status/${create.id}`);
+        const status = await statusResp.json();
+
+        if (true === status.success) {
+          clear();
+
+          resolve({
+            token: status.token,
+            refresh: status.refresh
+          });
+        } else {
+          // Never gonna execute
+          if (4 === status.error) {
+            clear();
+            reject(false);
+          }
+        }
+
+        // Elapse timeout
+        const elapsed = new Date().getTime() - start;
+        if (elapsed > API_TTL) {
+          clear();
+          reject(false);
+        }
+      }, API_TTY);
+    });
   }
 
   generateTmiOptions() {
@@ -260,9 +428,9 @@ export default class TwitchChat {
     // If `streamer` is set, try to use that, otherwise fallback to `bot` client if valid
     // lastly fallback to `null` for error handling
     const client =
-      'bot' === useClient && this.hasClientBot ? this.clients.bot
+      'bot' === useClient && this.hasAuthedClientBot ? this.clients.bot
       : this.hasAuthedClientStreamer ? this.clients.streamer
-      : this.hasClientBot ? this.clients.bot
+      : this.hasAuthedClientBot ? this.clients.bot
       : null;
 
     if (!client) {
@@ -270,5 +438,12 @@ export default class TwitchChat {
     }
 
     client?.say(settings.nameStreamer, message);
+  };
+
+  _onBusHasAuth = () => {
+    return {
+      streamer: this.hasAuthedClientStreamer,
+      bot: this.hasAuthedClientBot
+    };
   };
 }

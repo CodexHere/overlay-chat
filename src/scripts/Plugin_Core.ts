@@ -84,9 +84,8 @@ export default class Plugin_Core<PluginSettings extends AppSettings_Chat> implem
   }
 
   private buildElementMap() {
-    const root = this.options.renderOptions.rootContainer;
-
-    this.elements['container'] = root.querySelector('#container')!;
+    const body = globalThis.document.body;
+    this.elements['container'] = body.querySelector('#container')!;
   }
 
   private _onMessage = (ctx: MiddewareContext_Chat) => {
@@ -122,7 +121,7 @@ export default class Plugin_Core<PluginSettings extends AppSettings_Chat> implem
     // prettier-ignore
     RenderTemplate(
       this.elements['container'],
-      this.options.renderOptions.templates['chat-message'],
+      this.options.templates['chat-message'],
       context
     );
 

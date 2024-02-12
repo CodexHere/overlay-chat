@@ -36,13 +36,13 @@ export class PluginManager<PluginSettings extends PluginSettingsBase>
     await this.loadPlugins();
   }
 
-  unregisterPlugins() {
+  async unregisterPlugins() {
     const numPlugins = this._plugins.length;
 
     // Unregister existing plugins, and remove from list
     for (let idx = numPlugins - 1; idx >= 0; idx--) {
       const plugin = this._plugins[idx];
-      plugin.unregisterPlugin?.();
+      await plugin.unregisterPlugin?.();
       this._plugins.splice(idx, 1);
     }
 
@@ -55,7 +55,7 @@ export class PluginManager<PluginSettings extends PluginSettingsBase>
 
   loadPlugins = async () => {
     // Unregister Plugins before loading any new ones
-    this.unregisterPlugins();
+    await this.unregisterPlugins();
 
     const { defaultPlugin } = this.options;
 
@@ -107,7 +107,7 @@ export class PluginManager<PluginSettings extends PluginSettingsBase>
     const { customPlugins, plugins } = this.options.getSettings();
 
     if (customPlugins) {
-      pluginUrls = customPlugins;
+      pluginUrls = Array.isArray(customPlugins) ? customPlugins : [customPlugins];
     } else if (plugins) {
       // At runtime, `plugins` may actually be a single string due to deserializing
       // URLSearchParams that only had one specified plugin

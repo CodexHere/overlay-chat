@@ -1,9 +1,9 @@
 import { Listener } from 'events';
 import { FormEntryGrouping } from '../utils/Forms.js';
+import { TemplateMap } from '../utils/Templating.js';
 import { DefaultQueryString } from '../utils/URI.js';
 import { BusManagerEmitter, ErrorManager, SettingsValidatorResults } from './Managers.js';
 import { PluginMiddlewareMap } from './Middleware.js';
-import { RenderOptions } from './Renderers.js';
 
 export type PluginInstances<PluginSettings extends PluginSettingsBase> = PluginInstance<PluginSettings>[];
 export type PluginLoaders<PluginSettings extends PluginSettingsBase> = Array<
@@ -37,14 +37,15 @@ export type PluginEventRegistration = {
 export type PluginRegistrationOptions = {
   middlewares?: PluginMiddlewareMap;
   events?: PluginEventRegistration;
-  settings?: FormEntryGrouping;
+  settings?: FormEntryGrouping; // TODO: implement loading URL;
+  templates?: URL; // TODO: implement loading URL;
   stylesheet?: URL;
 };
 
 export type PluginOptions<PluginSettings extends PluginSettingsBase> = {
   getSettings: () => PluginSettings;
   emitter: Readonly<BusManagerEmitter>;
-  renderOptions: RenderOptions;
+  templates: TemplateMap;
   errorDisplay: ErrorManager;
 };
 
@@ -64,9 +65,9 @@ export type PluginInstance<PluginSettings extends PluginSettingsBase> = {
 
   // Plugin can optionally define these
   registerPlugin?(): PluginRegistrationOptions | Promise<PluginRegistrationOptions>;
-  unregisterPlugin?(): void;
+  unregisterPlugin?(): void | Promise<void>;
 
   isConfigured?(): SettingsValidatorResults<PluginSettings>;
-  renderSettings?(): void;
+  renderSettings?(updateSettings: () => void): void;
   renderApp?(): void;
 };

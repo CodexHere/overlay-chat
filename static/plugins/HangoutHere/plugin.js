@@ -6,7 +6,7 @@
  * @property {string} colorVip
  * @typedef {PluginSettings_Extra & PluginSettingsBase} PluginSettings
  *
-* @typedef {import('../../../src/scripts/Plugin_Core.js').MiddewareContext_Chat} ConcreteContext
+ * @typedef {import('../../../src/scripts/Plugin_Core.js').MiddewareContext_Chat} ConcreteContext
  * @typedef {Partial<ConcreteContext>} Context
  * @typedef {import('../../../src/scripts/utils/Forms.js').FormEntryGrouping} FormEntryFieldGroup
  * @typedef {import('../../../src/scripts/types/Managers.js').SettingsValidatorResults<PluginSettings>} SettingsValidatorResults
@@ -104,8 +104,7 @@ export default class Plugin_HangoutHereTheme {
     return {
       receives: {
         'test-event': this.testEventHandler
-      },
-      sends: ['chat:twitch--send']
+      }
     };
   }
 
@@ -119,12 +118,6 @@ export default class Plugin_HangoutHereTheme {
 
   renderApp() {
     console.log(`${this.name} [renderApp]`);
-
-    setTimeout(() => {
-      console.log('Sending message');
-      this.options.emitter.emit('chat:twitch:sendMessage', '[from Bot] Hello from HangoutHere Theme!');
-      this.options.emitter.emit('chat:twitch:sendMessage', '[from Streamer] Hello from HangoutHere Theme!', 'streamer');
-    }, 3000);
   }
 
   /**

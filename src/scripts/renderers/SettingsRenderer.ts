@@ -45,11 +45,12 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
 
     this.unbindEvents();
     this.renderApp();
-    this.renderPluginApp(plugins);
     this.buildElementMap();
     this.bindEvents();
 
     this.subInit();
+
+    this.renderPluginApp(plugins);
   }
 
   private subInit() {
@@ -74,7 +75,8 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
   }
 
   private renderApp() {
-    const { rootContainer, templates } = this.options.renderOptions;
+    const rootContainer = globalThis.document.body.querySelector('#root') as HTMLElement;
+    const { templates } = this.options;
 
     if (!rootContainer) {
       return;
@@ -92,7 +94,7 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
     // Iterate over every loaded plugin, and call `renderSettings` to manipulate the Settings view
     plugins.forEach(plugin => {
       try {
-        plugin.renderSettings?.();
+        plugin.renderSettings?.(this._updateSettings);
       } catch (err) {
         if (err instanceof Error) {
           throw new Error(
@@ -103,13 +105,23 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
     });
   }
 
+  private _updateSettings = () => {
+    const form = this.elements.form;
+    const formData = Forms.GetData<PluginSettings>(form);
+    this.options.setSettings(formData);
+
+    this.updateFormValidations();
+    this.updateSettingsOptions();
+    this.updateUrlState();
+  };
+
   private buildElementMap() {
-    const root = this.options.renderOptions.rootContainer;
+    const body = globalThis.document.body;
 
-    const linkResults = root.querySelector<HTMLElement>('.link-results')!;
+    const linkResults = body.querySelector<HTMLElement>('.link-results')!;
 
-    this.elements['form'] = root.querySelector('form#settings')!;
-    this.elements['form-options'] = root.querySelector('form#settings-options')!;
+    this.elements['form'] = body.querySelector('form#settings')!;
+    this.elements['form-options'] = body.querySelector('form#settings-options')!;
     this.elements['link-results'] = linkResults;
     this.elements['link-results-output'] = linkResults.querySelector('textarea')!;
   }
@@ -141,13 +153,13 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
   }
 
   private restoreViewState() {
-    const root = this.options.renderOptions.rootContainer!;
+    const body = globalThis.document.body;
 
     // Re-open Details groups
     const openDetails = GetLocalStorageItem('openDetails') as string[];
     if (!openDetails || 0 === openDetails.length) {
       // Open first one if state is missing
-      root.querySelector('details')?.setAttribute('open', '');
+      body.querySelector('details')?.setAttribute('open', '');
     } else {
       openDetails.forEach(id => document.querySelector(`#${id}`)?.setAttribute('open', ''));
     }
@@ -253,7 +265,7 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
     event.preventDefault();
     event.stopImmediatePropagation();
 
-    const settings = this.options.getSettings();
+    const settings = this.options.getMaskedSettings();
     const isAdd = btn.name.startsWith('add');
     const content = btn.closest('.content');
     const tableBody = content?.querySelector('table tbody');
@@ -335,16 +347,19 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
 
     const formData = Forms.GetData<PluginSettings>(form);
     const targetName = RemoveArrayIndex(target.name);
-    this.options.setSettings(formData);
 
     if (settingsShouldRetartPluginManager.includes(targetName)) {
       try {
+        this.options.setSettings(formData, true);
+
         await this.options.pluginLoader();
         await this.init();
       } catch (err) {
         this.options.errorDisplay.showError(err as Error);
       }
     } else {
+      this.options.setSettings(formData);
+
       form.reportValidity();
       this.updateUrlState();
       this.updateFormValidations();
@@ -375,10 +390,10 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
   }
 
   private updateFormValidations() {
-    const root = this.options.renderOptions.rootContainer;
+    const body = globalThis.document.body;
 
     // Unmark Invalid inputs
-    root.querySelectorAll<HTMLInputElement>('input:invalid').forEach(elem => {
+    body.querySelectorAll<HTMLInputElement>('input:invalid').forEach(elem => {
       elem?.setCustomValidity('');
     });
 
@@ -389,7 +404,7 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
     }
 
     Object.entries(validations).forEach(([settingName, error]) => {
-      const input = root.querySelector(`[name*=${settingName}]`) as HTMLInputElement;
+      const input = body.querySelector(`[name*=${settingName}]`) as HTMLInputElement;
 
       if (!input) {
         return;

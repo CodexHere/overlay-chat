@@ -4,30 +4,17 @@ import { PluginManager } from './managers/PluginManager.js';
 import { SettingsManager } from './managers/SettingsManager.js';
 import { AppRenderer } from './renderers/AppRenderer.js';
 import { SettingsRenderer } from './renderers/SettingsRenderer.js';
-import {
-  BootstrapOptions,
-  ErrorManager,
-  PluginManagerEmitter,
-  PluginManagerEvents,
-  TemplateMap
-} from './types/Managers.js';
+import { BootstrapOptions, ErrorManager, PluginManagerEmitter, PluginManagerEvents } from './types/Managers.js';
 import { PluginSettingsBase } from './types/Plugin.js';
 import { RendererConstructor, RendererInstance } from './types/Renderers.js';
 import { AddStylesheet } from './utils/DOM.js';
-import { PrepareTemplate } from './utils/Templating.js';
+import { PrepareTemplate, TemplateMap } from './utils/Templating.js';
 
 export class Bootstrapper<PluginSettings extends PluginSettingsBase> implements ErrorManager {
   busManager?: BusManager<PluginSettings>;
   settingsManager?: SettingsManager<PluginSettings>;
   pluginManager?: PluginManagerEmitter<PluginSettings>;
   templates?: TemplateMap;
-
-  private get renderOptions() {
-    return {
-      templates: this.templates!,
-      rootContainer: this.bootstrapOptions.rootContainer
-    };
-  }
 
   constructor(public bootstrapOptions: BootstrapOptions<PluginSettings>) {}
 
@@ -86,7 +73,7 @@ export class Bootstrapper<PluginSettings extends PluginSettingsBase> implements 
       pluginOptions: {
         emitter: this.busManager.emitter,
         getSettings: this.settingsManager.getSettings,
-        renderOptions: this.renderOptions,
+        templates: this.templates!,
         errorDisplay: this
       }
     });
@@ -102,7 +89,6 @@ export class Bootstrapper<PluginSettings extends PluginSettingsBase> implements 
     const settings = this.settingsManager!.getSettings();
     const areSettingsValid = this.pluginManager!.validateSettings();
 
-    // TODO: Determine if `SettingsManager` is configured by way of `SettingsValidator`
     const isConfigured = (!settings.forceShowSettings && true === areSettingsValid) || false;
     const { needsSettingsRenderer, needsAppRenderer } = this.bootstrapOptions;
     // Wants a `SettingsRenderer`, and `SettingsManager::isConfigured()` returns `false`
@@ -122,11 +108,12 @@ export class Bootstrapper<PluginSettings extends PluginSettingsBase> implements 
     }
 
     const renderer: RendererInstance = new rendererClass({
-      renderOptions: this.renderOptions,
-      getMaskedSettings: this.settingsManager!.getMaskedSettings,
-      getParsedJsonResults: this.settingsManager!.getParsedJsonResults,
+      templates: this.templates!,
       getSettings: this.settingsManager!.getSettings,
       setSettings: this.settingsManager!.setSettings,
+      getUnmaskedSettings: this.settingsManager!.getUnmaskedSettings,
+      getMaskedSettings: this.settingsManager!.getMaskedSettings,
+      getParsedJsonResults: this.settingsManager!.getParsedJsonResults,
       getPlugins: this.pluginManager!.getPlugins,
       pluginLoader: this.pluginManager!.loadPlugins,
       validateSettings: this.pluginManager!.validateSettings,
@@ -150,7 +137,7 @@ export class Bootstrapper<PluginSettings extends PluginSettingsBase> implements 
   }
 
   showError = (err: Error | Error[]) => {
-    const root = this.bootstrapOptions.rootContainer;
+    const body = globalThis.document.body;
 
     if (!err) {
       return;
@@ -165,13 +152,13 @@ export class Bootstrapper<PluginSettings extends PluginSettingsBase> implements 
 
     err.forEach(console.error);
 
-    root.querySelector('dialog')?.remove();
+    body.querySelector('dialog')?.remove();
 
     const msg = err.map(e => e.message).join('<br> <br>');
 
     // TODO: Should be converted to a template!
 
-    root.insertAdjacentHTML(
+    body.insertAdjacentHTML(
       'beforeend',
       `
         <dialog open>

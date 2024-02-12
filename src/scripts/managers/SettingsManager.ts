@@ -13,9 +13,12 @@ export class SettingsManager<PluginSettings extends PluginSettingsBase> {
   constructor(private locationHref: string) {}
 
   async init() {
-    this._settings = URI.QueryStringToJson(this.locationHref);
+    const settings = URI.QueryStringToJson<PluginSettings>(this.locationHref);
+    this._settings = this.toggleMaskSettings(settings, false);
 
     // Load Core Settings Schema
+    // TODO: Should be injected into Bootstrapper! This will make librarifying COAP much easier
+    // TODO: Maybe the core lib should just import this, and thus repopulate itself based on all plugin settings
     this._settingsSchemaDefault = await (await fetch('../../schemaSettingsCore.json')).json();
     this.resetSettingsSchema();
   }
@@ -24,12 +27,21 @@ export class SettingsManager<PluginSettings extends PluginSettingsBase> {
     return structuredClone(this._settings);
   };
 
+  getUnmaskedSettings = (): PluginSettings => {
+    return this.toggleMaskSettings(this.getSettings(), false);
+  };
+
   getMaskedSettings = (): PluginSettings => {
     return this.toggleMaskSettings(this.getSettings(), true);
   };
 
-  setSettings = (settings: PluginSettings) => {
-    this._settings = settings;
+  setSettings = (settings: PluginSettings, forceEncode: boolean = false) => {
+    if (forceEncode) {
+      this._settings = this.toggleMaskSettings(settings, true);
+    } else {
+      this._settings = settings;
+    }
+
     this.updateParsedJsonResults();
   };
 
