@@ -16,6 +16,7 @@ import {
 } from './types/Plugin.js';
 import { Middleware } from './utils/Middleware.js';
 import { RenderTemplate } from './utils/Templating.js';
+import { BaseUrl } from './utils/URI.js';
 
 export type AppSettings_Chat = PluginSettingsBase & {
   fontSize: number;
@@ -47,7 +48,8 @@ export default class Plugin_Core<PluginSettings extends AppSettings_Chat> implem
 
   registerPlugin = (): PluginRegistrationOptions => ({
     middlewares: this._getMiddleware(),
-    events: this._getEvents()
+    events: this._getEvents(),
+    templates: new URL(`${BaseUrl()}/templates/twitch-chat.html`)
   });
 
   isConfigured(): true | SettingsValidatorResults<PluginSettings> {
@@ -121,7 +123,7 @@ export default class Plugin_Core<PluginSettings extends AppSettings_Chat> implem
     // prettier-ignore
     RenderTemplate(
       this.elements['container'],
-      this.options.templates['chat-message'],
+      this.options.getTemplates()['chat-message'],
       context
     );
 

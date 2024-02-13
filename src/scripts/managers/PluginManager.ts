@@ -254,6 +254,13 @@ export class PluginManager<PluginSettings extends PluginSettingsBase>
         importResults.bad.push(new Error(`Could not Register Events for Plugin: ${plugin.name}`));
       }
 
+      // Register Templates from Plugins
+      try {
+        pluginRegistrar.registerTemplates(registration.templates);
+      } catch (err) {
+        importResults.bad.push(new Error(`Could not Register Templates for Plugin: ${plugin.name}`));
+      }
+
       // Load Styles from Plugins
       if (registration.stylesheet) {
         pluginRegistrar.registerStylesheet(registration.stylesheet.href);

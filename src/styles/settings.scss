@@ -71,10 +71,12 @@
     }
   }
 
+  [data-input-type='arraylist'] {
+    margin-left: calc(var(--spacing) * 2);
+  }
+
   [data-input-type='arraygroup'],
   [data-input-type='arraylist'] {
-    margin-left: calc(var(--spacing));
-
     .content {
       display: flex;
       flex-direction: column;

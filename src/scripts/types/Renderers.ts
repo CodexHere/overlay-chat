@@ -9,13 +9,12 @@ export type RenderOptions = {
 };
 
 export type RendererInstanceOptions<PluginSettings extends PluginSettingsBase> = {
-  templates: TemplateMap;
-
   getParsedJsonResults?: () => ParsedJsonResults | undefined;
 
   validateSettings: () => SettingsValidatorResults<PluginSettings>;
   getMaskedSettings: () => PluginSettings;
   getUnmaskedSettings: () => PluginSettings;
+  getTemplates: () => TemplateMap;
   getSettings: () => PluginSettings;
   setSettings: (settings: PluginSettings, forceEncode?: boolean) => void;
   getPlugins: () => PluginInstances<PluginSettings>;

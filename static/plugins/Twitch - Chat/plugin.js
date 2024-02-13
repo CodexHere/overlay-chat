@@ -196,26 +196,28 @@ export default class TwitchChat {
 
     globalThis.window.open(create.message, '_new');
 
-    const tokens = await this.waitForAuth(create);
+    try {
+      const tokens = await this.waitForAuth(create);
 
-    if (!tokens) {
+      const container = event.target.closest('[data-input-type="arraygroup"]');
+      /** @type {NodeListOf<HTMLInputElement> | undefined} */
+      const inputs = container?.querySelectorAll('.password-wrapper input');
+
+      if (inputs && inputs[0]) {
+        inputs[0].value = tokens.token;
+      }
+
+      if (inputs && inputs[1]) {
+        inputs[1].value = tokens.refresh;
+      }
+
+      this.updateSettings?.();
+    } catch (err) {
       event.target.disabled = false;
-      return;
+
+      const errInst = /** @type {Error} */ (/** @type {unknown} */ err);
+      this.options.errorDisplay.showError(errInst);
     }
-
-    const container = event.target.closest('[data-input-type="arraygroup"]');
-    /** @type {NodeListOf<HTMLInputElement> | undefined} */
-    const inputs = container?.querySelectorAll('.password-wrapper input');
-
-    if (inputs && inputs[0]) {
-      inputs[0].value = tokens.token;
-    }
-
-    if (inputs && inputs[1]) {
-      inputs[1].value = tokens.refresh;
-    }
-
-    this.updateSettings?.();
   };
 
   /**
@@ -282,7 +284,7 @@ export default class TwitchChat {
           // Never gonna execute
           if (4 === status.error) {
             clear();
-            reject(false);
+            reject(new Error("Token already processed. This shouldn't happen!"));
           }
         }
 
@@ -290,7 +292,7 @@ export default class TwitchChat {
         const elapsed = new Date().getTime() - start;
         if (elapsed > API_TTL) {
           clear();
-          reject(false);
+          reject(new Error('Timed out waiting for Twitch Authorization'));
         }
       }, API_TTY);
     });

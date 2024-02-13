@@ -18,6 +18,7 @@ export type PluginRegistrar<PluginSettings extends PluginSettingsBase> = {
   registerMiddleware(plugin: PluginInstance<PluginSettings>, queriedMiddleware: PluginMiddlewareMap | undefined): void;
   registerEvents(plugin: PluginInstance<PluginSettings>, eventMap?: PluginEventMap): void;
   registerSettings(fieldGroup?: FormEntryGrouping | undefined): void;
+  registerTemplates(templateUrl?: URL): void;
   registerStylesheet: (href: string) => void;
 };
 
@@ -45,7 +46,7 @@ export type PluginRegistrationOptions = {
 export type PluginOptions<PluginSettings extends PluginSettingsBase> = {
   getSettings: () => PluginSettings;
   emitter: Readonly<BusManagerEmitter>;
-  templates: TemplateMap;
+  getTemplates: () => TemplateMap;
   errorDisplay: ErrorManager;
 };
 

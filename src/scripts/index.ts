@@ -1,4 +1,4 @@
-import { Bootstrapper } from './AppBootstrapper.js';
+import Bootstrapper from './AppBootstrapper.js';
 import Plugin_Core, { AppSettings_Chat } from './Plugin_Core.js';
 import * as Managers from './managers/index.js';
 import * as Renderers from './renderers/index.js';

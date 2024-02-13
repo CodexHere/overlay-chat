@@ -343,6 +343,7 @@ export const FromJson = <Settings extends {}>(
     switch (entry.inputType) {
       case 'button':
       case 'fieldgroup':
+      case 'arraylist':
       case 'arraygroup':
       case 'array-row':
         // noop

@@ -3,6 +3,8 @@
 ## TODO
 
 * Move/Create other template
+  * Needs TemplateManager
+    * needs getTemplates to inject into `PluginManager`
   * error dialogue
 * Consider allowing plugins to register a template to load up front
 * Find and Fix all `TODO` and `FIXME` comments in entire source!

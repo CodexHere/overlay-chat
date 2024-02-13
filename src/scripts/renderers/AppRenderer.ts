@@ -30,7 +30,7 @@ export class AppRenderer<PluginSettings extends PluginSettingsBase> implements R
 
   private renderApp() {
     const rootContainer = globalThis.document.body.querySelector('#root') as HTMLElement;
-    const { templates } = this.options;
+    const { app: appTemplate } = this.options.getTemplates();
 
     if (!rootContainer) {
       return;
@@ -38,7 +38,7 @@ export class AppRenderer<PluginSettings extends PluginSettingsBase> implements R
 
     // Ensure no elements in the Root so we can display the App!
     rootContainer.innerHTML = '';
-    RenderTemplate(rootContainer, templates['app']);
+    RenderTemplate(rootContainer, appTemplate);
   }
 
   private renderPluginApp(plugins: PluginInstances<PluginSettings>) {

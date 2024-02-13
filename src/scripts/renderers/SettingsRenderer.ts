@@ -76,7 +76,7 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
 
   private renderApp() {
     const rootContainer = globalThis.document.body.querySelector('#root') as HTMLElement;
-    const { templates } = this.options;
+    const { settings } = this.options.getTemplates();
 
     if (!rootContainer) {
       return;
@@ -85,7 +85,7 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
     // Ensure no elements in the Root so we can display settings
     rootContainer.innerHTML = '';
 
-    RenderTemplate(rootContainer, templates['settings'], {
+    RenderTemplate(rootContainer, settings, {
       formElements: this.options.getParsedJsonResults?.()?.results
     });
   }
