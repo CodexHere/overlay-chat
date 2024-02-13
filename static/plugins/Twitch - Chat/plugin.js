@@ -7,7 +7,10 @@ import tmiJs from 'https://esm.sh/tmi.js@1.8.5';
  * @property {string} nameStreamer
  * @property {string} tokenBot
  * @property {string} tokenStreamer
+ * @property {string} refreshTokenBot
+ * @property {string} refreshTokenStreamer
  * @typedef {PluginSettings_Extra & PluginSettingsBase} PluginSettings
+ * @typedef {PluginSettings} PluginSettings_TwitchChat
  *
  * @typedef {import('../../../src/scripts/Plugin_Core.js').MiddewareContext_Chat} ConcreteContext
  * @typedef {Partial<ConcreteContext>} Context
@@ -41,6 +44,7 @@ export default class TwitchChat {
   name = 'Twitch - Chat';
   version = '1.0.0';
   ref = Symbol(this.name);
+  priority = 1;
 
   /** @type {Record<'bot'|'streamer', tmiJs.Client | undefined>} */
   clients = {
@@ -137,7 +141,6 @@ export default class TwitchChat {
 
   /**
    * @param {() => void} updateSettings
-   * @returns
    */
   async renderSettings(updateSettings) {
     this.updateSettings = updateSettings;
@@ -352,9 +355,6 @@ export default class TwitchChat {
       this.clients.streamer = new tmiJs.Client(tmiOpts.streamer);
       await this.clients.streamer.connect();
       this.clients.streamer.on('message', this.handleMessage_Streamer);
-      // TODO: Needs to move to icon swap plugin
-      //   loadAssets('twitch');
-      //   loadAssets(nameStreamer);
     } catch (err) {
       delete this.clients['streamer'];
       throw new Error('Could not connect Streamer to chat: ' + err);

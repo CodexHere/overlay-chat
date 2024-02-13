@@ -185,6 +185,7 @@ export class PluginManager<PluginSettings extends PluginSettingsBase>
       return pluginClass;
     } catch (err) {
       if (err instanceof TypeError) {
+        console.error(err);
         throw new Error(`Plugin does not exist at URL: ${pluginBaseUrl}`);
       } else if (err instanceof Error) {
         throw new Error(`Could not dynamically load Plugin:<br />${pluginBaseUrl}<br /><br />${err.message}`);

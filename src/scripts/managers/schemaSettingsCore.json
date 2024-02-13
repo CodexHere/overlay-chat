@@ -36,7 +36,7 @@
                 "name": "plugins",
                 "label": "",
                 "inputType": "switch-multiple",
-                "values": ["Example", "Twitch - Chat", "HangoutHere"]
+                "values": ["Example", "Twitch - Chat", "Twitch - EmoteSwap", "HangoutHere"]
               }
             ]
           },
