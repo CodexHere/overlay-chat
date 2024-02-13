@@ -141,5 +141,70 @@
         "values": ["sm Item Entry 1", "sm Item Entry Two"]
       }
     ]
+  },
+
+
+  {
+    "name": "testArea3",
+    "inputType": "arraylist",
+    "label": "Testing Array List Stuff",
+    "description": "Just testing things dawg",
+    "tooltip": "We're testing every type of item as an Array List",
+    "values": [
+      {
+        "name": "myOption211",
+        "label": "myOption211",
+        "inputType": "text"
+      },
+      {
+        "name": "myOption212",
+        "label": "myOption212",
+        "inputType": "password"
+      },
+      {
+        "name": "myOption213",
+        "label": "myOption213",
+        "inputType": "number"
+      },
+      {
+        "name": "myOption214",
+        "label": "myOption214",
+        "inputType": "checkbox"
+      },
+      {
+        "name": "myOption215",
+        "label": "myOption215",
+        "inputType": "switch"
+      },
+      {
+        "name": "myOption216",
+        "label": "myOption216",
+        "inputType": "color"
+      },
+      {
+        "name": "myOption217",
+        "label": "myOption217",
+        "inputType": "select",
+        "values": ["sel Item Entry 1", "sel Item Entry Two"]
+      },
+      {
+        "name": "myOption218",
+        "label": "myOption218",
+        "inputType": "radio",
+        "values": ["rdo Item Entry 1", "rdo Item Entry Two"]
+      },
+      {
+        "name": "myOption219",
+        "label": "myOption219",
+        "inputType": "checkbox-multiple",
+        "values": ["chk Item Entry 1", "chk Item Entry Two"]
+      },
+      {
+        "name": "myOption220",
+        "label": "myOption220",
+        "inputType": "select-multiple",
+        "values": ["sm Item Entry 1", "sm Item Entry Two"]
+      }
+    ]
   }
 ]

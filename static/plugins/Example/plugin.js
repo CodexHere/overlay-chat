@@ -15,7 +15,11 @@
  * @typedef {import('../../../src/scripts/types/Plugin.js').PluginInstance<PluginSettings>} PluginInstance
  * @typedef {import('../../../src/scripts/types/Plugin.js').PluginRegistrationOptions} PluginRegistrationOptions
  * @typedef {import('../../../src/scripts/utils/Middleware.js').Next<Context>} Next
- *
+ */
+
+const BaseUrl = () => import.meta.url.split('/').slice(0, -1).join('/');
+
+/**
  * @implements {PluginInstance}
  */
 export default class Plugin_Example {
@@ -40,7 +44,7 @@ export default class Plugin_Example {
     settings: this._getSettings(),
     middlewares: this._getMiddleware(),
     events: this._getEvents(),
-    stylesheet: new URL(`${import.meta.url.split('/').slice(0, -1).join('/')}/plugin.css`)
+    stylesheet: new URL(`${BaseUrl()}/plugin.css`)
   });
 
   /**

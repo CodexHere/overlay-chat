@@ -14,7 +14,7 @@ import {
   PluginRegistrationOptions,
   PluginSettingsBase
 } from '../types/Plugin.js';
-import { FormEntry } from '../utils/Forms.js';
+import { FormEntry, FormEntryGrouping } from '../utils/Forms.js';
 import * as URI from '../utils/URI.js';
 
 export class PluginManager<PluginSettings extends PluginSettingsBase>
@@ -227,15 +227,24 @@ export class PluginManager<PluginSettings extends PluginSettingsBase>
 
       // Load Settings Schemas from Plugins
       try {
-        const injectedSettings = structuredClone(registration.settings);
-        injectedSettings?.values.push({
-          inputType: 'fieldgroup',
-          label: 'Plugin Metadata',
-          name: `pluginMetadata-${plugin.name}`,
-          values: this.getPluginMetaInputs(plugin, registration)
-        });
+        if (registration.settings) {
+          let fieldGroup: FormEntryGrouping;
 
-        pluginRegistrar.registerSettings(injectedSettings);
+          if (registration.settings instanceof URL) {
+            fieldGroup = await (await fetch(registration.settings.href)).json();
+          } else {
+            fieldGroup = registration.settings;
+          }
+
+          fieldGroup?.values.push({
+            inputType: 'fieldgroup',
+            label: 'Plugin Metadata',
+            name: `pluginMetadata-${plugin.name}`,
+            values: this.getPluginMetaInputs(plugin, registration)
+          });
+
+          pluginRegistrar.registerSettings(fieldGroup);
+        }
       } catch (err) {
         importResults.bad.push(new Error(`Could not inject Settings Schema for Plugin: ${plugin.name}`));
       }

@@ -17,7 +17,7 @@ export type PluginImportResults<PluginSettings extends PluginSettingsBase> = {
 export type PluginRegistrar<PluginSettings extends PluginSettingsBase> = {
   registerMiddleware(plugin: PluginInstance<PluginSettings>, queriedMiddleware: PluginMiddlewareMap | undefined): void;
   registerEvents(plugin: PluginInstance<PluginSettings>, eventMap?: PluginEventMap): void;
-  registerSettings(fieldGroup?: FormEntryGrouping | undefined): void;
+  registerSettings(fieldGroup?: FormEntryGrouping | URL): void;
   registerTemplates(templateUrl?: URL): void;
   registerStylesheet: (href: string) => void;
 };
@@ -38,8 +38,8 @@ export type PluginEventRegistration = {
 export type PluginRegistrationOptions = {
   middlewares?: PluginMiddlewareMap;
   events?: PluginEventRegistration;
-  settings?: FormEntryGrouping; // TODO: implement loading URL;
-  templates?: URL; // TODO: implement loading URL;
+  settings?: FormEntryGrouping | URL;
+  templates?: URL;
   stylesheet?: URL;
 };
 

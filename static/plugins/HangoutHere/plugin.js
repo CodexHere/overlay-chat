@@ -17,7 +17,11 @@
  * @typedef {import('../../../src/scripts/types/Plugin.js').PluginInstance<PluginSettings>} PluginInstance
  * @typedef {import('../../../src/scripts/types/Plugin.js').PluginRegistrationOptions} PluginRegistrationOptions
  * @typedef {import('../../../src/scripts/utils/Middleware.js').Next<Context>} Next
- *
+ */
+
+const BaseUrl = () => import.meta.url.split('/').slice(0, -1).join('/');
+
+/**
  * @implements {PluginInstance}
  */
 export default class Plugin_HangoutHereTheme {
@@ -38,55 +42,11 @@ export default class Plugin_HangoutHereTheme {
    * @returns {PluginRegistrationOptions}
    */
   registerPlugin = () => ({
-    settings: this._getSettings(),
     middlewares: this._getMiddleware(),
     events: this._getEvents(),
-    stylesheet: new URL(`${import.meta.url.split('/').slice(0, -1).join('/')}/plugin.css`)
+    settings: new URL(`${BaseUrl()}/settings.json`),
+    stylesheet: new URL(`${BaseUrl()}/plugin.css`)
   });
-
-  /**
-   * @returns {FormEntryFieldGroup}
-   */
-  _getSettings() {
-    console.log(`${this.name} [injectSettingsSchema]`);
-
-    return {
-      inputType: 'fieldgroup',
-      label: this.name,
-      name: this.name.toLocaleLowerCase().replaceAll(' ', '_'),
-      values: [
-        {
-          name: 'showBadges',
-          label: 'Show Badges',
-          inputType: 'switch',
-          tooltip: 'Toggles whether to show leading Badges (i.e., Mod, VIP, etc)'
-        },
-
-        {
-          inputType: 'fieldgroup',
-          label: 'Leading Chat Colors',
-          name: 'leading_chat',
-          values: [
-            { name: 'colorLeading', label: 'Leading Color', inputType: 'color', defaultValue: '#FFFFFF' },
-            { name: 'colorMod', label: 'Mod Color', inputType: 'color', defaultValue: '#00FF00' },
-            { name: 'colorVip', label: 'VIP Color', inputType: 'color', defaultValue: '#FF00FF' }
-          ]
-        },
-
-        {
-          inputType: 'fieldgroup',
-          label: 'Text Reveal Colors',
-          name: 'text_reveal_colors',
-          values: [
-            { name: 'hhtheme-colorRevealText2', label: 'First Color', inputType: 'color', defaultValue: '#f23373' },
-            { name: 'hhtheme-colorRevealText1', label: 'Middle Color', inputType: 'color', defaultValue: '#ff8a3b' },
-            { name: 'hhtheme-colorRevealText0', label: 'Final Color', inputType: 'color', defaultValue: '#e2e2e2' }
-          ]
-        },
-        { name: 'hhtheme-colorBorder', label: 'Border Color', inputType: 'color', defaultValue: '#bc91f8' }
-      ]
-    };
-  }
 
   /**
    * @returns {PluginMiddlewareMap}

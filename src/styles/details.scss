@@ -74,15 +74,6 @@ details {
     }
   }
 
-  .description {
-    border: 1px solid var(--card-border-color);
-    padding: calc(var(--spacing) / 2);
-    margin: 0;
-    margin-bottom: var(--spacing);
-    font-size: 0.8em;
-    background-color: var(--description-background-color);
-  }
-
   .content > details {
     margin-left: calc(var(--spacing) * 2);
     margin-top: var(--spacing);

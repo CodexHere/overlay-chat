@@ -8,6 +8,7 @@ import { BootstrapOptions, ErrorManager, PluginManagerEmitter, PluginManagerEven
 import { PluginSettingsBase } from './types/Plugin.js';
 import { RendererConstructor, RendererInstance } from './types/Renderers.js';
 import { AddStylesheet } from './utils/DOM.js';
+import { RenderTemplate } from './utils/Templating.js';
 
 export default class Bootstrapper<PluginSettings extends PluginSettingsBase> implements ErrorManager {
   busManager?: BusManager<PluginSettings>;
@@ -131,28 +132,10 @@ export default class Bootstrapper<PluginSettings extends PluginSettingsBase> imp
 
     body.querySelector('dialog')?.remove();
 
-    const msg = err.map(e => e.message).join('<br> <br>');
+    const templates = this.templateManager?.getTemplates()!;
 
-    // TODO: Should be converted to a template!
-
-    body.insertAdjacentHTML(
-      'beforeend',
-      `
-        <dialog open>
-        <article>
-          <header>
-            There was an Error
-          </header>
-          <p>${msg}</p>
-
-          <footer>
-            <form method="dialog">
-              <button role="button">OK</button>
-            </form>
-          </footer>
-        </article>
-      </dialog>
-      `
-    );
+    RenderTemplate(body, templates['error'], {
+      errorMessage: err.map(e => e.message).join('<br> <br>')
+    });
   };
 }

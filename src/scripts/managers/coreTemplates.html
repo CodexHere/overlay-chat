@@ -32,3 +32,18 @@
     <footer class="version">v%PACKAGE_VERSION%</footer>
   </div>
 </template>
+
+<template id="error" type="text/x-handlebars-template">
+  <dialog open>
+    <article>
+      <header>There was an Error</header>
+      <p>{{errorMessage}}</p>
+
+      <footer>
+        <form method="dialog">
+          <button role="button">OK</button>
+        </form>
+      </footer>
+    </article>
+  </dialog>
+</template>

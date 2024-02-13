@@ -180,7 +180,7 @@ export const FromJson = <Settings extends {}>(
               <div class="content">
                 ${coreContent}
 
-                <div class="arraygroup-controls" data-inputs='${JSON.stringify(entry.values)}'>
+                <div class="arraylist-controls" data-inputs='${JSON.stringify(entry.values)}'>
                   <button name="addentry-${nameOrLabelId}" class="add">+</button>
                   <button name="delentry-${nameOrLabelId}" class="subtract">-</button>
                 </div>

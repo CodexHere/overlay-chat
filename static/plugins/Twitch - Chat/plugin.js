@@ -90,9 +90,8 @@ export default class TwitchChat {
    * @returns {Promise<PluginRegistrationOptions>}
    */
   registerPlugin = async () => ({
-    settings: await this._getSettings(),
     events: this._getEvents(),
-    stylesheet: new URL(`${BaseUrl()}/plugin.css`)
+    settings: new URL(`${BaseUrl()}/settings.json`)
   });
 
   unregisterPlugin() {
@@ -105,11 +104,6 @@ export default class TwitchChat {
       refreshButtons[idx].removeEventListener('click', this.#onClickRefresh);
     });
   }
-
-  /**
-   * @returns {Promise<FormEntryFieldGroup>}
-   */
-  _getSettings = async () => await (await fetch(`${BaseUrl()}/settings.json`)).json();
 
   /**
    * @returns {PluginEventMap}

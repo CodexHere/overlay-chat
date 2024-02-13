@@ -10,7 +10,6 @@ export type BootstrapOptions<PluginSettings extends PluginSettingsBase> = {
 
   needsSettingsRenderer?: true;
   needsAppRenderer?: true;
-  templateFile?: URL;
 };
 
 // SettingsManager

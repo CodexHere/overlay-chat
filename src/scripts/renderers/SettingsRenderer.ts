@@ -280,7 +280,7 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
         tableBody.removeChild(lastChild);
       }
     } else {
-      const fieldgroupJSON = content?.querySelector('.arraygroup-controls')?.getAttribute('data-inputs');
+      const fieldgroupJSON = content?.querySelector('.arraylist-controls')?.getAttribute('data-inputs');
       const fieldgroup = JSON.parse(fieldgroupJSON || '[]') as Forms.FormEntryGrouping[];
       const rows = content?.querySelectorAll('table tbody tr');
       let rowCount = rows?.length ?? 0;

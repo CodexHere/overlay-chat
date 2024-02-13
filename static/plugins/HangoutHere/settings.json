@@ -1,0 +1,41 @@
+{
+  "inputType": "fieldgroup",
+  "label": "HangoutHere Theme",
+  "name": "hangouthere_theme",
+  "values": [
+    {
+      "name": "showBadges",
+      "label": "Show Badges",
+      "inputType": "switch",
+      "tooltip": "Toggles whether to show leading Badges (i.e., Mod, VIP, etc)"
+    },
+
+    {
+      "inputType": "fieldgroup",
+      "label": "Leading Chat Colors",
+      "name": "leading_chat",
+      "values": [
+        { "name": "colorLeading", "label": "Leading Color", "inputType": "color", "defaultValue": "#FFFFFF" },
+        { "name": "colorMod", "label": "Mod Color", "inputType": "color", "defaultValue": "#00FF00" },
+        { "name": "colorVip", "label": "VIP Color", "inputType": "color", "defaultValue": "#FF00FF" }
+      ]
+    },
+
+    {
+      "inputType": "fieldgroup",
+      "label": "Text Reveal Colors",
+      "name": "text_reveal_colors",
+      "values": [
+        { "name": "hhtheme-colorRevealText2", "label": "First Color", "inputType": "color", "defaultValue": "#f23373" },
+        {
+          "name": "hhtheme-colorRevealText1",
+          "label": "Middle Color",
+          "inputType": "color",
+          "defaultValue": "#ff8a3b"
+        },
+        { "name": "hhtheme-colorRevealText0", "label": "Final Color", "inputType": "color", "defaultValue": "#e2e2e2" }
+      ]
+    },
+    { "name": "hhtheme-colorBorder", "label": "Border Color", "inputType": "color", "defaultValue": "#bc91f8" }
+  ]
+}

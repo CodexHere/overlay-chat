@@ -3,6 +3,7 @@ import set from 'lodash.set';
 import { PluginSettingsBase } from '../types/Plugin.js';
 import { FormEntry, FormEntryGrouping, FromJson, ParsedJsonResults } from '../utils/Forms.js';
 import * as URI from '../utils/URI.js';
+import SettingsSchemaDefault from './schemaSettingsCore.json';
 
 export class SettingsManager<PluginSettings extends PluginSettingsBase> {
   private _parsedJsonResults: ParsedJsonResults | undefined;
@@ -17,9 +18,7 @@ export class SettingsManager<PluginSettings extends PluginSettingsBase> {
     this._settings = this.toggleMaskSettings(settings, false);
 
     // Load Core Settings Schema
-    // TODO: Should be injected into Bootstrapper! This will make librarifying COAP much easier
-    // TODO: Maybe the core lib should just import this, and thus repopulate itself based on all plugin settings
-    this._settingsSchemaDefault = await (await fetch('../../schemaSettingsCore.json')).json();
+    this._settingsSchemaDefault = structuredClone(SettingsSchemaDefault as FormEntry[]);
     this.resetSettingsSchema();
   }
 
