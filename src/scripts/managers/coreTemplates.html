@@ -7,7 +7,14 @@
 
 <template id="settings" type="text/x-handlebars-template">
   <div id="container" class="settings">
-    <h1 class="container-title">Settings</h1>
+    <header>
+      <h1 class="container-title">Settings</h1>
+      <label>
+        Jump to:
+        <select id="plugin-jumper"></select>
+      </label>
+    </header>
+
     <form id="settings">{{formElements}}</form>
 
     <form id="settings-options">
@@ -31,4 +38,19 @@
 
     <footer class="version">v%PACKAGE_VERSION%</footer>
   </div>
+</template>
+
+<template id="modalMessage" type="text/x-handlebars-template">
+  <dialog open>
+    <article>
+      <header>{{title}}</header>
+      <p>{{message}}</p>
+
+      <footer>
+        <form method="dialog">
+          <button role="button">OK</button>
+        </form>
+      </footer>
+    </article>
+  </dialog>
 </template>

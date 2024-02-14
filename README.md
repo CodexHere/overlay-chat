@@ -2,15 +2,7 @@
 
 ## TODO
 
-* Move/Create other template
-  * error dialogue
-* Consider allowing plugins to register a template to load up front
-* Find and Fix all `TODO` and `FIXME` comments in entire source!
-  * Do not leave any! Finish ALL of them at once!
-  * Add missing HTMLInput Elements:
-    * File
-    * DateTime/Calendar
-    * https://www.w3schools.com/html/html_form_input_types.asp
+* Look at Plugins' `#updateSettingsUI` and do UX behaviors on Form input event!
 * Heavily Document everything
 * Create some cool examples:
   * renderSettings, listen to click of button, show error
@@ -26,6 +18,10 @@
 		* Sound on msg
 		* confetti on follow?
 		* TTS on eventsub redeem
+* Enhance Range UX
+  * Should be it's own handler that's not debounced so it updates faster
+  * Value should be a number input
+    * If value changed via input, Range should be set
 * Librarify:
   * https://vitejs.dev/guide/build#library-mode
   * Overlay Architecture
@@ -33,9 +29,7 @@
      * Options to auto convert to array per key
   * URI Serialize/Deserialize
      * Options to auto convert to array per key
-* Build a dropdown to jump to a plugins' settings
-  * Plugin will need more contextual data:
-    * Name
+  * Library for all Common/Reusable Plugins
 * Common Plugin Deploy
   * Twitch - Chat / PubSub, etc
   * OBS WS Proxy
@@ -80,7 +74,8 @@
 
 * Chat Core
 * EventSub Core
-* Event Sub Response:
+* PubSub Core
+* Example: Event Sub Response:
   * Output simple message (customizable) indicating an event was triggered
   * Needs a tokenized mapping of event sub properties
     * https://dev.twitch.tv/docs/eventsub/eventsub-subscription-types/#channelhype_trainbegin
@@ -93,11 +88,32 @@
   * Remove animation
 * SimpleReply
   * Simple mapping of `!command` to "Reply Text"
+* Message Playlist
+  * Playlist of messages to send at some frequency
+  * Do we have multiple timers?
 * Ignore Chatter
 * Sound Effects - Sound on Message
+  * ArrayList of sound urls
+  * Checkbox for Randomize
+  * Plays in order, or random per message
 * Sound Effects - User Entrance
+  * TTY for replaying sound
+  * ArrayList:
+    * Username
+    * Sound URL
 * Link Replacement
+  * Identifies links, replaces with custom Text
+    * IE: <img src="https://domain.com/redacted.png">
+    * IE: <LINK REDACTED>
+    * Have entries for: Streamer | VIP | Mod | Viewer
+      * Viewer: <a href="https:link" class="blurred">asdf</a>
+      * Mod: <a href="https:link">asdf</a>
 * Word replacement
+  * Auto Import of public list
+  * 2 Inputs:
+    * What to find
+    * What to replace with
+      * Can be empty
 * Emoji Replacments (7TV, BTTV)
   * Emoji Themes
 * Administrative Actions? (needs auth)

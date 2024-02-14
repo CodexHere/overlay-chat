@@ -1,14 +1,12 @@
 import { Listener } from 'events';
-import { FormEntryGrouping } from '../utils/Forms.js';
+import { FormValidatorResults } from '../utils/Forms.js';
 import { TemplateMap } from '../utils/Templating.js';
 import { DefaultQueryString } from '../utils/URI.js';
-import { BusManagerEmitter, ErrorManager, SettingsValidatorResults } from './Managers.js';
+import { BusManagerEmitter, DisplayManager } from './Managers.js';
 import { PluginMiddlewareMap } from './Middleware.js';
 
 export type PluginInstances<PluginSettings extends PluginSettingsBase> = PluginInstance<PluginSettings>[];
-export type PluginLoaders<PluginSettings extends PluginSettingsBase> = Array<
-  string | PluginConstructor<PluginSettings>
->;
+export type PluginLoaders<PluginSettings extends PluginSettingsBase> = Set<string | PluginConstructor<PluginSettings>>;
 export type PluginImportResults<PluginSettings extends PluginSettingsBase> = {
   good: PluginInstance<PluginSettings>[];
   bad: Error[];
@@ -17,7 +15,8 @@ export type PluginImportResults<PluginSettings extends PluginSettingsBase> = {
 export type PluginRegistrar<PluginSettings extends PluginSettingsBase> = {
   registerMiddleware(plugin: PluginInstance<PluginSettings>, queriedMiddleware: PluginMiddlewareMap | undefined): void;
   registerEvents(plugin: PluginInstance<PluginSettings>, eventMap?: PluginEventMap): void;
-  registerSettings(fieldGroup?: FormEntryGrouping | undefined): void;
+  registerSettings(plugin: PluginInstance<PluginSettings>, registration?: PluginRegistrationOptions): Promise<void>;
+  registerTemplates(templateUrl?: URL): void;
   registerStylesheet: (href: string) => void;
 };
 
@@ -37,16 +36,16 @@ export type PluginEventRegistration = {
 export type PluginRegistrationOptions = {
   middlewares?: PluginMiddlewareMap;
   events?: PluginEventRegistration;
-  settings?: FormEntryGrouping; // TODO: implement loading URL;
-  templates?: URL; // TODO: implement loading URL;
+  settings?: URL;
+  templates?: URL;
   stylesheet?: URL;
 };
 
 export type PluginOptions<PluginSettings extends PluginSettingsBase> = {
   getSettings: () => PluginSettings;
   emitter: Readonly<BusManagerEmitter>;
-  templates: TemplateMap;
-  errorDisplay: ErrorManager;
+  getTemplates: <TemplateIDs extends string>() => TemplateMap<TemplateIDs>;
+  errorDisplay: DisplayManager;
 };
 
 export type PluginConstructor<PluginSettings extends PluginSettingsBase> = {
@@ -67,7 +66,7 @@ export type PluginInstance<PluginSettings extends PluginSettingsBase> = {
   registerPlugin?(): PluginRegistrationOptions | Promise<PluginRegistrationOptions>;
   unregisterPlugin?(): void | Promise<void>;
 
-  isConfigured?(): SettingsValidatorResults<PluginSettings>;
-  renderSettings?(updateSettings: () => void): void;
+  isConfigured?(): FormValidatorResults<PluginSettings>;
+  renderSettings?(forceSyncSettings: () => void): void;
   renderApp?(): void;
 };

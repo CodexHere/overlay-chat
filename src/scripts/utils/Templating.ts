@@ -1,8 +1,19 @@
 import Handlebars from 'handlebars';
 
-const DomParser = new DOMParser();
+export type TemplateMap<TemplateIDs extends string> = Record<TemplateIDs, HandlebarsTemplateDelegate<any>>;
 
-export type TemplateMap = Record<string, HandlebarsTemplateDelegate<any>>;
+export const BuildTemplateMap = async <TemplateIDs extends string>(templateData: string) => {
+  const DomParser = new DOMParser();
+  const newDocument = DomParser.parseFromString(templateData, 'text/html');
+  const templates = [...newDocument.querySelectorAll('template')];
+
+  const templateMap = templates.reduce((templates, templateElement) => {
+    templates[templateElement.id as TemplateIDs] = PrepareTemplate(templateElement);
+    return templates;
+  }, {} as TemplateMap<TemplateIDs>);
+
+  return templateMap;
+};
 
 export const PrepareTemplate = (templateElement: HTMLElement) =>
   Handlebars.compile(templateElement.innerHTML, { noEscape: true });
@@ -15,6 +26,7 @@ export const RenderTemplate = (container: HTMLElement, template: Handlebars.Temp
   const renderedTemplate = template(data);
 
   // Parse the rendered template as HTML
+  const DomParser = new DOMParser();
   const newDocument = DomParser.parseFromString(renderedTemplate, 'text/html');
   const { firstChild: childToAppend } = newDocument.body;
 

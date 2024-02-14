@@ -4,18 +4,32 @@
   padding: 1rem 1rem 0.125rem 1rem;
   height: 100%;
 
-  h1 {
-    text-shadow:
-      0px 0px 3px rgb(255 255 255),
-      0px 0px 4px rgb(0 0 0),
-      0px 0px 18px var(--base-background),
-      0px 0px 5px var(--base-background);
+  header {
+    display: flex;
+
+    .container-title {
+      flex: 1;
+      margin-bottom: 1rem;
+      text-shadow:
+        0px 0px 3px rgb(255 255 255),
+        0px 0px 4px rgb(0 0 0),
+        0px 0px 18px var(--base-background),
+        0px 0px 5px var(--base-background);
+    }
+
+    #plugin-jumper {
+      width: auto;
+    }
   }
 
   [data-input-type] {
     display: flex;
     flex-direction: column;
     min-width: 12em;
+
+    & + [data-input-type='arraygroup'] {
+      margin-top: var(--spacing);
+    }
   }
 
   [data-input-type='password'] {
@@ -35,6 +49,23 @@
         right: 0.4rem;
         display: inline-block;
         position: absolute;
+      }
+    }
+  }
+
+  [data-input-type='range'] {
+    .range-wrapper {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+
+      input {
+        margin: 0;
+
+        &[type='number'] {
+          width: auto;
+          max-width: 6rem;
+        }
       }
     }
   }
@@ -67,13 +98,18 @@
       border: 1px solid var(--card-border-color);
       background: var(--card-background-color);
       border-radius: var(--border-radius);
-      margin-bottom: var(--spacing);
+
+      &:not(:last-child) {
+        margin-bottom: var(--spacing);
+      }
     }
   }
 
   [data-input-type='arraygroup'],
   [data-input-type='arraylist'] {
-    margin-left: calc(var(--spacing));
+    .description {
+      margin: 0.5em;
+    }
 
     .content {
       display: flex;
@@ -83,7 +119,7 @@
         display: inline-block;
       }
 
-      .arraygroup-controls {
+      .arraylist-controls {
         display: flex;
         width: 8rem;
         gap: 1rem;
@@ -100,36 +136,51 @@
     }
   }
 
+  [data-col-type='hidden'] {
+    display: none;
+  }
+
+  // For ArrayGroup/Lists, we want to hide labels to avoid redundant labeling in a Table
+  // However, in these we may have switch/checkboxes which we *DO* need the labels for.
   form#settings {
     [data-input-type='arraygroup'],
     [data-input-type='arraylist'] {
-      label {
-        display: none;
+      td > [data-input-type] {
+        &:not([data-input-type='switch']):not([data-input-type='checkbox']) {
+          & > label {
+            display: none;
+          }
+        }
       }
     }
   }
 
-  .container-title {
-    margin-bottom: 1rem;
+  .description {
+    border: 1px solid var(--card-border-color);
+    padding: calc(var(--spacing) / 2);
+    margin: 0;
+    margin-bottom: var(--spacing);
+    font-size: 0.8em;
+    background-color: var(--description-background-color);
+  }
+
+  .table-wrapper {
+    max-width: 100%;
+    overflow: auto;
+    margin-bottom: var(--spacing);
+
+    table {
+      margin-bottom: 0;
+    }
   }
 
   .content {
     position: relative;
 
-    padding: 0.5rem;
+    padding: var(--spacing);
     border: 1px solid var(--card-border-color);
     border-top: 0;
     background: var(--card-background-color);
-
-    .table-wrapper {
-      max-width: 100%;
-      overflow: auto;
-      margin-bottom: var(--typography-spacing-vertical);
-
-      table {
-        margin-bottom: 0;
-      }
-    }
   }
 
   [title]:after {

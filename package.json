@@ -1,6 +1,6 @@
 {
   "name": "overlay-chat",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "",
   "main": "dist/index.js",
   "types": "dist/types/index.d.ts",
@@ -38,8 +38,6 @@
     "lodash.merge": "^4.6.2",
     "lodash.set": "^4.3.2",
     "lz-string": "^1.5.0",
-    "splitting": "^1.0.6",
-    "tmi-emote-parse": "^2.0.0",
-    "tmi.js": "^1.8.5"
+    "splitting": "^1.0.6"
   }
 }

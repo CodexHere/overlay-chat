@@ -6,6 +6,7 @@
   --hhtheme-colorRevealText2: #f23373;
   --hhtheme-colorRevealText3: transparent;
   --hhtheme-colorBorder: #bc91f8;
+  --hhtheme-revealDelay: 0.1s;
 
   --hhtheme-background: url('../../../images/bg_wood.jpg');
 }
@@ -63,7 +64,7 @@ body:has(#container-settings) {
   background-size: 2em 3em;
   z-index: calc(var(--char-total) - var(--char-index));
   animation: loading-text 8s cubic-bezier(0.6, 0, 0, 1) forwards;
-  animation-delay: calc((var(--char-index)) * 0.1s);
+  animation-delay: calc((var(--char-index)) * var(--hhtheme-revealDelay) * 1ms);
   background-clip: text;
   -webkit-text-fill-color: transparent;
 }

@@ -1,8 +1,9 @@
 import get from 'lodash.get';
 import set from 'lodash.set';
-import { PluginSettingsBase } from '../types/Plugin.js';
+import { PluginInstance, PluginRegistrationOptions, PluginSettingsBase } from '../types/Plugin.js';
 import { FormEntry, FormEntryGrouping, FromJson, ParsedJsonResults } from '../utils/Forms.js';
 import * as URI from '../utils/URI.js';
+import SettingsSchemaDefault from './schemaSettingsCore.json';
 
 export class SettingsManager<PluginSettings extends PluginSettingsBase> {
   private _parsedJsonResults: ParsedJsonResults | undefined;
@@ -17,9 +18,7 @@ export class SettingsManager<PluginSettings extends PluginSettingsBase> {
     this._settings = this.toggleMaskSettings(settings, false);
 
     // Load Core Settings Schema
-    // TODO: Should be injected into Bootstrapper! This will make librarifying COAP much easier
-    // TODO: Maybe the core lib should just import this, and thus repopulate itself based on all plugin settings
-    this._settingsSchemaDefault = await (await fetch('../../schemaSettingsCore.json')).json();
+    this._settingsSchemaDefault = structuredClone(SettingsSchemaDefault as FormEntry[]);
     this.resetSettingsSchema();
   }
 
@@ -57,13 +56,66 @@ export class SettingsManager<PluginSettings extends PluginSettingsBase> {
     this._settingsSchema = structuredClone(this._settingsSchemaDefault);
   }
 
-  registerSettings = (fieldGroup?: FormEntryGrouping) => {
-    if (!fieldGroup) {
+  registerSettings = async (plugin: PluginInstance<PluginSettings>, registration?: PluginRegistrationOptions) => {
+    if (!registration || !registration.settings) {
       return;
     }
 
+    const fieldGroup: FormEntryGrouping = await (await fetch(registration.settings.href)).json();
+
+    fieldGroup.name = plugin.name.toLocaleLowerCase().replaceAll(' ', '_');
+    fieldGroup.values = fieldGroup.values ?? [];
+
+    fieldGroup.values.push({
+      inputType: 'fieldgroup',
+      label: 'Plugin Metadata',
+      name: `pluginMetadata-${plugin.name}`,
+      values: this.getPluginMetaInputs(plugin, registration)
+    });
+
     this._settingsSchema.push(fieldGroup);
   };
+
+  getPluginMetaInputs(plugin: PluginInstance<PluginSettings>, registration: PluginRegistrationOptions): FormEntry[] {
+    return [
+      {
+        inputType: 'text',
+        name: ' ',
+        label: 'Name',
+        defaultValue: plugin.name
+      },
+      {
+        inputType: 'text',
+        name: ' ',
+        label: 'Version',
+        defaultValue: plugin.version
+      },
+      {
+        inputType: 'text',
+        name: ' ',
+        label: 'Priority',
+        defaultValue: plugin.priority || 'N/A'
+      },
+      {
+        inputType: 'text',
+        name: ' ',
+        label: 'Middleware Chain(s)',
+        defaultValue: registration.middlewares && Object.keys(registration.middlewares).join(', ')
+      },
+      {
+        inputType: 'text',
+        name: ' ',
+        label: 'Event(s) Listening',
+        defaultValue: registration.events?.receives && Object.keys(registration.events?.receives).join(', ')
+      },
+      {
+        inputType: 'text',
+        name: ' ',
+        label: 'Event(s) Sent',
+        defaultValue: registration.events?.sends && registration.events?.sends.join(', ')
+      }
+    ];
+  }
 
   updateParsedJsonResults = (pluginsLoaded: boolean = false) => {
     this._parsedJsonResults = FromJson(this.getSettingsSchema(), this._settings);
@@ -76,9 +128,12 @@ export class SettingsManager<PluginSettings extends PluginSettingsBase> {
   };
 
   private toggleMaskSettings(settings: PluginSettings, mask: boolean) {
-    const passwordEntries = this._parsedJsonResults?.mapping?.password;
+    const maskableEntries = {
+      ...this._parsedJsonResults?.mapping?.password,
+      ...this._parsedJsonResults?.mapping?.hidden
+    };
 
-    Object.keys(passwordEntries ?? {}).forEach(settingName => {
+    Object.keys(maskableEntries ?? {}).forEach(settingName => {
       const val = get(settings, settingName);
 
       if (val) {

@@ -1,8 +1,12 @@
 import merge from 'lodash.merge';
 import set from 'lodash.set';
+import { IsInViewPort } from './DOM.js';
 import { IsValidValue } from './misc.js';
 
 export type FormData = Record<string, any>;
+
+export type FormValidatorResult<FormData extends {}> = true | Partial<Record<keyof FormData, string>>;
+export type FormValidatorResults<FormData extends {}> = true | FormValidatorResult<FormData>;
 
 type FormEntryBase = {
   name: string;
@@ -18,8 +22,23 @@ export type FormEntryButton = {
   label: string;
 };
 
+export type FormEntryValidated = FormEntryBase & {
+  inputType: 'email' | 'tel' | 'url';
+  pattern?: string;
+};
+
 export type FormEntryInput = FormEntryBase & {
-  inputType: 'text' | 'password' | 'number' | 'checkbox' | 'switch' | 'radio-option' | 'color';
+  inputType:
+    | 'checkbox'
+    | 'color'
+    | 'file'
+    | 'hidden'
+    | 'number'
+    | 'password'
+    | 'radio-option'
+    | 'search'
+    | 'switch'
+    | 'text';
 };
 
 export type FormEntryGrouping = FormEntryBase & {
@@ -41,9 +60,40 @@ export type FormEntrySelection = FormEntryBase & {
   values: string[];
 };
 
-export type FormEntry = FormEntryButton | FormEntrySelection | FormEntryInput | FormEntryGrouping | FormEntryRow;
+export type FormEntryDate = FormEntryBase & {
+  inputType: 'date' | 'datetime-local' | 'month' | 'time' | 'week';
+  max?: string;
+  min?: string;
+  step?: number;
+};
+
+export type FormEntryRange = FormEntryBase & {
+  inputType: 'range';
+  max?: number;
+  min?: number;
+  step?: number;
+};
+
+export type FormEntry =
+  | FormEntryButton
+  | FormEntryDate
+  | FormEntryGrouping
+  | FormEntryInput
+  | FormEntryRange
+  | FormEntryRow
+  | FormEntrySelection
+  | FormEntryValidated;
 
 let labelId = 0;
+let _timeoutId = 0;
+
+const INPUT_VALIDATION_TTY = 500;
+
+const PATTERN_DEFAULTS = {
+  tel: '[0-9]{3}-[0-9]{3}-[0-9]{4}',
+  email: '[a-z0-9._%+-]+@[a-z0-9.-]+.[a-z]{2,4}$',
+  url: ''
+};
 
 export type ParsedJsonResults = {
   results: string;
@@ -100,12 +150,12 @@ export const FromJson = <Settings extends {}>(
         // `entry.label` identifies array index access
         const suffix = undefined !== entry.arrayIndex ? `[${entry.arrayIndex}]` : '';
 
-        const columns = rowEntries.map(fe => {
+        const columns = rowEntries.map(rowEntry => {
           const processedJson = FromJson(
             [
               {
-                ...fe,
-                name: `${fe.name}${suffix}`
+                ...rowEntry,
+                name: `${rowEntry.name}${suffix}`
               }
             ],
             settings
@@ -116,7 +166,13 @@ export const FromJson = <Settings extends {}>(
           return processedJson.results;
         });
 
-        input += `<tr><td>${columns.join('</td><td>')}</td></tr>`;
+        let rowContent = '';
+        columns.forEach((content, idx) => {
+          const entry = rowEntries[idx];
+          rowContent += `<td data-col-type="${entry.inputType}">${content}</td>`;
+        });
+
+        input += `<tr>${rowContent}</tr>`;
 
         break;
       case 'arraylist':
@@ -149,12 +205,19 @@ export const FromJson = <Settings extends {}>(
 
         description = entry.description ? `<blockquote class="description">${entry.description}</blockquote>` : '';
 
+        let headers = '';
+        entry.values.forEach(formEntry => {
+          headers += `
+            <th data-col-type="${formEntry.inputType}">
+              ${formEntry.label ?? formEntry.name}
+            </th>
+            `;
+        });
+
         const tableData = `
           <table>
             <thead>
-              <tr>
-                <th>${entry.values.map(fe => fe.label).join('</th><th>')}</th>
-              </tr>
+              <tr>${headers}</tr>
             </thead>
             <tbody>
               ${recursedCallArray.map(row => row.results).join('')}
@@ -180,7 +243,7 @@ export const FromJson = <Settings extends {}>(
               <div class="content">
                 ${coreContent}
 
-                <div class="arraygroup-controls" data-inputs='${JSON.stringify(entry.values)}'>
+                <div class="arraylist-controls" data-inputs='${JSON.stringify(entry.values)}'>
                   <button name="addentry-${nameOrLabelId}" class="add">+</button>
                   <button name="delentry-${nameOrLabelId}" class="subtract">-</button>
                 </div>
@@ -209,7 +272,7 @@ export const FromJson = <Settings extends {}>(
 
         input += `
           <details 
-            id="${entry.name ?? entry.label.toLocaleLowerCase().replaceAll(' ', '_')}" 
+            id="${nameOrLabelId}" 
             data-input-type="${entry.inputType}"
           >
             <summary><div class="label-wrapper" ${tooltip}>${chosenLabel}</div></summary>
@@ -273,9 +336,42 @@ export const FromJson = <Settings extends {}>(
         break;
 
       case 'color':
+      case 'email':
+      case 'file':
+      case 'hidden':
       case 'number':
-      case 'text':
       case 'password':
+      case 'range':
+      case 'search':
+      case 'tel':
+      case 'text':
+      case 'url':
+      case 'date':
+      case 'datetime-local':
+      case 'month':
+      case 'time':
+      case 'week':
+        const validated = ['tel', 'email', 'url'];
+        const minMaxed = ['date', 'datetime-local', 'month', 'time', 'week', 'range'];
+
+        let validatorPattern = '';
+        let min = '';
+        let max = '';
+        let step = '';
+
+        if (minMaxed.includes(entry.inputType)) {
+          const _entry = entry as FormEntryDate | FormEntryRange;
+          min = _entry.min ? `min="${_entry.min}"` : '';
+          max = _entry.max ? `max="${_entry.max}"` : '';
+          step = _entry.step ? `step="${_entry.step}"` : '';
+        }
+
+        if (validated.includes(entry.inputType)) {
+          const _entry = entry as FormEntryValidated;
+          const chosenPattern = _entry.pattern ?? PATTERN_DEFAULTS[_entry.inputType];
+          validatorPattern = chosenPattern ? `pattern="${chosenPattern}"` : '';
+        }
+
         input += `
             <input
               type="${entry.inputType}"
@@ -283,6 +379,10 @@ export const FromJson = <Settings extends {}>(
               id="${uniqueId}"
               name="${entry.name}"
               placeholder="${chosenLabel}"
+              ${validatorPattern}
+              ${min}
+              ${max}
+              ${step}
               ${required}
             >
         `;
@@ -306,6 +406,15 @@ export const FromJson = <Settings extends {}>(
             </div>
           `;
           mapping = merge({}, mapping, recursedCall.mapping);
+        }
+
+        if ('range' === entry.inputType) {
+          input = `
+            <div class='range-wrapper'>
+              ${input}
+              <input type="number" class="range-display" />
+            </div>
+          `;
         }
 
         break;
@@ -343,6 +452,7 @@ export const FromJson = <Settings extends {}>(
     switch (entry.inputType) {
       case 'button':
       case 'fieldgroup':
+      case 'arraylist':
       case 'arraygroup':
       case 'array-row':
         // noop
@@ -399,6 +509,8 @@ export const Hydrate = (form: HTMLFormElement, formData: FormData) => {
 
       if (element instanceof HTMLInputElement) {
         switch (element.type) {
+          case 'file':
+          // noop - we can't set values of files!
           case 'checkbox':
             element.checked = currValue;
             break;
@@ -486,4 +598,192 @@ export const GetData = <Data extends {}>(formElement: HTMLFormElement): Data => 
   }
 
   return json;
+};
+
+export const BindInteractionEvents = (formElement?: HTMLFormElement) => {
+  if (!formElement) {
+    return;
+  }
+
+  formElement.addEventListener('input', onFormChanged);
+  formElement.addEventListener('click', onFormClicked);
+  formElement.addEventListener('mousemove', onFormMouseMove);
+
+  initRangeDisplays(formElement);
+};
+
+export const UnbindInteractionEvents = (formElement?: HTMLFormElement) => {
+  if (!formElement) {
+    return;
+  }
+
+  formElement.removeEventListener('input', onFormChanged);
+  formElement.removeEventListener('click', onFormClicked);
+  formElement.removeEventListener('mousemove', onFormMouseMove);
+};
+
+const onFormChanged = (event: Event) => {
+  updateRangeDisplays(event);
+  updateRangeValue(event);
+};
+
+const onFormClicked = (event: MouseEvent) => {
+  checkButtonsClicked(event);
+};
+
+const initRangeDisplays = (formElement: HTMLFormElement) => {
+  // prettier-ignore
+  formElement
+    .querySelectorAll<HTMLInputElement>('input[type="range"]')
+    .forEach(updateRangeDisplay);
+};
+
+const updateRangeDisplays = (event: Event) => {
+  if (false === event.target instanceof HTMLInputElement) {
+    return;
+  }
+
+  if (event.target.type !== 'range') {
+    return;
+  }
+
+  const range = event.target;
+  updateRangeDisplay(range);
+};
+
+const updateRangeValue = (event: Event) => {
+  if (false === event.target instanceof HTMLInputElement) {
+    return;
+  }
+
+  if (false === event.target.classList.contains('range-display')) {
+    return;
+  }
+
+  const range = event.target.closest('.range-wrapper ')?.querySelector('input[type="range"]') as HTMLInputElement;
+  range.value = event.target.value;
+};
+
+const updateRangeDisplay = (range: HTMLInputElement) => {
+  const rangeDisplay = range.closest('.range-wrapper ')?.querySelector('.range-display') as HTMLInputElement;
+  rangeDisplay.value = range.value;
+};
+
+const checkButtonsClicked = (event: MouseEvent) => {
+  if (false === event.target instanceof HTMLButtonElement) {
+    return;
+  }
+
+  // A Button might have been clicked
+  const btn = event.target;
+  const name = btn.name;
+
+  if (true === name.startsWith('password-view')) {
+    return passwordToggle(event, btn);
+  } else if (true === name.startsWith('addentry') || true === name.startsWith('delentry')) {
+    return manageArrayGroupEntries(event, btn);
+  }
+};
+
+const passwordToggle = (event: MouseEvent, btn: HTMLButtonElement) => {
+  event.preventDefault();
+  event.stopImmediatePropagation();
+
+  const name = btn.name.replace('password-view-', '');
+  const wrapper = btn.closest('div.password-wrapper');
+  const input = wrapper?.querySelector(`input[name="${name}"]`) as HTMLInputElement;
+
+  if (input) {
+    input.type = 'text' === input.type ? 'password' : 'text';
+  }
+};
+
+const manageArrayGroupEntries = (event: MouseEvent, btn: HTMLButtonElement) => {
+  event.preventDefault();
+  event.stopImmediatePropagation();
+
+  const isAdd = btn.name.startsWith('add');
+  const content = btn.closest('.content');
+  const tableBody = content?.querySelector('table tbody');
+
+  if (!tableBody) {
+    return;
+  }
+
+  if (false === isAdd) {
+    const lastChild = [...tableBody.children][tableBody.children.length - 1];
+    if (lastChild) {
+      tableBody.removeChild(lastChild);
+    }
+  } else {
+    const arrayRowJson = content?.querySelector('.arraylist-controls')?.getAttribute('data-inputs');
+    const arrayRow = JSON.parse(arrayRowJson || '[]') as FormEntryGrouping[];
+    const rows = content?.querySelectorAll('table tbody tr');
+    let rowCount = rows?.length ?? 0;
+
+    if (0 === arrayRow.length) {
+      return;
+    }
+
+    const row = FromJson(
+      [
+        {
+          inputType: 'array-row',
+          name: 'array-row',
+          arrayIndex: rowCount,
+          values: arrayRow
+        }
+      ],
+      {} // Since this is a new row, there can't be any settings already for it!
+    ).results;
+
+    tableBody.insertAdjacentHTML('beforeend', row);
+  }
+};
+
+const onFormMouseMove = (event: MouseEvent) => {
+  if (false === event.target instanceof HTMLSelectElement && false === event.target instanceof HTMLInputElement) {
+    clearTimeout(_timeoutId);
+    _timeoutId = 0;
+    return;
+  }
+
+  if (_timeoutId) {
+    return;
+  }
+
+  _timeoutId = setTimeout(() => (event.target as HTMLInputElement).reportValidity(), INPUT_VALIDATION_TTY);
+};
+
+export const UpdateFormValidators = <FormData extends {}>(
+  formElement: HTMLFormElement,
+  validations: FormValidatorResults<FormData>
+) => {
+  // Unmark Invalid inputs
+  formElement.querySelectorAll<HTMLInputElement>('input:invalid').forEach(elem => {
+    elem?.setCustomValidity('');
+  });
+
+  if (true === validations) {
+    return;
+  }
+
+  Object.entries(validations).forEach(([settingName, error]) => {
+    const input = formElement.querySelector(`[name*=${settingName}]`) as HTMLInputElement;
+
+    if (!input) {
+      return;
+    }
+
+    input.setCustomValidity(error as string);
+
+    // Use browser's `.closest()` to target top form element, that has a child of details, that :has() our input with the settings name. This is a crazy "from me to top to me again" 2-way recursive search 😆
+    const topDetails = input.closest(`form > details:has(input[name*=${settingName}])`) as HTMLElement;
+    const inFormViewPort = IsInViewPort(input, formElement);
+    const inTopDetailsViewPort = IsInViewPort(input, topDetails);
+
+    if (inFormViewPort && inTopDetailsViewPort) {
+      input.reportValidity();
+    }
+  });
 };

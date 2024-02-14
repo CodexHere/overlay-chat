@@ -1,6 +1,5 @@
 import { PluginInstances, PluginSettingsBase } from '../types/Plugin.js';
 import { RendererInstance, RendererInstanceOptions } from '../types/Renderers.js';
-import { IsInViewPort } from '../utils/DOM.js';
 import * as Forms from '../utils/Forms.js';
 import { GetLocalStorageItem, SetLocalStorageItem } from '../utils/LocalStorage.js';
 import { RenderTemplate } from '../utils/Templating.js';
@@ -17,7 +16,6 @@ type ElementMap = {
 // These settings should restart the PluginManager
 const settingsShouldRetartPluginManager = ['plugins', 'customPlugins'];
 const detailsTagTypes = ['DETAILS:', 'SUMMARY:', 'DIV:label-wrapper'];
-const INPUT_VALIDATION_TTY = 500;
 
 const ScrollTTY = 20; // in seconds
 const isScrollTTYExpired = () => {
@@ -27,6 +25,8 @@ const isScrollTTYExpired = () => {
 
   return elapsed >= ScrollTTY * 1000;
 };
+
+const instanceId = new Date().getTime();
 
 export class SettingsRenderer<PluginSettings extends PluginSettingsBase> implements RendererInstance {
   private _onSettingsChanged: (event: Event) => Promise<void>;
@@ -46,11 +46,10 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
     this.unbindEvents();
     this.renderApp();
     this.buildElementMap();
-    this.bindEvents();
-
     this.subInit();
+    this.renderPluginSettings(plugins);
 
-    this.renderPluginApp(plugins);
+    this.bindEvents();
   }
 
   private subInit() {
@@ -63,10 +62,32 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
     // Update Form Validity state data only if we're starting with settings
     // > 1, because a 'format' is enforced on the settings object
     if (Object.keys(settings).length > 1) {
-      this.updateFormValidations();
+      const validations = this.options.validateSettings();
+      Forms.UpdateFormValidators(this.elements.form, validations);
     }
 
+    this.createPluginJumper();
+
     this.restoreViewState();
+  }
+
+  private get pluginJumper() {
+    return globalThis.document.getElementById('plugin-jumper') as HTMLSelectElement | undefined;
+  }
+
+  private createPluginJumper() {
+    const plugins = this.options.getPlugins();
+    const pluginJumper = this.pluginJumper;
+
+    // Add the plugin name to the Plugin Jumper
+    plugins.forEach(plugin => {
+      const newOpt = globalThis.document.createElement('option');
+      const nameAsValue = plugin.name.toLocaleLowerCase().replaceAll(' ', '_');
+
+      newOpt.value = nameAsValue;
+      newOpt.text = plugin.name;
+      pluginJumper?.add(newOpt);
+    });
   }
 
   private updateUrlState() {
@@ -76,7 +97,7 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
 
   private renderApp() {
     const rootContainer = globalThis.document.body.querySelector('#root') as HTMLElement;
-    const { templates } = this.options;
+    const { settings } = this.options.getTemplates();
 
     if (!rootContainer) {
       return;
@@ -85,16 +106,16 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
     // Ensure no elements in the Root so we can display settings
     rootContainer.innerHTML = '';
 
-    RenderTemplate(rootContainer, templates['settings'], {
+    RenderTemplate(rootContainer, settings, {
       formElements: this.options.getParsedJsonResults?.()?.results
     });
   }
 
-  private renderPluginApp(plugins: PluginInstances<PluginSettings>) {
+  private renderPluginSettings(plugins: PluginInstances<PluginSettings>) {
     // Iterate over every loaded plugin, and call `renderSettings` to manipulate the Settings view
     plugins.forEach(plugin => {
       try {
-        plugin.renderSettings?.(this._updateSettings);
+        plugin.renderSettings?.(this._forceSyncSettings);
       } catch (err) {
         if (err instanceof Error) {
           throw new Error(
@@ -105,12 +126,14 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
     });
   }
 
-  private _updateSettings = () => {
+  private _forceSyncSettings = () => {
     const form = this.elements.form;
     const formData = Forms.GetData<PluginSettings>(form);
     this.options.setSettings(formData);
 
-    this.updateFormValidations();
+    const validations = this.options.validateSettings();
+
+    Forms.UpdateFormValidators(this.elements.form, validations);
     this.updateSettingsOptions();
     this.updateUrlState();
   };
@@ -129,27 +152,35 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
   private unbindEvents() {
     const form = this.elements['form'];
     const formOptions = this.elements['form-options'];
+    const pluginJumper = this.pluginJumper;
 
     form?.removeEventListener('input', this._onSettingsChanged);
     form?.removeEventListener('click', this.onFormClicked);
     form?.removeEventListener('scroll', this._onFormScrolled);
-    form?.removeEventListener('mousemove', this.onFormMouseMove);
 
     formOptions?.removeEventListener('click', this.onSettingsOptionClick);
     formOptions?.removeEventListener('change', this.onSettingsOptionChange);
+
+    pluginJumper?.removeEventListener('change', this.onJumpPlugin);
+
+    Forms.UnbindInteractionEvents(form);
   }
 
   private bindEvents() {
     const form = this.elements['form'];
     const formOptions = this.elements['form-options'];
+    const pluginJumper = this.pluginJumper;
 
     form?.addEventListener('input', this._onSettingsChanged);
     form?.addEventListener('click', this.onFormClicked);
     form?.addEventListener('scroll', this._onFormScrolled);
-    form?.addEventListener('mousemove', this.onFormMouseMove);
 
     formOptions?.addEventListener('click', this.onSettingsOptionClick);
     formOptions?.addEventListener('change', this.onSettingsOptionChange);
+
+    pluginJumper?.addEventListener('change', this.onJumpPlugin);
+
+    Forms.BindInteractionEvents(form);
   }
 
   private restoreViewState() {
@@ -190,22 +221,6 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
     SetLocalStorageItem('lastScrolledAt', new Date().getTime());
   };
 
-  private _timeoutId = 0;
-
-  private onFormMouseMove = (event: MouseEvent) => {
-    if (false === event.target instanceof HTMLSelectElement && false === event.target instanceof HTMLInputElement) {
-      clearTimeout(this._timeoutId);
-      this._timeoutId = 0;
-      return;
-    }
-
-    if (this._timeoutId) {
-      return;
-    }
-
-    this._timeoutId = setTimeout(() => (event.target as HTMLInputElement).reportValidity(), INPUT_VALIDATION_TTY);
-  };
-
   private checkDetailsClicked = (event: MouseEvent) => {
     if (false === event.target instanceof Element) {
       return;
@@ -220,25 +235,8 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
     }
   };
 
-  private checkButtonsClicked = (event: MouseEvent) => {
-    if (false === event.target instanceof HTMLButtonElement) {
-      return;
-    }
-
-    // A Button might have been clicked
-    const btn = event.target;
-    const name = btn.name;
-
-    if (true === name.startsWith('password-view')) {
-      return this.passwordToggle(event, btn);
-    } else if (true === name.startsWith('addentry') || true === name.startsWith('delentry')) {
-      return this.manageArrayGroupEntries(event, btn);
-    }
-  };
-
   private onFormClicked = (event: MouseEvent) => {
     this.checkDetailsClicked(event);
-    this.checkButtonsClicked(event);
   };
 
   private trackDetailsClicks(event: MouseEvent) {
@@ -261,65 +259,13 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
     SetLocalStorageItem('openDetails', [...openDetails]);
   }
 
-  private manageArrayGroupEntries(event: MouseEvent, btn: HTMLButtonElement) {
-    event.preventDefault();
-    event.stopImmediatePropagation();
-
-    const settings = this.options.getMaskedSettings();
-    const isAdd = btn.name.startsWith('add');
-    const content = btn.closest('.content');
-    const tableBody = content?.querySelector('table tbody');
-
-    if (!tableBody) {
-      return;
-    }
-
-    if (false === isAdd) {
-      const lastChild = [...tableBody.children][tableBody.children.length - 1];
-      if (lastChild) {
-        tableBody.removeChild(lastChild);
-      }
-    } else {
-      const fieldgroupJSON = content?.querySelector('.arraygroup-controls')?.getAttribute('data-inputs');
-      const fieldgroup = JSON.parse(fieldgroupJSON || '[]') as Forms.FormEntryGrouping[];
-      const rows = content?.querySelectorAll('table tbody tr');
-      let rowCount = rows?.length ?? 0;
-
-      if (0 !== fieldgroup.length) {
-        const inputs = fieldgroup.map(fe => {
-          return Forms.FromJson(
-            [
-              {
-                ...fe,
-                name: `${fe.name}[${rowCount}]`
-              }
-            ],
-            settings
-          ).results;
-        });
-
-        tableBody.insertAdjacentHTML('beforeend', `<tr><td>${inputs.join('</td><td>')}</td></tr>`);
-      }
-    }
-  }
-
-  private passwordToggle(event: MouseEvent, btn: HTMLButtonElement) {
-    event.preventDefault();
-    event.stopImmediatePropagation();
-
-    const name = btn.name.replace('password-view-', '');
-    const wrapper = btn.closest('div.password-wrapper');
-    const input = wrapper?.querySelector(`input[name="${name}"]`) as HTMLInputElement;
-
-    if (input) {
-      input.type = 'text' === input.type ? 'password' : 'text';
-    }
-  }
-
   private onSettingsOptionChange = (event: Event) => {
     if (false === event.target instanceof HTMLElement) {
       return;
     }
+
+    event.stopImmediatePropagation();
+    event.preventDefault();
 
     const isSettingsOption = event.target.classList.contains('settings-option');
 
@@ -358,11 +304,7 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
         this.options.errorDisplay.showError(err as Error);
       }
     } else {
-      this.options.setSettings(formData);
-
-      form.reportValidity();
-      this.updateUrlState();
-      this.updateFormValidations();
+      this._forceSyncSettings();
     }
   };
 
@@ -387,40 +329,6 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
     btnLoadApp.disabled = true !== this.options.validateSettings();
 
     linkResultsOutput.parentElement?.setAttribute('data-char-count', linkResultsOutput.value.length.toString());
-  }
-
-  private updateFormValidations() {
-    const body = globalThis.document.body;
-
-    // Unmark Invalid inputs
-    body.querySelectorAll<HTMLInputElement>('input:invalid').forEach(elem => {
-      elem?.setCustomValidity('');
-    });
-
-    const validations = this.options.validateSettings();
-
-    if (true === validations) {
-      return;
-    }
-
-    Object.entries(validations).forEach(([settingName, error]) => {
-      const input = body.querySelector(`[name*=${settingName}]`) as HTMLInputElement;
-
-      if (!input) {
-        return;
-      }
-
-      input.setCustomValidity(error);
-
-      // Use browser's `.closest()` to target top form element, that has a child of details, that :has() our input with the settings name. This is a crazy "from me to top to me again" 2-way recursive search 😆
-      const topDetails = input.closest(`form > details:has(input[name*=${settingName}])`) as HTMLElement;
-      const inFormViewPort = IsInViewPort(input, this.elements.form);
-      const inTopDetailsViewPort = IsInViewPort(input, topDetails);
-
-      if (inFormViewPort && inTopDetailsViewPort) {
-        input.reportValidity();
-      }
-    });
   }
 
   private onSettingsOptionClick = (event: Event) => {
@@ -450,10 +358,24 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
     const url = this.generateUrl();
 
     if (newWindowCheck && newWindowCheck.checked) {
-      window.open(url, 'app');
+      window.open(url, `instance-${instanceId}`);
       history.replaceState(null, '', `${url}&forceShowSettings=true`);
     } else {
       window.location.href = url;
     }
+  }
+
+  private onJumpPlugin(event: Event) {
+    if (false === event.target instanceof HTMLSelectElement) {
+      return;
+    }
+
+    const containerId = event.target.value;
+    const pluginContainer = globalThis.document.getElementById(containerId);
+
+    pluginContainer?.setAttribute('open', '');
+    pluginContainer?.scrollIntoView({
+      behavior: 'smooth'
+    });
   }
 }

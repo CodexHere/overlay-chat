@@ -1,0 +1,52 @@
+{
+  "inputType": "fieldgroup",
+  "label": "HangoutHere Theme",
+  "values": [
+    {
+      "name": "showBadges",
+      "label": "Show Badges",
+      "inputType": "switch",
+      "tooltip": "Toggles whether to show leading Badges (i.e., Mod, VIP, etc)"
+    },
+
+    {
+      "inputType": "arraygroup",
+      "label": "Leading Chat Colors",
+      "name": "leading_chat",
+      "description": "This will stylize the username based on Role",
+      "values": [
+        { "name": "colorLeading", "label": "Leading Color", "inputType": "color", "defaultValue": "#FFFFFF" },
+        { "name": "colorMod", "label": "Mod Color", "inputType": "color", "defaultValue": "#00FF00" },
+        { "name": "colorVip", "label": "VIP Color", "inputType": "color", "defaultValue": "#FF00FF" }
+      ]
+    },
+
+    {
+      "inputType": "arraygroup",
+      "label": "Text Reveal Colors",
+      "name": "text_reveal_colors",
+      "values": [
+        { "name": "hhtheme-colorRevealText2", "label": "First Color", "inputType": "color", "defaultValue": "#f23373" },
+        {
+          "name": "hhtheme-colorRevealText1",
+          "label": "Middle Color",
+          "inputType": "color",
+          "defaultValue": "#ff8a3b"
+        },
+        { "name": "hhtheme-colorRevealText0", "label": "Final Color", "inputType": "color", "defaultValue": "#e2e2e2" }
+      ]
+    },
+
+    {
+      "name": "hhtheme-revealDelay",
+      "inputType": "range",
+      "label": "Reveal Delay (per Character)",
+      "defaultValue": "100",
+      "min": "0",
+      "max": "10000",
+      "step": "1"
+    },
+
+    { "name": "hhtheme-colorBorder", "label": "Border Color", "inputType": "color", "defaultValue": "#bc91f8" }
+  ]
+}

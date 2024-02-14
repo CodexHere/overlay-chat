@@ -1,28 +1,28 @@
-import { ParsedJsonResults } from '../utils/Forms.js';
+import { TemplatesBase } from '../managers/TemplateManager.js';
+import { FormValidatorResults, ParsedJsonResults } from '../utils/Forms.js';
 import { TemplateMap } from '../utils/Templating.js';
-import { ErrorManager, SettingsValidatorResults } from './Managers.js';
+import { DisplayManager } from './Managers.js';
 import { PluginInstances, PluginSettingsBase } from './Plugin.js';
 
 export type RenderOptions = {
-  templates: TemplateMap;
+  templates: TemplateMap<TemplatesBase>;
   rootContainer: HTMLElement;
 };
 
 export type RendererInstanceOptions<PluginSettings extends PluginSettingsBase> = {
-  templates: TemplateMap;
-
   getParsedJsonResults?: () => ParsedJsonResults | undefined;
 
-  validateSettings: () => SettingsValidatorResults<PluginSettings>;
+  validateSettings: () => FormValidatorResults<PluginSettings>;
   getMaskedSettings: () => PluginSettings;
   getUnmaskedSettings: () => PluginSettings;
+  getTemplates: () => TemplateMap<TemplatesBase>;
   getSettings: () => PluginSettings;
   setSettings: (settings: PluginSettings, forceEncode?: boolean) => void;
   getPlugins: () => PluginInstances<PluginSettings>;
 
   pluginLoader: () => void;
 
-  errorDisplay: ErrorManager;
+  errorDisplay: DisplayManager;
 };
 
 export type RendererInstance = {

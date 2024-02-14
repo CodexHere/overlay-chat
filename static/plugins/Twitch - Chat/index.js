@@ -7,12 +7,15 @@ import tmiJs from 'https://esm.sh/tmi.js@1.8.5';
  * @property {string} nameStreamer
  * @property {string} tokenBot
  * @property {string} tokenStreamer
+ * @property {string} refreshTokenBot
+ * @property {string} refreshTokenStreamer
  * @typedef {PluginSettings_Extra & PluginSettingsBase} PluginSettings
+ * @typedef {PluginSettings} PluginSettings_TwitchChat
  *
  * @typedef {import('../../../src/scripts/Plugin_Core.js').MiddewareContext_Chat} ConcreteContext
  * @typedef {Partial<ConcreteContext>} Context
  * @typedef {import('../../../src/scripts/utils/Forms.js').FormEntryGrouping} FormEntryFieldGroup
- * @typedef {import('../../../src/scripts/types/Managers.js').SettingsValidatorResults<PluginSettings>} SettingsValidatorResults
+ * @typedef {import('../../../src/scripts/utils/Forms.js').FormValidatorResults<PluginSettings>} SettingsValidatorResults
  * @typedef {import('../../../src/scripts/types/Managers.js').BusManagerContext_Init<{}>} BusManagerContext_Init
  * @typedef {import('../../../src/scripts/types/Middleware.js').PluginMiddlewareMap} PluginMiddlewareMap
  * @typedef {import('../../../src/scripts/types/Plugin.js').PluginEventRegistration} PluginEventMap
@@ -41,6 +44,7 @@ export default class TwitchChat {
   name = 'Twitch - Chat';
   version = '1.0.0';
   ref = Symbol(this.name);
+  priority = 1;
 
   /** @type {Record<'bot'|'streamer', tmiJs.Client | undefined>} */
   clients = {
@@ -49,11 +53,11 @@ export default class TwitchChat {
   };
 
   get hasAuthedClientStreamer() {
-    return this.clients.streamer && false === this.clients.streamer.getUsername().startsWith('justin');
+    return !!this.clients.streamer && false === this.clients.streamer.getUsername().startsWith('justin');
   }
 
   get hasAuthedClientBot() {
-    return this.clients.bot && false === this.clients.bot.getUsername().startsWith('justin');
+    return !!this.clients.bot && false === this.clients.bot.getUsername().startsWith('justin');
   }
 
   /**
@@ -90,9 +94,8 @@ export default class TwitchChat {
    * @returns {Promise<PluginRegistrationOptions>}
    */
   registerPlugin = async () => ({
-    settings: await this._getSettings(),
     events: this._getEvents(),
-    stylesheet: new URL(`${BaseUrl()}/plugin.css`)
+    settings: new URL(`${BaseUrl()}/settings.json`)
   });
 
   unregisterPlugin() {
@@ -105,11 +108,6 @@ export default class TwitchChat {
       refreshButtons[idx].removeEventListener('click', this.#onClickRefresh);
     });
   }
-
-  /**
-   * @returns {Promise<FormEntryFieldGroup>}
-   */
-  _getSettings = async () => await (await fetch(`${BaseUrl()}/settings.json`)).json();
 
   /**
    * @returns {PluginEventMap}
@@ -142,11 +140,10 @@ export default class TwitchChat {
   }
 
   /**
-   * @param {() => void} updateSettings
-   * @returns
+   * @param {() => void} forceSyncSettings
    */
-  async renderSettings(updateSettings) {
-    this.updateSettings = updateSettings;
+  async renderSettings(forceSyncSettings) {
+    this.forceSyncSettings = forceSyncSettings;
   }
 
   #updateSettingsUI() {
@@ -196,26 +193,16 @@ export default class TwitchChat {
 
     globalThis.window.open(create.message, '_new');
 
-    const tokens = await this.waitForAuth(create);
-
-    if (!tokens) {
+    try {
+      const tokens = await this.waitForAuth(create);
+      this.updateTokenInputs(tokens, event.target);
+      this.forceSyncSettings?.();
+    } catch (err) {
       event.target.disabled = false;
-      return;
+
+      const errInst = /** @type {Error} */ (/** @type {unknown} */ err);
+      this.options.errorDisplay.showError(errInst);
     }
-
-    const container = event.target.closest('[data-input-type="arraygroup"]');
-    /** @type {NodeListOf<HTMLInputElement> | undefined} */
-    const inputs = container?.querySelectorAll('.password-wrapper input');
-
-    if (inputs && inputs[0]) {
-      inputs[0].value = tokens.token;
-    }
-
-    if (inputs && inputs[1]) {
-      inputs[1].value = tokens.refresh;
-    }
-
-    this.updateSettings?.();
   };
 
   /**
@@ -238,20 +225,35 @@ export default class TwitchChat {
     if (inputs && inputs[1]) {
       const refreshToken = inputs[1].value;
       const refreshResp = await fetch(`${API_BaseUrl}/refresh/${refreshToken}`);
-      const refresh = await refreshResp.json();
+      const tokens = await refreshResp.json();
 
-      if (inputs && inputs[0]) {
-        inputs[0].value = refresh.token;
-      }
-
-      if (inputs && inputs[1]) {
-        inputs[1].value = refresh.refresh;
-      }
+      this.updateTokenInputs(tokens, event.target);
+      this.forceSyncSettings?.();
     } else {
       return false;
     }
+  };
 
-    this.updateSettings?.();
+  /**
+   * @param {*} tokens
+   * @param {HTMLButtonElement} button
+   */
+  updateTokenInputs = (tokens, button) => {
+    const container = button.closest('[data-input-type="arraygroup"]');
+    /** @type {NodeListOf<HTMLInputElement> | undefined} */
+    const inputs = container?.querySelectorAll('.password-wrapper input, input[type="hidden"]');
+
+    if (inputs && inputs[0]) {
+      inputs[0].value = tokens.token;
+    }
+
+    if (inputs && inputs[1]) {
+      inputs[1].value = tokens.refresh;
+    }
+
+    if (inputs && inputs[2]) {
+      inputs[2].value = tokens.client_id;
+    }
   };
 
   /**
@@ -273,16 +275,12 @@ export default class TwitchChat {
 
         if (true === status.success) {
           clear();
-
-          resolve({
-            token: status.token,
-            refresh: status.refresh
-          });
+          resolve(status);
         } else {
           // Never gonna execute
           if (4 === status.error) {
             clear();
-            reject(false);
+            reject(new Error("Token already processed. This shouldn't happen!"));
           }
         }
 
@@ -290,7 +288,7 @@ export default class TwitchChat {
         const elapsed = new Date().getTime() - start;
         if (elapsed > API_TTL) {
           clear();
-          reject(false);
+          reject(new Error('Timed out waiting for Twitch Authorization'));
         }
       }, API_TTY);
     });
@@ -356,9 +354,6 @@ export default class TwitchChat {
       this.clients.streamer = new tmiJs.Client(tmiOpts.streamer);
       await this.clients.streamer.connect();
       this.clients.streamer.on('message', this.handleMessage_Streamer);
-      // TODO: Needs to move to icon swap plugin
-      //   loadAssets('twitch');
-      //   loadAssets(nameStreamer);
     } catch (err) {
       delete this.clients['streamer'];
       throw new Error('Could not connect Streamer to chat: ' + err);

@@ -10,17 +10,7 @@ export type BootstrapOptions<PluginSettings extends PluginSettingsBase> = {
 
   needsSettingsRenderer?: true;
   needsAppRenderer?: true;
-  templateFile?: URL;
 };
-
-// SettingsManager
-
-export type SettingsValidatorResult<PluginSettings extends PluginSettingsBase> =
-  | true
-  | Partial<Record<keyof PluginSettings, string>>;
-export type SettingsValidatorResults<PluginSettings extends PluginSettingsBase> =
-  | true
-  | SettingsValidatorResult<PluginSettings>;
 
 // PluginManager
 
@@ -68,8 +58,9 @@ export type BusManagerEmitter = EnhancedEventEmitter & {
   ): void;
 };
 
-// Error Manager
+// Display Manager
 
-export type ErrorManager = {
+export type DisplayManager = {
   showError(err: Error | Error[]): void;
+  showInfo(message: string, title?: string): void;
 };

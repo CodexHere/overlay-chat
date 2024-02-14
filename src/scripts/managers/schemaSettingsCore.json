@@ -36,7 +36,7 @@
                 "name": "plugins",
                 "label": "",
                 "inputType": "switch-multiple",
-                "values": ["Example", "Twitch - Chat", "HangoutHere"]
+                "values": ["Example", "Twitch - Chat", "Twitch - EmoteSwap", "HangoutHere"]
               }
             ]
           },
@@ -44,7 +44,7 @@
             "name": "customPlugins",
             "inputType": "arraylist",
             "label": "Custom Plugins",
-            "description": "Enter a full URL to a Plugin path of a folder that has both <code>plugin.js</code> and <code>plugin.css</code>.<br />If this is supplied, the Plugins selection will be ignored.<br />Example: https://mywebsite.com/pluginFolder/",
+            "description": "Enter a direct URL to a Plugin JS file, or a folder to autoload <code>index.js</code>.<br />Example: https://mywebsite.com/pluginFolder/myPlugin.js",
             "values": [
               {
                 "name": "customPlugins",

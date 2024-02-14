@@ -1,0 +1,343 @@
+[
+  {
+    "name": "testArea1",
+    "inputType": "fieldgroup",
+    "label": "Testing Field Group Stuff",
+    "description": "Just testing things dawg",
+    "tooltip": "We're testing every type of item",
+    "values": [
+      {
+        "name": "simpleInputs",
+        "inputType": "fieldgroup",
+        "label": "Simple Inputs",
+        "description": "These are single-value inputs",
+        "values": [
+          {
+            "name": "myOption-1",
+            "inputType": "text"
+          },
+          {
+            "name": "myOption-2",
+            "inputType": "password"
+          },
+          {
+            "name": "myOption-3",
+            "inputType": "number"
+          },
+          {
+            "name": "myOption-4",
+            "inputType": "checkbox"
+          },
+          {
+            "name": "myOption-5",
+            "inputType": "switch"
+          },
+          {
+            "name": "myOption-6",
+            "inputType": "range",
+            "min": 10,
+            "max": 1000,
+            "step": 100
+          },
+          {
+            "name": "myOption-7",
+            "inputType": "color"
+          },
+          {
+            "name": "myOption-8",
+            "inputType": "email"
+          },
+          {
+            "name": "myOption-9",
+            "inputType": "file"
+          },
+          {
+            "name": "myOption-10",
+            "label": "myOption-11",
+            "inputType": "hidden"
+          },
+          {
+            "name": "myOption-12",
+            "inputType": "search"
+          },
+          {
+            "name": "myOption-13",
+            "inputType": "tel"
+          },
+          {
+            "name": "myOption-14",
+            "inputType": "url"
+          },
+          {
+            "name": "myOption-15",
+            "inputType": "date"
+          },
+          {
+            "name": "myOption-16",
+            "inputType": "datetime-local"
+          },
+          {
+            "name": "myOption-17",
+            "inputType": "month"
+          },
+          {
+            "name": "myOption-18",
+            "inputType": "time"
+          },
+          {
+            "name": "myOption-19",
+            "inputType": "week"
+          }
+        ]
+      },
+      {
+        "name": "multiInputs",
+        "inputType": "fieldgroup",
+        "label": "Multiple Inputs",
+        "description": "These are multiple-value inputs",
+        "values": [
+          {
+            "name": "myOption-20",
+            "inputType": "select",
+            "values": ["sel Item Entry 1", "sel Item Entry Two"]
+          },
+          {
+            "name": "myOption-21",
+            "inputType": "radio",
+            "values": ["rdo Item Entry 1", "rdo Item Entry Two"]
+          },
+          {
+            "name": "myOption-22",
+            "inputType": "checkbox-multiple",
+            "values": ["chk Item Entry 1", "chk Item Entry Two"]
+          },
+          {
+            "name": "myOption-23",
+            "inputType": "switch-multiple",
+            "values": ["chk Item Entry 1", "chk Item Entry Two"]
+          },
+          {
+            "name": "myOption-24",
+            "inputType": "select-multiple",
+            "values": ["sm Item Entry 1", "sm Item Entry Two"]
+          }
+        ]
+      }
+    ]
+  },
+
+  {
+    "name": "testArea2",
+    "inputType": "arraygroup",
+    "label": "Testing Array Group Stuff",
+    "description": "Just testing things dawg",
+    "tooltip": "We're testing every type of item as an Array Group",
+    "values": [
+      {
+        "name": "myOption-25",
+        "inputType": "text"
+      },
+      {
+        "name": "myOption-26",
+        "inputType": "password"
+      },
+      {
+        "name": "myOption-27",
+        "inputType": "number"
+      },
+      {
+        "name": "myOption-28",
+        "inputType": "checkbox"
+      },
+      {
+        "name": "myOption-29",
+        "inputType": "switch"
+      },
+      {
+        "name": "myOption-30",
+        "inputType": "range",
+        "min": 10,
+        "max": 1000,
+        "step": 100
+      },
+      {
+        "name": "myOption-31",
+        "inputType": "color"
+      },
+      {
+        "name": "myOption-32",
+        "inputType": "email"
+      },
+      {
+        "name": "myOption-33",
+        "inputType": "file"
+      },
+      {
+        "name": "myOption-34",
+        "inputType": "hidden"
+      },
+      {
+        "name": "myOption-35",
+        "inputType": "search"
+      },
+      {
+        "name": "myOption-36",
+        "inputType": "tel"
+      },
+      {
+        "name": "myOption-37",
+        "inputType": "url"
+      },
+      {
+        "name": "myOption-38",
+        "inputType": "date"
+      },
+      {
+        "name": "myOption-39",
+        "inputType": "datetime-local"
+      },
+      {
+        "name": "myOption-40",
+        "inputType": "month"
+      },
+      {
+        "name": "myOption-41",
+        "inputType": "time"
+      },
+      {
+        "name": "myOption-42",
+        "inputType": "week"
+      },
+      {
+        "name": "myOption-43",
+        "inputType": "select",
+        "values": ["sel Item Entry 1", "sel Item Entry Two"]
+      },
+      {
+        "name": "myOption-44",
+        "inputType": "radio",
+        "values": ["rdo Item Entry 1", "rdo Item Entry Two"]
+      },
+      {
+        "name": "myOption-45",
+        "inputType": "checkbox-multiple",
+        "values": ["chk Item Entry 1", "chk Item Entry Two"]
+      },
+      {
+        "name": "myOption-46",
+        "inputType": "switch-multiple",
+        "values": ["chk Item Entry 1", "chk Item Entry Two"]
+      },
+      {
+        "name": "myOption-47",
+        "inputType": "select-multiple",
+        "values": ["sm Item Entry 1", "sm Item Entry Two"]
+      }
+    ]
+  },
+
+  {
+    "name": "testArea3",
+    "inputType": "arraylist",
+    "label": "Testing Array List Stuff",
+    "description": "Just testing things dawg",
+    "tooltip": "We're testing every type of item as an Array List",
+    "values": [
+      {
+        "name": "myOption-48",
+        "inputType": "text"
+      },
+      {
+        "name": "myOption-49",
+        "inputType": "password"
+      },
+      {
+        "name": "myOption-50",
+        "inputType": "number"
+      },
+      {
+        "name": "myOption-51",
+        "inputType": "checkbox"
+      },
+      {
+        "name": "myOption-52",
+        "inputType": "switch"
+      },
+      {
+        "name": "myOption-53",
+        "inputType": "range",
+        "min": 10,
+        "max": 1000,
+        "step": 100
+      },
+      {
+        "name": "myOption-54",
+        "inputType": "color"
+      },
+      {
+        "name": "myOption-55",
+        "inputType": "email"
+      },
+      {
+        "name": "myOption-56",
+        "inputType": "file"
+      },
+      {
+        "name": "myOption-57",
+        "inputType": "hidden"
+      },
+      {
+        "name": "myOption-58",
+        "inputType": "search"
+      },
+      {
+        "name": "myOption-59",
+        "inputType": "tel"
+      },
+      {
+        "name": "myOption-60",
+        "inputType": "url"
+      },
+      {
+        "name": "myOption-61",
+        "inputType": "date"
+      },
+      {
+        "name": "myOption-62",
+        "inputType": "datetime-local"
+      },
+      {
+        "name": "myOption-63",
+        "inputType": "month"
+      },
+      {
+        "name": "myOption-64",
+        "inputType": "time"
+      },
+      {
+        "name": "myOption-65",
+        "inputType": "week"
+      },
+      {
+        "name": "myOption-66",
+        "inputType": "select",
+        "values": ["sel Item Entry 1", "sel Item Entry Two"]
+      },
+      {
+        "name": "myOption-67",
+        "inputType": "radio",
+        "values": ["rdo Item Entry 1", "rdo Item Entry Two"]
+      },
+      {
+        "name": "myOption-68",
+        "inputType": "checkbox-multiple",
+        "values": ["chk Item Entry 1", "chk Item Entry Two"]
+      },
+      {
+        "name": "myOption-69",
+        "inputType": "select-multiple",
+        "values": ["sm Item Entry 1", "sm Item Entry Two"]
+      }
+    ]
+  }
+]

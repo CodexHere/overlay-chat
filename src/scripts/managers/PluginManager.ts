@@ -1,20 +1,14 @@
 import { EventEmitter } from 'events';
-import {
-  PluginManagerEmitter,
-  PluginManagerEvents,
-  PluginManagerOptions,
-  SettingsValidatorResults
-} from '../types/Managers.js';
+import { PluginManagerEmitter, PluginManagerEvents, PluginManagerOptions } from '../types/Managers.js';
 import {
   PluginConstructor,
   PluginImportResults,
   PluginInstance,
   PluginInstances,
   PluginLoaders,
-  PluginRegistrationOptions,
   PluginSettingsBase
 } from '../types/Plugin.js';
-import { FormEntry } from '../utils/Forms.js';
+import { FormValidatorResults } from '../utils/Forms.js';
 import * as URI from '../utils/URI.js';
 
 export class PluginManager<PluginSettings extends PluginSettingsBase>
@@ -61,23 +55,18 @@ export class PluginManager<PluginSettings extends PluginSettingsBase>
 
     // Load all URLs for desired plugins
     const pluginLoaders: PluginLoaders<PluginSettings> = this.pluginBaseUrls() as PluginLoaders<PluginSettings>;
-    // Prepend Default plugin to instantiate/import
-    pluginLoaders.unshift(defaultPlugin);
+    // Add Default plugin to instantiate/import
+    pluginLoaders.add(defaultPlugin);
     // Perform Imports/Intantiations
     const importResults = await this.importModules(pluginLoaders);
 
     // Bootstrap the Plugins loaded
     await this.registerPlugins(importResults);
 
-    this.emit(PluginManagerEvents.LOADED, this._plugins);
-
-    if (0 !== importResults.bad.length) {
-      // TODO: Turn (imports) into a return value and handle in Renderers/etc to call showError
-      throw new Error(importResults.bad.join('<br /><br />'));
-    }
+    this.emit(PluginManagerEvents.LOADED, importResults);
   };
 
-  validateSettings = (): SettingsValidatorResults<PluginSettings> => {
+  validateSettings = (): FormValidatorResults<PluginSettings> => {
     let errorMapping = {};
 
     this._plugins.forEach(plugin => {
@@ -107,22 +96,60 @@ export class PluginManager<PluginSettings extends PluginSettingsBase>
     const { customPlugins, plugins } = this.options.getSettings();
 
     if (customPlugins) {
-      pluginUrls = Array.isArray(customPlugins) ? customPlugins : [customPlugins];
-    } else if (plugins) {
-      // At runtime, `plugins` may actually be a single string due to deserializing
-      // URLSearchParams that only had one specified plugin
-      pluginUrls = plugins
-        // Convert `true:SomePluginName` -> `SomePluginName`
-        .map(invalidPluginData => invalidPluginData.split(':')[1])
-        // Iterate getting the full plugin path
-        .map(this.getPluginPath);
+      // Incoming type is an Array already, add each of them
+      if (true === Array.isArray(customPlugins)) {
+        pluginUrls.push(...customPlugins);
+      } else {
+        // User only supplied one, Settings didn't know to convert to array for us,
+        // so we add just the one incoming value as string
+        pluginUrls.push(customPlugins);
+      }
     }
 
-    return pluginUrls;
+    if (plugins) {
+      // Incoming type is an Array already, add each of them
+      if (true === Array.isArray(plugins)) {
+        plugins
+          // Convert `index:SomePluginName` -> `SomePluginName`
+          // i.e., checkbox/radio lists from `Utils::Forms` will have
+          // value set as described, so we need just the plugin name to get the url
+          .map(invalidPluginData => invalidPluginData.split(':')[1])
+          .forEach(
+            // Iterate getting the full plugin path
+            pluginPath => pluginUrls.push(this.getPluginPath(pluginPath))
+          );
+      } else {
+        // User only supplied one, Settings didn't know to convert to array for us,
+        // so we add just the one incoming value as string
+        pluginUrls.push(plugins);
+      }
+    }
+
+    const retUrls: Set<string> = new Set();
+
+    // Default to `index.js` if a JS file isn't targeted
+    pluginUrls.forEach(pUrl => {
+      if (!pUrl) {
+        return;
+      }
+
+      const fileExtension = pUrl.split('.').pop();
+
+      if ('js' !== fileExtension) {
+        pUrl += '/index.js';
+      }
+
+      retUrls.add(pUrl);
+    });
+
+    return retUrls;
   }
 
-  private async importModules(pluginLoaders: PluginLoaders<PluginSettings>) {
-    const promises = pluginLoaders.map(async pluginUrl => await this.loadPluginInstance(pluginUrl));
+  private async importModules(
+    pluginLoaders: PluginLoaders<PluginSettings>
+  ): Promise<PluginImportResults<PluginSettings>> {
+    const promises: Promise<PluginInstance<PluginSettings> | undefined>[] = [];
+    pluginLoaders.forEach(async pluginUrl => promises.push(this.loadPluginInstance(pluginUrl)));
 
     return (
       (await Promise.allSettled(promises))
@@ -173,7 +200,7 @@ export class PluginManager<PluginSettings extends PluginSettingsBase>
       // If a Custom Theme is supplied, we'll expect it to be a full URL, otherwise we'll formulate a URL.
       // This allows us to ensure vite will not attempt to package the plugin on our behalf, and will truly
       //   import from a remote file.
-      const pluginLoad = await import(/* @vite-ignore */ `${pluginBaseUrl}/plugin.js`);
+      const pluginLoad = await import(/* @vite-ignore */ `${pluginBaseUrl}`);
       pluginClass = pluginLoad.default;
 
       if (!pluginClass) {
@@ -185,6 +212,7 @@ export class PluginManager<PluginSettings extends PluginSettingsBase>
       return pluginClass;
     } catch (err) {
       if (err instanceof TypeError) {
+        console.error(err);
         throw new Error(`Plugin does not exist at URL: ${pluginBaseUrl}`);
       } else if (err instanceof Error) {
         throw new Error(`Could not dynamically load Plugin:<br />${pluginBaseUrl}<br /><br />${err.message}`);
@@ -227,15 +255,7 @@ export class PluginManager<PluginSettings extends PluginSettingsBase>
 
       // Load Settings Schemas from Plugins
       try {
-        const injectedSettings = structuredClone(registration.settings);
-        injectedSettings?.values.push({
-          inputType: 'fieldgroup',
-          label: 'Plugin Metadata',
-          name: `pluginMetadata-${plugin.name}`,
-          values: this.getPluginMetaInputs(plugin, registration)
-        });
-
-        pluginRegistrar.registerSettings(injectedSettings);
+        await pluginRegistrar.registerSettings(plugin, registration);
       } catch (err) {
         importResults.bad.push(new Error(`Could not inject Settings Schema for Plugin: ${plugin.name}`));
       }
@@ -254,51 +274,17 @@ export class PluginManager<PluginSettings extends PluginSettingsBase>
         importResults.bad.push(new Error(`Could not Register Events for Plugin: ${plugin.name}`));
       }
 
+      // Register Templates from Plugins
+      try {
+        pluginRegistrar.registerTemplates(registration.templates);
+      } catch (err) {
+        importResults.bad.push(new Error(`Could not Register Templates for Plugin: ${plugin.name}`));
+      }
+
       // Load Styles from Plugins
       if (registration.stylesheet) {
         pluginRegistrar.registerStylesheet(registration.stylesheet.href);
       }
     }
-  }
-
-  getPluginMetaInputs(plugin: PluginInstance<PluginSettings>, registration: PluginRegistrationOptions): FormEntry[] {
-    return [
-      {
-        inputType: 'text',
-        name: ' ',
-        label: 'Name',
-        defaultValue: plugin.name
-      },
-      {
-        inputType: 'text',
-        name: ' ',
-        label: 'Version',
-        defaultValue: plugin.version
-      },
-      {
-        inputType: 'text',
-        name: ' ',
-        label: 'Priority',
-        defaultValue: plugin.priority || 'N/A'
-      },
-      {
-        inputType: 'text',
-        name: ' ',
-        label: 'Middleware Chain(s)',
-        defaultValue: registration.middlewares && Object.keys(registration.middlewares).join(', ')
-      },
-      {
-        inputType: 'text',
-        name: ' ',
-        label: 'Event(s) Listening',
-        defaultValue: registration.events?.receives && Object.keys(registration.events?.receives).join(', ')
-      },
-      {
-        inputType: 'text',
-        name: ' ',
-        label: 'Event(s) Sent',
-        defaultValue: registration.events?.sends && registration.events?.sends.join(', ')
-      }
-    ];
   }
 }

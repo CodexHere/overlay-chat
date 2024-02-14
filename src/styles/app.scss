@@ -44,7 +44,7 @@
     &.removing {
       position: absolute;
       z-index: -1;
-      animation: 2s remove-message linear forwards;
+      // animation: 2s remove-message linear forwards;
     }
 
     .leader {
@@ -80,6 +80,13 @@
     .message-emote {
       width: 5vmin;
     }
+  }
+}
+
+@keyframes noop {
+  from {
+  }
+  to {
   }
 }
 

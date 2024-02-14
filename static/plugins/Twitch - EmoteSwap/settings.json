@@ -1,0 +1,24 @@
+{
+  "inputType": "fieldgroup",
+  "label": "Twitch - EmoteSwap",
+  "values": [
+    {
+      "inputType": "arraygroup",
+      "label": "Client ID",
+      "name": "twitchEmoteSwap--clientId",
+      "description": "In order to retrieve a Client ID automatically, provide a Refresh Token for either the Streamer, or the Bot for the <code>Twitch - Chat</code> Plugin!",
+      "values": [
+        {
+          "name": "twitchEmoteSwap--clientId",
+          "inputType": "password",
+          "label": "Client ID"
+        },
+        {
+          "name": "btnGetClientId",
+          "inputType": "button",
+          "label": "Get Client ID"
+        }
+      ]
+    }
+  ]
+}

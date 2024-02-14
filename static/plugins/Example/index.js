@@ -1,13 +1,18 @@
 /**
  * @typedef {import('../../../src/scripts/types/Plugin.js').PluginSettingsBase} PluginSettingsBase
  * @typedef {Object} PluginSettings_Extra
- * @property {string} exampleSettings
+ * @property {string} example--addText
+ * @property {boolean} example--showErrorAtRuntime
+ * @property {boolean} example--showInfoAtRuntime
+ * @property {string} example--showInfoAtRuntime-message
+ * @property {boolean} example--sendMessageAtRuntime
+ * @property {string} example--sendMessageAtRuntime-message
  * @typedef {PluginSettings_Extra & PluginSettingsBase} PluginSettings
  *
  * @typedef {import('../../../src/scripts/Plugin_Core.js').MiddewareContext_Chat} ConcreteContext
  * @typedef {Partial<ConcreteContext>} Context
  * @typedef {import('../../../src/scripts/utils/Forms.js').FormEntryGrouping} FormEntryFieldGroup
- * @typedef {import('../../../src/scripts/types/Managers.js').SettingsValidatorResults<PluginSettings>} SettingsValidatorResults
+ * @typedef {import('../../../src/scripts/utils/Forms.js').FormValidatorResults<PluginSettings>} SettingsValidatorResults
  * @typedef {import('../../../src/scripts/types/Managers.js').BusManagerContext_Init<{}>} BusManagerContext_Init
  * @typedef {import('../../../src/scripts/types/Middleware.js').PluginMiddlewareMap} PluginMiddlewareMap
  * @typedef {import('../../../src/scripts/types/Plugin.js').PluginEventRegistration} PluginEventMap
@@ -15,7 +20,11 @@
  * @typedef {import('../../../src/scripts/types/Plugin.js').PluginInstance<PluginSettings>} PluginInstance
  * @typedef {import('../../../src/scripts/types/Plugin.js').PluginRegistrationOptions} PluginRegistrationOptions
  * @typedef {import('../../../src/scripts/utils/Middleware.js').Next<Context>} Next
- *
+ */
+
+const BaseUrl = () => import.meta.url.split('/').slice(0, -1).join('/');
+
+/**
  * @implements {PluginInstance}
  */
 export default class Plugin_Example {
@@ -37,32 +46,11 @@ export default class Plugin_Example {
    * @returns {PluginRegistrationOptions}
    */
   registerPlugin = () => ({
-    settings: this._getSettings(),
+    settings: new URL(`${BaseUrl()}/settings.json`),
     middlewares: this._getMiddleware(),
     events: this._getEvents(),
-    stylesheet: new URL(`${import.meta.url.split('/').slice(0, -1).join('/')}/plugin.css`)
+    stylesheet: new URL(`${BaseUrl()}/plugin.css`)
   });
-
-  /**
-   * @returns {FormEntryFieldGroup}
-   */
-  _getSettings() {
-    console.log(`[${this.name}] [_getSettings]`);
-
-    return {
-      inputType: 'fieldgroup',
-      label: this.name,
-      name: this.name.toLocaleLowerCase().replaceAll(' ', '_'),
-      values: [
-        {
-          name: 'exampleSettings',
-          label: 'Add Text',
-          inputType: 'text',
-          tooltip: 'If this value is set, it will add it to the end of the chat message!'
-        }
-      ]
-    };
-  }
 
   /**
    * @returns {PluginMiddlewareMap}
@@ -131,8 +119,8 @@ export default class Plugin_Example {
     context.message += ' [MW 1 Exec] ';
 
     const settings = this.options.getSettings();
-    if (settings.exampleSettings) {
-      context.message += `[${settings.exampleSettings}] `;
+    if (settings['example--addText']) {
+      context.message += `[${settings['example--addText']}] `;
     }
 
     await next();
@@ -156,8 +144,8 @@ export default class Plugin_Example {
     context.message += ' [MW 2 Exec] ';
 
     const settings = this.options.getSettings();
-    if (settings.exampleSettings) {
-      context.message += `[${settings.exampleSettings}] `;
+    if (settings['example--addText']) {
+      context.message += `[${settings['example--addText']}] `;
     }
 
     await next();
@@ -180,8 +168,8 @@ export default class Plugin_Example {
     context.message += ' [MW 3 Exec] ';
 
     const settings = this.options.getSettings();
-    if (settings.exampleSettings) {
-      context.message += `[${settings.exampleSettings}] `;
+    if (settings['example--addText']) {
+      context.message += `[${settings['example--addText']}] `;
     }
 
     await next();
@@ -207,7 +195,7 @@ export default class Plugin_Example {
     console.log('[MW 5] - Next Error');
 
     if (context.message?.includes('nextError')) {
-      console.log('[MW 5] - Next Error - Skipping the rest of Link');
+      console.log('[MW 5] - Next Error - Skipping the rest of Chain');
       await next(new Error('Not Skippable Error'));
       return;
     }
@@ -217,8 +205,8 @@ export default class Plugin_Example {
     context.message += ' [MW 5] ';
 
     const settings = this.options.getSettings();
-    if (settings.exampleSettings) {
-      context.message += `[${settings.exampleSettings}] `;
+    if (settings['example--addText']) {
+      context.message += `[${settings['example--addText']}] `;
     }
 
     await next();
@@ -231,7 +219,7 @@ export default class Plugin_Example {
     console.log('[MW 6] - Throw Error');
 
     if (context.message?.includes('throwError')) {
-      console.log('[MW 6] - Throw Error - Skipping the rest of Link');
+      console.log('[MW 6] - Throw Error - Skipping the rest of Chain');
       throw new Error('Not Skippable Error');
     }
 
@@ -240,8 +228,8 @@ export default class Plugin_Example {
     context.message += ' [MW 6] ';
 
     const settings = this.options.getSettings();
-    if (settings.exampleSettings) {
-      context.message += `[${settings.exampleSettings}] `;
+    if (settings['example--addText']) {
+      context.message += `[${settings['example--addText']}] `;
     }
 
     await next();
@@ -266,6 +254,20 @@ export default class Plugin_Example {
     const val = this.options.emitter.call('test-event', ['Some Test Value'], { foo: true, bar: false });
     console.log(`[${this.name}] Event Output:`, val);
 
+    const btn = document.querySelector('[name="example--btnExample"]');
+    btn?.addEventListener('click', event => {
+      event.stopImmediatePropagation();
+      event.preventDefault();
+      const txt = btn.closest('[data-input-type="arraygroup"]')?.querySelector('[name="example--txtExample"]');
+      /** @type {HTMLInputElement} */
+      (btn).disabled = true;
+      if (txt instanceof HTMLInputElement) {
+        txt.value = 'Hello from the Plugin!';
+      }
+    });
+
+    //TODO: Look into this
+    return;
     // This should error, since this isn't the first plugin to register the chain
     setTimeout(() => {
       /** @type {BusManagerContext_Init} */
@@ -294,18 +296,49 @@ export default class Plugin_Example {
     console.log(`[${this.name}] [renderApp]`);
 
     setTimeout(() => {
-      // Shows an error to the user as an example
-      console.warn(`[${this.name}] Show an error to the user`);
-      this.options.errorDisplay.showError(new Error('This error should be shown to the user!'));
+      const settings = this.options.getSettings();
 
-      console.log('Sending Messages to Chat');
-      this.options.emitter.emit('chat:twitch:sendMessage', '[from Bot] Hello from HangoutHere Theme!');
-      this.options.emitter.emit('chat:twitch:sendMessage', '[from Streamer] Hello from HangoutHere Theme!', 'streamer');
+      if (true === settings['example--showErrorAtRuntime']) {
+        // Shows an error to the user as an example
+        console.warn(`[${this.name}] Show an error to the user`);
+        this.options.errorDisplay.showError(new Error('This error should be shown to the user!'));
+      }
+
+      if (true === settings['example--showInfoAtRuntime']) {
+        // Shows an error to the user as an example
+        console.warn(`[${this.name}] Show an error to the user`);
+        this.options.errorDisplay.showInfo(
+          `Your Message: ${settings['example--showInfoAtRuntime-message']}`,
+          'Custom Info Alert Coming At Ya!'
+        );
+      }
+
+      if (settings['example--sendMessageAtRuntime']) {
+        try {
+          console.log('Sending Messages to Chat');
+          this.options.emitter.emit(
+            'chat:twitch:sendMessage',
+            '[from Bot if available] ' + settings['example--sendMessageAtRuntime-message']
+          );
+          this.options.emitter.emit(
+            'chat:twitch:sendMessage',
+            '[from Streamer if available] ' + settings['example--sendMessageAtRuntime-message'],
+            'streamer'
+          );
+        } catch (err) {
+          const errInst = /** @type {Error} */ (/** @type {unknown} */ err);
+          this.options.errorDisplay.showError(errInst);
+        }
+      }
 
       const hasAuth = this.options.emitter.call('chat:twitch:hasAuth').slice(-1)[0];
-      this.options.errorDisplay.showError(
-        new Error(`Do we have auth?<br/>* Streamer: ${hasAuth.streamer}<br/>* Bot: ${hasAuth.bot}`)
-      );
+      console.log('Checking Auth Values', hasAuth);
+      if (hasAuth) {
+        this.options.errorDisplay.showInfo(
+          `* Streamer: ${hasAuth.streamer}<br/>* Bot: ${hasAuth.bot}`,
+          'Do we have auth?'
+        );
+      }
     }, 3000);
   }
 }
