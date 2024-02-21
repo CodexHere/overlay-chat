@@ -4,7 +4,7 @@ import * as Forms from '../utils/Forms.js';
 import { GetLocalStorageItem, SetLocalStorageItem } from '../utils/LocalStorage.js';
 import { RenderTemplate } from '../utils/Templating.js';
 import * as URI from '../utils/URI.js';
-import { RemoveArrayIndex, debounce } from '../utils/misc.js';
+import { debounce } from '../utils/misc.js';
 
 type ElementMap = {
   form: HTMLFormElement;
@@ -27,6 +27,9 @@ const isScrollTTYExpired = () => {
 };
 
 const instanceId = new Date().getTime();
+const indexRegExp = new RegExp(/(.*)\[\d*\]$/);
+
+const RemoveArrayIndex = (paramName: string) => paramName.replace(indexRegExp, '$1');
 
 export class SettingsRenderer<PluginSettings extends PluginSettingsBase> implements RendererInstance {
   private _onSettingsChanged: (event: Event) => Promise<void>;

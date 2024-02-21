@@ -2,7 +2,7 @@ import { BusManagerContext_Init, BusManagerEmitter, BusManagerEvents } from '../
 import { PluginMiddlewareMap } from '../types/Middleware.js';
 import { PluginEventMap, PluginInstance, PluginSettingsBase } from '../types/Plugin.js';
 import { EnhancedEventEmitter } from '../utils/EnhancedEventEmitter.js';
-import { Middleware, MiddlewareChain } from '../utils/Middleware.js';
+import { MiddlewareChain, MiddlewareLink } from '../utils/Middleware.js';
 
 function isSilentlyFailChainError(err: unknown): err is SilentlyFailChainError {
   if (!err || false === err instanceof Error) {
@@ -122,7 +122,7 @@ export class BusManager<PluginSettings extends PluginSettingsBase> {
     }
   };
 
-  private errorMiddleware: Middleware<{}> = async (_ctx, next, err) => {
+  private errorMiddleware: MiddlewareLink<{}> = async (_ctx, next, err) => {
     if (err) {
       throw err;
     } else {

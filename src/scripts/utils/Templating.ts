@@ -1,7 +1,17 @@
 import Handlebars from 'handlebars';
 
+/**
+ * Mapping of a `templateId` -> `HandlebarsTemplateDelegate` Function.
+ *
+ * @typeParam TemplateIDs - Union Type of accepted `TemplateIDs`.
+ */
 export type TemplateMap<TemplateIDs extends string> = Record<TemplateIDs, HandlebarsTemplateDelegate<any>>;
 
+/**
+ * Generate a `TemplateMap` from a string of HTML Template Tags.
+ *
+ * @param templateData - HTML as a string, containing `<template>` tags to build a `TemplateMap`.
+ */
 export const BuildTemplateMap = async <TemplateIDs extends string>(templateData: string) => {
   const DomParser = new DOMParser();
   const newDocument = DomParser.parseFromString(templateData, 'text/html');
@@ -15,10 +25,26 @@ export const BuildTemplateMap = async <TemplateIDs extends string>(templateData:
   return templateMap;
 };
 
-export const PrepareTemplate = (templateElement: HTMLElement) =>
+/**
+ * Compiles an HTML Template Element into a `HandlebarsTemplateDelegate` Function.
+ *
+ * @param templateElement - HTML Element to derive the Template contents.
+ */
+export const PrepareTemplate = (templateElement: HTMLTemplateElement) =>
   Handlebars.compile(templateElement.innerHTML, { noEscape: true });
 
-export const RenderTemplate = (container: HTMLElement, template: Handlebars.TemplateDelegate, data = {}) => {
+/**
+ * Renders a Template to a Container with given Data for template tokenizing.
+ *
+ * @param container - Element that the generated content should be inserted into.
+ * @param template - The {@link https://github.com/handlebars-lang/handlebars.js/blob/master/types/index.d.ts#L24 | `TemplateDelegate`} that we want to generate to HTML.
+ * @param data - The object to inject into the Template for runtime tokenizing.
+ */
+export const RenderTemplate = (
+  container: HTMLElement,
+  template: Handlebars.TemplateDelegate,
+  data: Record<string, any> = {}
+) => {
   if (!template) {
     return;
   }

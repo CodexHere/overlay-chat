@@ -1,0 +1,11 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+
+  "entryPoints": ["./src/scripts"],
+  "out": "docs",
+
+  "entryPointStrategy": "expand",
+
+  "plugin": ["@mxssfd/typedoc-theme"],
+  "theme": "my-theme"
+}

@@ -1,4 +1,5 @@
+-j build
 -P ubuntu-latest=catthehacker/ubuntu:act-latest
---var-file=.env
---secret-file=.env
+--var-file .env
+--secret-file .env
 # --insecure-secrets

@@ -1,3 +1,3 @@
-import { Middleware } from '../utils/Middleware.js';
+import { MiddlewareLink } from '../utils/Middleware.js';
 
-export type PluginMiddlewareMap = Record<string, Middleware<{}>[]>;
+export type PluginMiddlewareMap = Record<string, MiddlewareLink<{}>[]>;

@@ -12,7 +12,7 @@ import {
 } from './types/Plugin.js';
 import { IsInViewPort } from './utils/DOM.js';
 import { FormValidatorResult, FormValidatorResults } from './utils/Forms.js';
-import { Middleware } from './utils/Middleware.js';
+import { MiddlewareLink } from './utils/Middleware.js';
 import { RenderTemplate } from './utils/Templating.js';
 import { BaseUrl } from './utils/URI.js';
 
@@ -104,7 +104,7 @@ export default class Plugin_Core<PluginSettings extends AppSettings_Chat> implem
     return this.options.emitter.emit(BusManagerEvents.MIDDLEWARE_EXECUTE, initCtx);
   };
 
-  middleware: Middleware<Context> = async (context, next) => {
+  middleware: MiddlewareLink<Context> = async (context, next) => {
     // Wait for Middleware chance to execute
     await next();
 

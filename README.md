@@ -134,3 +134,15 @@
   * Send message welcoming viewer
 * History Plugin:
   * Stores chats in localStorage to be retrieved on load, so chat isn't empty on first load
+
+
+## NOTES:
+
+Artifacts Token:
+
+```
+ACTIONS_RUNTIME_TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbiI6dHJ1ZSwic2NwIjoiQWN0aW9ucy5FeGFtcGxlU2NvcGUgQWN0aW9ucy5SZXN1bHRzOmFhYTpiYmIifQ.Byr9QP7Pg1c_P2grEkyHDrG2XdPspFCPvSThK9egAqw
+AUTH_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbiI6dHJ1ZSwic2NwIjoiQWN0aW9ucy5FeGFtcGxlU2NvcGUgQWN0aW9ucy5SZXN1bHRzOmFhYTpiYmIifQ.Byr9QP7Pg1c_P2grEkyHDrG2XdPspFCPvSThK9egAqw
+
+# JWT Generation: https://jwt.io/#debugger-io?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbiI6dHJ1ZSwic2NwIjoiQWN0aW9ucy5FeGFtcGxlU2NvcGUgQWN0aW9ucy5SZXN1bHRzOmFhYTpiYmIifQ.Byr9QP7Pg1c_P2grEkyHDrG2XdPspFCPvSThK9egAqw
+```

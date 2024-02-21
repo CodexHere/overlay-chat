@@ -1,9 +1,20 @@
+/**
+ * Helpers for Serializing and Deserializing JSON <-> URI String
+ *
+ * @module
+ */
+
 import set from 'lodash.set';
 import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from 'lz-string';
 import { BOOLEAN_FALSES, BOOLEAN_TRUES, IsValidValue } from './misc.js';
 
+/**
+ * Default parameters that should always exist in the Query String for this Module to properly operate.
+ */
 export type DefaultQueryString = {
+  /** Tells the [De]Serializing process whether to handle I/O as URI, or a Compressed String */
   format?: 'compressed' | 'uri';
+  /** If `format` is `compressed` then this should hold the compressed content. */
   data?: string;
 };
 
