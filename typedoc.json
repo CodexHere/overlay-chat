@@ -5,7 +5,7 @@
   "out": "docs",
 
   "entryPointStrategy": "expand",
-
+  "includeVersion": true,
   "plugin": ["@mxssfd/typedoc-theme"],
   "theme": "my-theme"
 }

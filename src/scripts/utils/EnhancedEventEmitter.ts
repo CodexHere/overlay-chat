@@ -1,8 +1,12 @@
+/**
+ * A slightly hacky/modified version of the EventEmitter!
+ *
+ * @module
+ */
+
 import { EventEmitter, Listener } from 'events';
 
 /**
- * EnhancedEventEmitter
- *
  * A slightly hacky/modified version of the EventEmitter!
  *
  * Essentially, the class will keep track of the callback return values (if any) associated

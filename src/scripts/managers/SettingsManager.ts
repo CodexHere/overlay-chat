@@ -26,10 +26,6 @@ export class SettingsManager<PluginSettings extends PluginSettingsBase> {
     return structuredClone(this._settings);
   };
 
-  getUnmaskedSettings = (): PluginSettings => {
-    return this.toggleMaskSettings(this.getSettings(), false);
-  };
-
   getMaskedSettings = (): PluginSettings => {
     return this.toggleMaskSettings(this.getSettings(), true);
   };
@@ -106,7 +102,7 @@ export class SettingsManager<PluginSettings extends PluginSettingsBase> {
         inputType: 'text',
         name: ' ',
         label: 'Event(s) Listening',
-        defaultValue: registration.events?.receives && Object.keys(registration.events?.receives).join(', ')
+        defaultValue: registration.events?.recieves && Object.keys(registration.events?.recieves).join(', ')
       },
       {
         inputType: 'text',

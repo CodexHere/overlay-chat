@@ -269,7 +269,7 @@ export class PluginManager<PluginSettings extends PluginSettingsBase>
 
       // Register Events from Plugins
       try {
-        pluginRegistrar.registerEvents(plugin, registration.events?.receives);
+        pluginRegistrar.registerEvents(plugin, registration.events?.recieves);
       } catch (err) {
         importResults.bad.push(new Error(`Could not Register Events for Plugin: ${plugin.name}`));
       }
@@ -283,7 +283,7 @@ export class PluginManager<PluginSettings extends PluginSettingsBase>
 
       // Load Styles from Plugins
       if (registration.stylesheet) {
-        pluginRegistrar.registerStylesheet(registration.stylesheet.href);
+        pluginRegistrar.registerStylesheet(registration.stylesheet);
       }
     }
   }

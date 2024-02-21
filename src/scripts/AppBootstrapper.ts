@@ -4,19 +4,19 @@ import { SettingsManager } from './managers/SettingsManager.js';
 import { TemplateManager, TemplatesBase } from './managers/TemplateManager.js';
 import { AppRenderer } from './renderers/AppRenderer.js';
 import { SettingsRenderer } from './renderers/SettingsRenderer.js';
-import { BootstrapOptions, DisplayManager, PluginManagerEmitter, PluginManagerEvents } from './types/Managers.js';
+import { AppBootstrapperOptions, DisplayManager, PluginManagerEmitter, PluginManagerEvents } from './types/Managers.js';
 import { PluginImportResults, PluginSettingsBase } from './types/Plugin.js';
 import { RendererConstructor, RendererInstance } from './types/Renderers.js';
 import { AddStylesheet } from './utils/DOM.js';
 import { RenderTemplate } from './utils/Templating.js';
 
-export default class Bootstrapper<PluginSettings extends PluginSettingsBase> implements DisplayManager {
+export class AppBootstrapper<PluginSettings extends PluginSettingsBase> implements DisplayManager {
   busManager?: BusManager<PluginSettings>;
   settingsManager?: SettingsManager<PluginSettings>;
   pluginManager?: PluginManagerEmitter<PluginSettings>;
   templateManager?: TemplateManager;
 
-  constructor(public bootstrapOptions: BootstrapOptions<PluginSettings>) {}
+  constructor(public bootstrapOptions: AppBootstrapperOptions<PluginSettings>) {}
 
   async init() {
     try {
@@ -91,7 +91,6 @@ export default class Bootstrapper<PluginSettings extends PluginSettingsBase> imp
       getTemplates: this.templateManager!.getTemplates,
       getSettings: this.settingsManager!.getSettings,
       setSettings: this.settingsManager!.setSettings,
-      getUnmaskedSettings: this.settingsManager!.getUnmaskedSettings,
       getMaskedSettings: this.settingsManager!.getMaskedSettings,
       getParsedJsonResults: this.settingsManager!.getParsedJsonResults,
       getPlugins: this.pluginManager!.getPlugins,

@@ -1,6 +1,11 @@
+/**
+ * Busmanager
+ *
+ * @module
+ */
+
 import { BusManagerContext_Init, BusManagerEmitter, BusManagerEvents } from '../types/Managers.js';
-import { PluginMiddlewareMap } from '../types/Middleware.js';
-import { PluginEventMap, PluginInstance, PluginSettingsBase } from '../types/Plugin.js';
+import { PluginEventMap, PluginInstance, PluginMiddlewareMap, PluginSettingsBase } from '../types/Plugin.js';
 import { EnhancedEventEmitter } from '../utils/EnhancedEventEmitter.js';
 import { MiddlewareChain, MiddlewareLink } from '../utils/Middleware.js';
 
@@ -27,6 +32,9 @@ export class SilentlyFailChainError extends Error {
   }
 }
 
+/**
+ * Manages MiddlewareChain and Event Buses.
+ */
 export class BusManager<PluginSettings extends PluginSettingsBase> {
   private chainPluginMap: Map<MiddlewareChain<{}>, Symbol> = new Map();
   private chains: Map<string, MiddlewareChain<{}>> = new Map();

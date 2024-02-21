@@ -2,8 +2,16 @@
 
 ## TODO
 
+
 * Look at Plugins' `#updateSettingsUI` and do UX behaviors on Form input event!
 * Heavily Document everything
+  * Left `Forms` undocumented, because we're considering a rewrite.
+* Refactor:
+  * Forms - should use clases to generate output, consider design patterns (Builder, Visitor)
+  * PluginOptions - rename to PluginServices
+  * PluginContext - PluginRegistrar, and PluginServices
+    * Needs rendererType: 'app' | 'settings'
+  * PluginConstructor - needs to take in PluginContext
 * Create some cool examples:
   * renderSettings, listen to click of button, show error
     * This should replace the timeout errors

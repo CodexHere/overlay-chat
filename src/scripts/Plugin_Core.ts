@@ -2,10 +2,10 @@ import Splitting from 'splitting';
 import tmiJs from 'tmi.js';
 import { TemplatesBase } from './managers/TemplateManager.js';
 import { BusManagerContext_Init, BusManagerEvents } from './types/Managers.js';
-import { PluginMiddlewareMap } from './types/Middleware.js';
 import {
   PluginEventRegistration,
   PluginInstance,
+  PluginMiddlewareMap,
   PluginOptions,
   PluginRegistrationOptions,
   PluginSettingsBase
@@ -75,7 +75,7 @@ export default class Plugin_Core<PluginSettings extends AppSettings_Chat> implem
   });
 
   private _getEvents = (): PluginEventRegistration => ({
-    receives: {
+    recieves: {
       'chat:twitch:onMessage': this._onMessage
     },
     sends: [BusManagerEvents.MIDDLEWARE_EXECUTE]

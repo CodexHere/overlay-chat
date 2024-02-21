@@ -1,4 +1,10 @@
 /**
+ * Middleware Chain and Link implementations for handling in-order operations
+ *
+ * @module
+ */
+
+/**
  * Next Function injected into each Middleware Link.
  *
  * @typeParam Context - Contextual State passed from Link to Link.

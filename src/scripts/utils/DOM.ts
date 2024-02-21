@@ -9,12 +9,12 @@
  *
  * @param href - URL to Stylesheet.
  */
-export const AddStylesheet = (href: string) => {
+export const AddStylesheet = (href: string | URL) => {
   const head = globalThis.document.getElementsByTagName('head')[0];
   const link = globalThis.document.createElement('link');
   link.rel = 'stylesheet';
   link.type = 'text/css';
-  link.href = href;
+  link.href = href instanceof URL ? href.href : href;
   link.setAttribute('data-plugin', 'true');
 
   head.appendChild(link);
