@@ -1,6 +1,6 @@
 import Splitting from 'splitting';
 import tmiJs from 'tmi.js';
-import { TemplatesBase } from './managers/TemplateManager.js';
+import { TemplateIDsBase } from './managers/TemplateManager.js';
 import { BusManagerContext_Init, BusManagerEvents } from './types/Managers.js';
 import {
   PluginEventRegistration,
@@ -34,7 +34,7 @@ type ElementMap = {
   container: HTMLElement;
 };
 
-type TemplateIDs = TemplatesBase | 'chat-message';
+type TemplateIDs = TemplateIDsBase | 'chat-message';
 
 export default class Plugin_Core<PluginSettings extends AppSettings_Chat> implements PluginInstance<PluginSettings> {
   name = 'Core Plugin';

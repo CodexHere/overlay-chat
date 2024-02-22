@@ -258,7 +258,6 @@ export default class TwitchChat {
 
   /**
    * @param {*} create
-   * @returns
    */
   async waitForAuth(create) {
     const start = new Date().getTime();

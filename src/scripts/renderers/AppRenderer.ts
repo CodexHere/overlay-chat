@@ -2,15 +2,33 @@ import { PluginInstances, PluginSettingsBase } from '../types/Plugin.js';
 import { RendererInstance, RendererInstanceOptions } from '../types/Renderers.js';
 import { RenderTemplate } from '../utils/Templating.js';
 
+/**
+ * Elements we know about in this {@link RendererInstance | `RendererInstance`}.
+ */
 type ElementMap = {
   'show-settings': HTMLElement;
 };
 
+/**
+ * Renderer for displaying the Application, handling Plugin Configuration, allowing advanced DOM manipulation, etc.
+ *
+ * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
+ */
 export class AppRenderer<PluginSettings extends PluginSettingsBase> implements RendererInstance {
+  /** Local `ElementMap` mapping name -> Element the {@link RendererInstance | `RendererInstance`} needs to access. */
   private elements: ElementMap = {} as ElementMap;
 
+  /**
+   * Create a new {@link AppRenderer | `AppRenderer`}.
+   *
+   * @param options Incoming Options for this Renderer.
+   * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
+   */
   constructor(private options: RendererInstanceOptions<PluginSettings>) {}
 
+  /**
+   * Initialize the Renderer, kicking off the Lifecycle.
+   */
   async init() {
     const plugins = this.options.getPlugins();
 
@@ -23,10 +41,17 @@ export class AppRenderer<PluginSettings extends PluginSettingsBase> implements R
     this.bindEvents();
   }
 
+  /**
+   * Custom Initialization for this Renderer that doesn't fit into other Lifecycle methods.
+   */
   private subInit() {
     this.injectSettingsIntoCSS();
   }
 
+  /**
+   * The actual Renderer for the Application.
+   * Builds/Injects base template for the Renderer.
+   */
   private renderApp() {
     const rootContainer = globalThis.document.body.querySelector('#root') as HTMLElement;
     const { app: appTemplate } = this.options.getTemplates();
@@ -40,6 +65,13 @@ export class AppRenderer<PluginSettings extends PluginSettingsBase> implements R
     RenderTemplate(rootContainer, appTemplate);
   }
 
+  /**
+   * Iterates over all currently known Registered Plugins and calls `renderApp` to allow it to
+   * do it's own manipulation of the DOM/Settings/etc.
+   *
+   * @param plugins Currently known Registered Plugins.
+   * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
+   */
   private renderPluginApp(plugins: PluginInstances<PluginSettings>) {
     // Iterate over every loaded plugin, and call `renderApp` to manipulate the App view
     plugins.forEach(plugin => {
@@ -55,6 +87,9 @@ export class AppRenderer<PluginSettings extends PluginSettingsBase> implements R
     });
   }
 
+  /**
+   * Build the Local `ElementMap` this {@link RendererInstance | `RendererInstance`} needs to access.
+   */
   private buildElementMap() {
     const body = globalThis.document.body;
 
@@ -62,12 +97,20 @@ export class AppRenderer<PluginSettings extends PluginSettingsBase> implements R
     this.elements['show-settings'] = body.querySelector('#show-settings')!;
   }
 
+  /**
+   * Bind/Add Events we need to listen to for UX, Settings Validation, etc.
+   */
   private bindEvents() {
     this.elements['show-settings'].addEventListener('click', () => {
       globalThis.location.href += `&forceShowSettings=true`;
     });
   }
 
+  /**
+   * Injects all Settings Names/Values into CSS as keys in the `document.style` value.
+   *
+   * This is a quick and dirty way of getting a lot of great functionality in CSS from Settings.
+   */
   private injectSettingsIntoCSS() {
     const style = globalThis.document.documentElement.style;
     const settings = this.options.getMaskedSettings();

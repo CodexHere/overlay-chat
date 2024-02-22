@@ -1,7 +1,7 @@
 import { BusManager } from './managers/BusManager.js';
 import { PluginManager } from './managers/PluginManager.js';
 import { SettingsManager } from './managers/SettingsManager.js';
-import { TemplateManager, TemplatesBase } from './managers/TemplateManager.js';
+import { TemplateIDsBase, TemplateManager } from './managers/TemplateManager.js';
 import { AppRenderer } from './renderers/AppRenderer.js';
 import { SettingsRenderer } from './renderers/SettingsRenderer.js';
 import { AppBootstrapperOptions, DisplayManager, PluginManagerEmitter, PluginManagerEvents } from './types/Managers.js';
@@ -124,7 +124,7 @@ export class AppBootstrapper<PluginSettings extends PluginSettingsBase> implemen
 
   showInfo = (message: string, title?: string | undefined): void => {
     const body = globalThis.document.body;
-    const templates = this.templateManager?.getTemplates<TemplatesBase>()!;
+    const templates = this.templateManager?.getTemplates<TemplateIDsBase>()!;
 
     RenderTemplate(body, templates.modalMessage, {
       title: title ?? 'Information',
@@ -148,7 +148,7 @@ export class AppBootstrapper<PluginSettings extends PluginSettingsBase> implemen
 
     err.forEach(console.error);
 
-    const templates = this.templateManager?.getTemplates<TemplatesBase>()!;
+    const templates = this.templateManager?.getTemplates<TemplateIDsBase>()!;
 
     RenderTemplate(body, templates.modalMessage, {
       title: 'There was an Error',

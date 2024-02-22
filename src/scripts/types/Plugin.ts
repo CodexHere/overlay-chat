@@ -31,7 +31,9 @@ export type PluginLoaders<PluginSettings extends PluginSettingsBase> = Set<strin
  * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
  */
 export type PluginImportResults<PluginSettings extends PluginSettingsBase> = {
+  /** Plugins marked as imported successfully. */
   good: PluginInstance<PluginSettings>[];
+  /** Errors from failed attempts at importing Plugins. */
   bad: Error[];
 };
 

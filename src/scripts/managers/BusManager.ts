@@ -1,9 +1,3 @@
-/**
- * Busmanager
- *
- * @module
- */
-
 import { BusManagerContext_Init, BusManagerEmitter, BusManagerEvents } from '../types/Managers.js';
 import { PluginEventMap, PluginInstance, PluginMiddlewareMap, PluginSettingsBase } from '../types/Plugin.js';
 import { EnhancedEventEmitter } from '../utils/EnhancedEventEmitter.js';

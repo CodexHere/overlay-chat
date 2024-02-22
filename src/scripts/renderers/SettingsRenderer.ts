@@ -13,7 +13,7 @@ import * as URI from '../utils/URI.js';
 import { debounce } from '../utils/misc.js';
 
 /**
- * Elements we know about in the `SettingsRenderer`
+ * Elements we know about in this {@link RendererInstance | `RendererInstance`}.
  */
 type ElementMap = {
   form: HTMLFormElement;
@@ -55,7 +55,7 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
   private _onSettingsChanged: (event: Event) => Promise<void>;
   /** Handler for when the Settings Form is scrolled. */
   private _onFormScrolled: (event: Event) => void;
-  /** Local {@link ElementMap | `ElementMap``}` mapping name -> Element the {@link RendererInstance | `RendererInstance`} needs to access. */
+  /** Local `ElementMap` mapping name -> Element the {@link RendererInstance | `RendererInstance`} needs to access. */
   private elements: ElementMap = {} as ElementMap;
   /** Local Deserialized instance of the Settings Options Form data. */
   private settingsOptionsFormCache: PluginSettings = {} as PluginSettings;
@@ -70,7 +70,8 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
   /**
    * Create a new {@link SettingsRenderer | `SettingsRenderer`}.
    *
-   * @param options Incoming Options for this Renderer
+   * @param options Incoming Options for this Renderer.
+   * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
    */
   constructor(private options: RendererInstanceOptions<PluginSettings>) {
     this._onSettingsChanged = debounce(this.onSettingsChanged, 750);
@@ -473,7 +474,6 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
    * Event Handler for when the Settings Option Form changes.
    *
    * @param event - Event from Settings Option Input Element
-   * @returns
    */
   private onSettingsOptionClick = (event: Event) => {
     if (false === event.target instanceof HTMLButtonElement) {
@@ -518,7 +518,6 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
    * element for the Plugin Settings.
    *
    * @param event - Event from PluginJumper Element
-   * @returns
    */
   private onJumpPlugin(event: Event) {
     if (false === event.target instanceof HTMLSelectElement) {

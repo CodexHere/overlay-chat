@@ -1,3 +1,9 @@
+/**
+ * Manages the Application's Settings State
+ *
+ * @module
+ */
+
 import get from 'lodash.get';
 import set from 'lodash.set';
 import { PluginInstance, PluginRegistrationOptions, PluginSettingsBase } from '../types/Plugin.js';
@@ -5,14 +11,40 @@ import { FormEntry, FormEntryGrouping, FromJson, ParsedJsonResults } from '../ut
 import * as URI from '../utils/URI.js';
 import SettingsSchemaDefault from './schemaSettingsCore.json';
 
+/**
+ * Manages the Application's Settings State.
+ *
+ * This includes parsing from URI on `init`, and the ability to transform Settings to be
+ * Masked (aka, encrypted values for certain types).
+ *
+ * This class is also part of the {@link types/Plugin.PluginRegistrar | `PluginRegistrar`},
+ * providing various Registration points.
+ *
+ * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
+ */
 export class SettingsManager<PluginSettings extends PluginSettingsBase> {
-  private _parsedJsonResults: ParsedJsonResults | undefined;
+  /** Cached store of the parsed JSON results from the Settings Schema. */
+  private _parsedJsonResults?: ParsedJsonResults;
+  /** The Settings values, as the System currently sees them. */
   private _settings: PluginSettings = {} as PluginSettings;
+  /** The Settings Schema, as the System currently sees them. */
   private _settingsSchema: FormEntry[] = [];
+  /** The Default Settings Schema, when the System inits/resets. */
   private _settingsSchemaDefault: FormEntry[] = [];
 
+  /**
+   * Create a new {@link SettingsManager | `SettingsManager`}.
+   *
+   * @param locationHref - HREF URL containing possible URI Query Search Params as Settings.
+   * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
+   */
   constructor(private locationHref: string) {}
 
+  /**
+   * Initialize the Settings Manager, which will deserialize Settings from the Location HREF.
+   *
+   * > The settings will be unmasked once deserialized.
+   */
   async init() {
     const settings = URI.QueryStringToJson<PluginSettings>(this.locationHref);
     this._settings = this.toggleMaskSettings(settings, false);
@@ -22,14 +54,26 @@ export class SettingsManager<PluginSettings extends PluginSettingsBase> {
     this.resetSettingsSchema();
   }
 
+  /**
+   * Accessor Function for Settings
+   */
   getSettings = (): PluginSettings => {
     return structuredClone(this._settings);
   };
 
+  /**
+   * Accessor Function to retrieve the Settings masked.
+   */
   getMaskedSettings = (): PluginSettings => {
     return this.toggleMaskSettings(this.getSettings(), true);
   };
 
+  /**
+   * Action Function to Set Settings
+   *
+   * @param settings - Settings to store for the System.
+   * @param forceEncode - Whether or not to force encoding appropriate values.
+   */
   setSettings = (settings: PluginSettings, forceEncode: boolean = false) => {
     if (forceEncode) {
       this._settings = this.toggleMaskSettings(settings, true);
@@ -40,28 +84,40 @@ export class SettingsManager<PluginSettings extends PluginSettingsBase> {
     this.updateParsedJsonResults();
   };
 
-  getSettingsSchema(): Readonly<FormEntry[]> {
-    return structuredClone(this._settingsSchema);
-  }
-
+  /**
+   * Accessor Function to get the Parsed JSON Results of processing a {@link FormEntry | `FormEntry[]`}. */
   getParsedJsonResults = (): ParsedJsonResults | undefined => {
     return this._parsedJsonResults;
   };
 
+  /**
+   * Reset the Settings Schema to the default value.
+   *
+   * Generally this is only used when resetting the `PluginManager`.
+   */
   resetSettingsSchema() {
     this._settingsSchema = structuredClone(this._settingsSchemaDefault);
   }
 
+  /**
+   * Register a Settings Schema with the system.
+   *
+   * @param plugin - Instance of the Plugin to register against.
+   * @param registration - The Plugin Instance's Registration Options.
+   * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
+   */
   registerSettings = async (plugin: PluginInstance<PluginSettings>, registration?: PluginRegistrationOptions) => {
     if (!registration || !registration.settings) {
       return;
     }
 
+    // Load the Settings Schema file as JSON
     const fieldGroup: FormEntryGrouping = await (await fetch(registration.settings.href)).json();
-
+    // Enforce a `name` for the Plugin Settings as a named FieldGroup. This is for sanity sake later.
     fieldGroup.name = plugin.name.toLocaleLowerCase().replaceAll(' ', '_');
     fieldGroup.values = fieldGroup.values ?? [];
 
+    // Push a final FieldGroup into the values with Plugin Metadata
     fieldGroup.values.push({
       inputType: 'fieldgroup',
       label: 'Plugin Metadata',
@@ -72,7 +128,18 @@ export class SettingsManager<PluginSettings extends PluginSettingsBase> {
     this._settingsSchema.push(fieldGroup);
   };
 
-  getPluginMetaInputs(plugin: PluginInstance<PluginSettings>, registration: PluginRegistrationOptions): FormEntry[] {
+  /**
+   * Generate the Plugin Metadata {@link FormEntry | `FormEntry`} Settings Schema.
+   *
+   * > NOTE: This is mostly for displaying in Settings configurator.
+   *
+   * @param plugin - Instance of the Plugin to register against.
+   * @param registration - Registration object to garner metadata against
+   */
+  private getPluginMetaInputs(
+    plugin: PluginInstance<PluginSettings>,
+    registration: PluginRegistrationOptions
+  ): FormEntry[] {
     return [
       {
         inputType: 'text',
@@ -113,8 +180,14 @@ export class SettingsManager<PluginSettings extends PluginSettingsBase> {
     ];
   }
 
+  /**
+   * Update the cached Parsed JSON Results from parsing the Settings Schema.
+   *
+   * @param pluginsLoaded - Whether this was called after the Plugins were Loaded,
+   * versus initial startup.
+   */
   updateParsedJsonResults = (pluginsLoaded: boolean = false) => {
-    this._parsedJsonResults = FromJson(this.getSettingsSchema(), this._settings);
+    this._parsedJsonResults = FromJson(structuredClone(this._settingsSchema), this._settings);
 
     // Plugins just loaded, and we want to now use a fully parsedJsonResult
     // too unmask our settings correctly and completely
@@ -123,6 +196,12 @@ export class SettingsManager<PluginSettings extends PluginSettingsBase> {
     }
   };
 
+  /**
+   * Toggle masking particular Settings types by encoding their values.
+   *
+   * @param settings - Settings to mask or unmask.
+   * @param mask - Whether to mask or unmask.
+   */
   private toggleMaskSettings(settings: PluginSettings, mask: boolean) {
     const maskableEntries = {
       ...this._parsedJsonResults?.mapping?.password,

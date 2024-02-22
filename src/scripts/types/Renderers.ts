@@ -28,7 +28,12 @@ export type RendererInstanceOptions<PluginSettings extends PluginSettingsBase> =
   getTemplates: <TemplateIDs extends string>() => TemplateMap<TemplateIDs>;
   /** Accessor Function for Settings */
   getSettings: () => PluginSettings;
-  /** Action Function to Set Settings */
+  /**
+   * Action Function to Set Settings
+   *
+   * @param settings - Settings to store for the System.
+   * @param forceEncode - Whether or not to force encoding appropriate values.
+   */
   setSettings: (settings: PluginSettings, forceEncode?: boolean) => void;
   /** Accessor Function for Registered Plugins */
   getPlugins: () => PluginInstances<PluginSettings>;

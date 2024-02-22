@@ -14,9 +14,10 @@ import Handlebars from 'handlebars';
 export type TemplateMap<TemplateIDs extends string> = Record<TemplateIDs, HandlebarsTemplateDelegate<any>>;
 
 /**
- * Generate a `TemplateMap` from a string of HTML Template Tags.
+ * Generate a {@link TemplateMap | `TemplateMap`} from a string of HTML Template Tags.
  *
- * @param templateData - HTML as a string, containing `<template>` tags to build a `TemplateMap`.
+ * @param templateData - HTML as a string, containing `<template>` tags to build a {@link TemplateMap | `TemplateMap`}.
+ * @typeParam TemplateIDs - Union Type of accepted `TemplateIDs`.
  */
 export const BuildTemplateMap = async <TemplateIDs extends string>(templateData: string) => {
   const DomParser = new DOMParser();

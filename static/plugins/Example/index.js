@@ -95,7 +95,6 @@ export default class Plugin_Example {
   /**
    * @param {string[]} param1
    * @param {object} param2
-   * @returns
    */
   testEventHandler = (param1, param2) => {
     return `[${this.name}] TEST return call successfully (${param1.join(', ')}, ${JSON.stringify(param2)})`;
