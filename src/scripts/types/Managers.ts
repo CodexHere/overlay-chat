@@ -1,5 +1,5 @@
 /**
- * Types for all the `Manager` classes used throughout the application lifecycle
+ * Types for all the `Manager` classes used throughout the Application Lifecycle
  *
  * @module
  */
@@ -74,9 +74,9 @@ export type PluginManagerEmitter<PluginSettings extends PluginSettingsBase> = Pl
 // BusManager
 
 /**
- * When a Middleware Chain is executed, this special Context allows us to target
- * the name of the Chain, as well as define the initial context value, and mark the plugin as
- * initiating the execution request.
+ * When a Middleware Chain is executed, this special Context is used to initiate the hain, by
+ * targeting the name of the Chain. This structure also defines the initial context value, and
+ * mark the plugin as initiating the execution request.
  *
  * @typeParam Context - Shape of the Context State each Link recieves to mutate.
  */
@@ -87,14 +87,14 @@ export type BusManagerContext_Init<Context extends {}> = {
 };
 
 /**
- * Events that the {@link BusManager} Emits.
+ * Events that the {@link BusManager | `BusManager`} Emits.
  */
 export enum BusManagerEvents {
   MIDDLEWARE_EXECUTE = 'middleware-execute'
 }
 
 /**
- * Events that the {@link BusManager} Emits.
+ * Events that the {@link BusManager | `BusManager`} Emits.
  */
 export type BusManagerEmitter = EnhancedEventEmitter & {
   addListener(eventType: BusManagerEvents, listener: Listener): void;

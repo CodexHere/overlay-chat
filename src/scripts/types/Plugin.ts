@@ -36,7 +36,7 @@ export type PluginImportResults<PluginSettings extends PluginSettingsBase> = {
 };
 
 /**
- * Mapping of Middleware Chain Name to an array of Middleware Link handlers.
+ * Mapping of Middleware Chain Name to an array of Middleware Link Handlers.
  */
 export type PluginMiddlewareMap = Record<string, MiddlewareLink<{}>[]>;
 

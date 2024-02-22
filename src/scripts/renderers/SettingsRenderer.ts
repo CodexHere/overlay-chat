@@ -1,3 +1,9 @@
+/**
+ * Renderer for Settings portion of the Application
+ *
+ * @module
+ */
+
 import { PluginInstances, PluginSettingsBase } from '../types/Plugin.js';
 import { RendererInstance, RendererInstanceOptions } from '../types/Renderers.js';
 import * as Forms from '../utils/Forms.js';
@@ -6,6 +12,9 @@ import { RenderTemplate } from '../utils/Templating.js';
 import * as URI from '../utils/URI.js';
 import { debounce } from '../utils/misc.js';
 
+/**
+ * Elements we know about in the `SettingsRenderer`
+ */
 type ElementMap = {
   form: HTMLFormElement;
   'form-options': HTMLFormElement;
@@ -13,11 +22,14 @@ type ElementMap = {
   'link-results-output': HTMLTextAreaElement;
 };
 
-// These settings should restart the PluginManager
-const settingsShouldRetartPluginManager = ['plugins', 'customPlugins'];
+// Changes to these Settings properties should restart the PluginManager
+const settingShouldRestartPluginManager = ['plugins', 'customPlugins'];
+// These combos of tags are used to identify Details Elements
 const detailsTagTypes = ['DETAILS:', 'SUMMARY:', 'DIV:label-wrapper'];
 
+// After this TTY, no longer "resume" scroll value
 const ScrollTTY = 20; // in seconds
+// Helper to evaluate whether the ScrolTTY has Expired
 const isScrollTTYExpired = () => {
   const lastScrolledAt = Number(GetLocalStorageItem('lastScrolledAt') || 0);
   const now = new Date().getTime();
@@ -26,23 +38,48 @@ const isScrollTTYExpired = () => {
   return elapsed >= ScrollTTY * 1000;
 };
 
+// Unique ID created on load of this file. This is a re-use/busting ID for the "New Window" feature.
 const instanceId = new Date().getTime();
+// RegEx to find array-like index naming (i.e., `myObj[1]` would match).
 const indexRegExp = new RegExp(/(.*)\[\d*\]$/);
-
+// Remove the array-like index naming from a parameter name (i.e., `myObj[1]` -> `myObj`).
 const RemoveArrayIndex = (paramName: string) => paramName.replace(indexRegExp, '$1');
 
+/**
+ * Renderer for displaying Settings, handling Plugin Configuration, allowing advanced configuration, etc.
+ *
+ * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
+ */
 export class SettingsRenderer<PluginSettings extends PluginSettingsBase> implements RendererInstance {
+  /** Debounced Handler called any of the Settings Form inputs are changed. */
   private _onSettingsChanged: (event: Event) => Promise<void>;
+  /** Handler for when the Settings Form is scrolled. */
   private _onFormScrolled: (event: Event) => void;
-
+  /** Local {@link ElementMap | `ElementMap``}` mapping name -> Element the {@link RendererInstance | `RendererInstance`} needs to access. */
   private elements: ElementMap = {} as ElementMap;
-  private formOptionsCache: PluginSettings = {} as PluginSettings;
+  /** Local Deserialized instance of the Settings Options Form data. */
+  private settingsOptionsFormCache: PluginSettings = {} as PluginSettings;
 
+  /**
+   * Get the PluginJumper Element, if it exists
+   */
+  private get pluginJumper() {
+    return globalThis.document.getElementById('plugin-jumper') as HTMLSelectElement | undefined;
+  }
+
+  /**
+   * Create a new {@link SettingsRenderer | `SettingsRenderer`}.
+   *
+   * @param options Incoming Options for this Renderer
+   */
   constructor(private options: RendererInstanceOptions<PluginSettings>) {
     this._onSettingsChanged = debounce(this.onSettingsChanged, 750);
     this._onFormScrolled = debounce(this.onFormScrolled, 100);
   }
 
+  /**
+   * Initialize the Renderer, kicking off the Lifecycle.
+   */
   async init() {
     const plugins = this.options.getPlugins();
 
@@ -55,6 +92,9 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
     this.bindEvents();
   }
 
+  /**
+   * Custom Initialization for this Renderer that doesn't fit into other Lifecycle methods.
+   */
   private subInit() {
     const settings = this.options.getSettings();
 
@@ -74,10 +114,9 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
     this.restoreViewState();
   }
 
-  private get pluginJumper() {
-    return globalThis.document.getElementById('plugin-jumper') as HTMLSelectElement | undefined;
-  }
-
+  /**
+   * Creates the PluginJumper Component, adding the Plugin Name as Options.
+   */
   private createPluginJumper() {
     const plugins = this.options.getPlugins();
     const pluginJumper = this.pluginJumper;
@@ -93,11 +132,18 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
     });
   }
 
+  /**
+   * Generates a new URL based on current Settings, and updates the Link Results.
+   */
   private updateUrlState() {
     const url = this.generateUrl();
     this.updateLinkResults(url);
   }
 
+  /**
+   * The actual Renderer for the Application.
+   * Builds/Injects base template for the Renderer.
+   */
   private renderApp() {
     const rootContainer = globalThis.document.body.querySelector('#root') as HTMLElement;
     const { settings } = this.options.getTemplates();
@@ -114,10 +160,17 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
     });
   }
 
+  /**
+   * Iterates over all currently known Registered Plugins and calls `renderSettings` to allow it to
+   * do it's own manipulation of the DOM/Settings/etc.
+   *
+   * @param plugins Currently known Registered Plugins.
+   */
   private renderPluginSettings(plugins: PluginInstances<PluginSettings>) {
     // Iterate over every loaded plugin, and call `renderSettings` to manipulate the Settings view
     plugins.forEach(plugin => {
       try {
+        // If it exists, call `renderSettings`, and pass in our method to force a sync of Settings.
         plugin.renderSettings?.(this._forceSyncSettings);
       } catch (err) {
         if (err instanceof Error) {
@@ -129,18 +182,32 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
     });
   }
 
+  /**
+   * Force the current state of the Settings Form to be accepted as Settings.
+   *
+   * This is useful when a Plugin modifies the Settings Form, and doesn't correctly trigger
+   * a Change Event.
+   */
   private _forceSyncSettings = () => {
+    // Get the current Settings Form data, and set it as the current System Settings
     const form = this.elements.form;
     const formData = Forms.GetData<PluginSettings>(form);
     this.options.setSettings(formData);
 
+    // Validate Settings through all Plugins
     const validations = this.options.validateSettings();
 
+    // Update the Settings Form Validation states
     Forms.UpdateFormValidators(this.elements.form, validations);
+    // Update/Store the Settings Options
     this.updateSettingsOptions();
+    // Update the URL State
     this.updateUrlState();
   };
 
+  /**
+   * Build the Local `ElementMap` this {@link RendererInstance | `RendererInstance`} needs to access.
+   */
   private buildElementMap() {
     const body = globalThis.document.body;
 
@@ -152,6 +219,9 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
     this.elements['link-results-output'] = linkResults.querySelector('textarea')!;
   }
 
+  /**
+   * Unbind/Remove Events we may be listening to, in order to avoid an Event Leak.
+   */
   private unbindEvents() {
     const form = this.elements['form'];
     const formOptions = this.elements['form-options'];
@@ -166,9 +236,13 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
 
     pluginJumper?.removeEventListener('change', this.onJumpPlugin);
 
+    // Delegate Common Interaction Events
     Forms.UnbindInteractionEvents(form);
   }
 
+  /**
+   * Bind/Add Events we need to listen to for UX, Settings Validation, etc.
+   */
   private bindEvents() {
     const form = this.elements['form'];
     const formOptions = this.elements['form-options'];
@@ -183,13 +257,21 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
 
     pluginJumper?.addEventListener('change', this.onJumpPlugin);
 
+    // Delegate Common Interaction Events
     Forms.BindInteractionEvents(form);
   }
 
+  /**
+   * Restore the View State based on previously stored values.
+   *
+   * This is called somewhat frequently because we often destroy and rebuild the entire Renderer View.
+   * Because of this, this method is called to quickly put the View State back to what it was to appear
+   * as if nothing happened in the UI.
+   */
   private restoreViewState() {
     const body = globalThis.document.body;
 
-    // Re-open Details groups
+    // Re-open Details groups based on previously opened states saved in Local Storage.
     const openDetails = GetLocalStorageItem('openDetails') as string[];
     if (!openDetails || 0 === openDetails.length) {
       // Open first one if state is missing
@@ -198,21 +280,27 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
       openDetails.forEach(id => document.querySelector(`#${id}`)?.setAttribute('open', ''));
     }
 
-    // Scroll Height
-    const scrollHeight = GetLocalStorageItem('scrollHeight');
-    if (scrollHeight && false === isScrollTTYExpired()) {
+    // Scroll to `settingsFormTop` saved before in Local Storage.
+    const settingsFormTop = GetLocalStorageItem('settingsFormTop');
+    if (settingsFormTop && false === isScrollTTYExpired()) {
       this.elements['form'].scrollTo({
-        top: scrollHeight
+        top: settingsFormTop
       } as ScrollToOptions);
     }
 
-    // Settings Options
+    // Restore the Settings Options Form data from stringified data in Local Storage.
     const settingsOptions: PluginSettings = GetLocalStorageItem('settingsOptions');
     if (settingsOptions) {
       Forms.Hydrate(this.elements['form-options'], settingsOptions);
     }
   }
 
+  /**
+   * Event Handler for when Settings Form is Scrolled.
+   * This will save the scroll offset to Local Settings.
+   *
+   * @param event - Event from Form.
+   */
   private onFormScrolled = (event: Event) => {
     if (!event.target || false === event.target instanceof HTMLFormElement) {
       return;
@@ -220,10 +308,16 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
 
     // Form has scrolled
     const scrollHeight = event.target.scrollTop;
-    SetLocalStorageItem('scrollHeight', scrollHeight);
+    SetLocalStorageItem('settingsFormTop', scrollHeight);
     SetLocalStorageItem('lastScrolledAt', new Date().getTime());
   };
 
+  /**
+   * Event Handler for when a Details Element is clicked.
+   * Based on Open/Close state, will add/remove from Local Storage.
+   *
+   * @param event - Event from Element Clicked.
+   */
   private checkDetailsClicked = (event: MouseEvent) => {
     if (false === event.target instanceof Element) {
       return;
@@ -238,10 +332,21 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
     }
   };
 
+  /**
+   * Event Handler for when the Settings Form is Clicked.
+   * The `Event` is delegated for further evaluation to other methods.
+   *
+   * @param event - Event from Form.
+   */
   private onFormClicked = (event: MouseEvent) => {
     this.checkDetailsClicked(event);
   };
 
+  /**
+   * Updates the Local Storage data as a Set with the Details, and it's Parent's Details, ID.
+   *
+   * @param event - Event from Element Clicked
+   */
   private trackDetailsClicks(event: MouseEvent) {
     const target = event.target as Element;
     const details = target.closest('details')!;
@@ -262,6 +367,11 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
     SetLocalStorageItem('openDetails', [...openDetails]);
   }
 
+  /**
+   * Event Handler for when the Settings Options Form has an Input Change.
+   *
+   * @param event - Event from Settings Options Form.
+   */
   private onSettingsOptionChange = (event: Event) => {
     if (false === event.target instanceof HTMLElement) {
       return;
@@ -282,12 +392,22 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
     this.updateUrlState();
   };
 
+  /**
+   * Updates the Local Form Data cache, and saves it into Local Storage.
+   */
   private updateSettingsOptions() {
     // Serialize Form into JSON and store in LocalStorage
-    this.formOptionsCache = Forms.GetData(this.elements['form-options']);
-    SetLocalStorageItem('settingsOptions', this.formOptionsCache);
+    this.settingsOptionsFormCache = Forms.GetData(this.elements['form-options']);
+    SetLocalStorageItem('settingsOptions', this.settingsOptionsFormCache);
   }
 
+  /**
+   * Event Handler for when Settings Form is Changed.
+   * This will deserialize the Settings Form, store it, validate it, and
+   * if the Plugin List changed will reload all Plugins.
+   *
+   * @param event - Event from Input Change in Settings Form.
+   */
   private onSettingsChanged = async (event: Event) => {
     const target = event.target! as HTMLInputElement;
     const form = target.form!;
@@ -297,26 +417,36 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
     const formData = Forms.GetData<PluginSettings>(form);
     const targetName = RemoveArrayIndex(target.name);
 
-    if (settingsShouldRetartPluginManager.includes(targetName)) {
+    // The Settings value changed is one that should cause a programmatic Restart
+    if (settingShouldRestartPluginManager.includes(targetName)) {
       try {
+        // Set the settings
         this.options.setSettings(formData, true);
-
+        // Reload Plugins
         await this.options.pluginLoader();
+        // Re-init this Renderer
         await this.init();
       } catch (err) {
         this.options.errorDisplay.showError(err as Error);
       }
     } else {
+      // NO restart necessary, let's sync settings from User changes.
       this._forceSyncSettings();
     }
   };
 
+  /**
+   * Generate a URL representing the current state of the Settings.
+   *
+   * This uses the Masked form of the Settings to avoid leaking `FormEntry` types marked as `password`.
+   */
   private generateUrl() {
     const settings = this.options.getMaskedSettings();
 
     delete settings.forceShowSettings;
 
-    settings.format = (this.formOptionsCache.format?.[0].split(':')[1] as PluginSettings['format']) ?? settings.format;
+    settings.format =
+      (this.settingsOptionsFormCache.format?.[0].split(':')[1] as PluginSettings['format']) ?? settings.format;
 
     const baseUrl = URI.BaseUrl();
     const querystring = URI.JsonToQueryString(settings);
@@ -324,6 +454,11 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
     return querystring ? `${baseUrl}?${querystring}`.replace(/\?+$/, '') : '';
   }
 
+  /**
+   * Updates the Link Results state, which is the URL box and the "Load App" button.
+   *
+   * @param url - URL to update the Link Results box.
+   */
   private updateLinkResults(url: string) {
     const linkResultsOutput = this.elements['link-results-output'];
     const btnLoadApp = this.elements['form-options'].querySelector('.button-load-app') as HTMLButtonElement;
@@ -334,6 +469,12 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
     linkResultsOutput.parentElement?.setAttribute('data-char-count', linkResultsOutput.value.length.toString());
   }
 
+  /**
+   * Event Handler for when the Settings Option Form changes.
+   *
+   * @param event - Event from Settings Option Input Element
+   * @returns
+   */
   private onSettingsOptionClick = (event: Event) => {
     if (false === event.target instanceof HTMLButtonElement) {
       return;
@@ -343,15 +484,19 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
     event.stopImmediatePropagation();
     event.preventDefault();
 
-    // Reset Button Clicked
+    // "Load App" Button Clicked
     if (event.target.classList.contains('button-load-app')) {
       this.loadApp();
     } else if (event.target.classList.contains('button-settings-reset')) {
+      // Reset Button Clicked
       localStorage.clear();
       globalThis.location.href = URI.BaseUrl();
     }
   };
 
+  /**
+   * Loads the app in a new window, or current window based on Settings Options.
+   */
   private loadApp() {
     const form = this.elements['form-options'];
     const newWindowCheck = form.querySelector('[name="new-window"]') as HTMLInputElement;
@@ -368,6 +513,13 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
     }
   }
 
+  /**
+   * Event Handler for when PluginJumper is Changed to jump to the Details
+   * element for the Plugin Settings.
+   *
+   * @param event - Event from PluginJumper Element
+   * @returns
+   */
   private onJumpPlugin(event: Event) {
     if (false === event.target instanceof HTMLSelectElement) {
       return;

@@ -7,6 +7,7 @@
 * Heavily Document everything
   * Left `Forms` undocumented, because we're considering a rewrite.
 * Refactor:
+  * SettingsRenderer - Pull some stuff out into helper classes, particularly the Settings Options stuff. 
   * Forms - should use clases to generate output, consider design patterns (Builder, Visitor)
   * PluginOptions - rename to PluginServices
   * PluginContext - PluginRegistrar, and PluginServices

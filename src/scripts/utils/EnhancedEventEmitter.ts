@@ -16,7 +16,7 @@ export class EnhancedEventEmitter extends EventEmitter {
   /**
    * Disables Adding any more Listeners.
    *
-   * This is useful for ensuring a registration phase in your application lifecycle.
+   * This is useful for ensuring a registration phase in your Application Lifecycle.
    *
    * If set to `true`, all attempts to call `addListener` or `on` will result in an `Error`!
    */
@@ -125,7 +125,6 @@ export class EnhancedEventEmitter extends EventEmitter {
    * Override of the original `removeAllListeners`, but it also deletes map data as necessary.
    *
    * @param type - Name/ID of the Event to remove, or leave empty to remove ALL Event types.
-   * @returns {this}
    */
   override removeAllListeners(type?: string | number): this {
     if (type) {
