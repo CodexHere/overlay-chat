@@ -12,7 +12,7 @@ import { MiddlewareChain, MiddlewareLink } from '../utils/Middleware.js';
 /**
  * Type Guard for determining if an object is truly a `SilentlyFailChainError`
  *
- * @param err An Error of unknown type.
+ * @param err - An Error of unknown type.
  */
 function isSilentlyFailChainError(err: unknown): err is SilentlyFailChainError {
   if (!err || false === err instanceof Error) {
@@ -198,7 +198,7 @@ export class BusManager<PluginSettings extends PluginSettingsBase> {
    * as well as ensure the Plugin causing the Trigger is the very same that first Registered the
    * {@link MiddlewareChain | `MiddlewareChain`} attempting to be Executed.
    *
-   * @param ctx Initiating Context Object, housing the initial state of the Chain Context, as well as Plugin reference.
+   * @param ctx - Initiating Context Object, housing the initial state of the Chain Context, as well as Plugin reference.
    */
   private startMiddlewareChainByName = async (ctx: BusManagerContext_Init<{}>) => {
     const links = this.chains.get(ctx.chainName);

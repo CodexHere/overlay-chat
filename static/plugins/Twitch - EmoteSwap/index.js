@@ -40,8 +40,6 @@ export default class Plugin_Twitch_EmoteSwap {
   isConfigured() {
     const { 'twitchEmoteSwap--clientId': clientId, refreshTokenBot, refreshTokenStreamer } = this.options.getSettings();
 
-    this.#updateSettingsUI();
-
     if (!!clientId) {
       return true;
     }
@@ -84,6 +82,16 @@ export default class Plugin_Twitch_EmoteSwap {
    */
   async renderSettings(forceSyncSettings) {
     this.forceSyncSettings = forceSyncSettings;
+
+    // Update state of UI on changes
+    // prettier-ignore
+    globalThis
+      .document
+      .body
+      .querySelector('form#settings')
+      ?.addEventListener('change', this.#updateSettingsUI);
+
+    this.#updateSettingsUI();
   }
 
   #updateSettingsUI = () => {

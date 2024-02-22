@@ -188,7 +188,7 @@ export class PluginManager<PluginSettings extends PluginSettingsBase>
    *
    * > Will also first clean up from how the Settings are [De]Serialized.
    *
-   * @param customPlugins - Depending on Settings, could be a single `string`, or an `Array` of them.
+   * @param plugins - Depending on Settings, could be a single `string`, or an `Array` of them.
    */
   private getPluginsSettings(plugins?: string | string[]) {
     return (
@@ -358,7 +358,7 @@ export class PluginManager<PluginSettings extends PluginSettingsBase>
   /**
    * Utilize the {@link types/Plugins.PluginRegistrar | `PluginRegistrar`} to Register various parts of a Plugin.
    *
-   * @param importResults Result mapping after attempted Imports of Plugins.
+   * @param importResults - Result mapping after attempted Imports of Plugins.
    */
   private async registerImportedPlugins(importResults: PluginImportResults<PluginSettings>) {
     const { pluginRegistrar } = this.options;

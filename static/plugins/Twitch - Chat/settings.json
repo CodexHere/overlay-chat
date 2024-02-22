@@ -15,6 +15,7 @@
       "name": "tokensStreamer",
       "label": "Auth Tokens for Streamer",
       "inputType": "arraygroup",
+      "description": "<i>You only need to supply these Auth Tokens if you want to perform Moderator/Streamer Actions such as: Banning, Timing Out, Giving Shout Outs, etc!</i><br /><br />If properly Authenticated, the Bot Account is generally the preferred message sender among most Plugins. However it may be possible to explicitly target the Streamer Account for messaging if the Plugin supports it.<br /><br /><i>If your Tokens are Invalid, or Expired, you will not be able to read chat, let alone send messages!</i> If you Authenticated through this UI, you can <i>Refresh</i> your Token by simply clicking the button. Should that fail, simply clear both values and click <i>Auth</i> and continue.",
       "values": [
         {
           "name": "tokenStreamer",
@@ -46,6 +47,7 @@
       "name": "tokensBot",
       "label": "Auth Tokens for Bot",
       "inputType": "arraygroup",
+      "description": "<i>You only need to supply these Auth Tokens if you want a separate Bot Account to send messages to your chat!</i><br /><br />If properly Authenticated, the Bot Account is generally the preferred message sender among most Plugins.<br /><br />The Bot Account will only ever send messages to chat. Moderator/Streamer Actions are performed with the Streamer Token<br /><br />If the Account you wish to Auth against is different than the one auto-popping up when you click \"Auth\", change Accounts in your browser and try again. Alternatively, copy the URL and paste it into an Incognito window or another browser profile to log into your Bot Account and Authenticate.",
       "values": [
         {
           "name": "tokenBot",

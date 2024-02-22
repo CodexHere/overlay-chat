@@ -1,6 +1,6 @@
 /**
  * Middleware Chain and Link implementations for handling in-order operations
- * 
+ *
  * @module
  */
 
@@ -38,14 +38,14 @@ export type MiddlewareLink<Context extends {}> = (
  */
 export class MiddlewareChain<Context extends {}> {
   /**
-   * @param stack A list of Links to add to the Chain on instantiation.
+   * @param stack - A list of Links to add to the Chain on instantiation.
    */
   constructor(protected stack: MiddlewareLink<Context>[] = []) {}
 
   /**
    * Add Middleware Links to the Chain.
    *
-   * @param links A list of Middleware Links to add to the current Chain.
+   * @param links - A list of Middleware Links to add to the current Chain.
    */
   use(...links: MiddlewareLink<Context>[]) {
     this.stack.push(...links);

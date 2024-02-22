@@ -107,10 +107,7 @@ export class SettingsManager<PluginSettings extends PluginSettingsBase> {
    * @param registration - The Plugin Instance's Registration Options.
    * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
    */
-  registerSettings = async (
-    plugin: PluginInstance<PluginSettings>,
-    registration?: PluginRegistrationOptions
-  ) => {
+  registerSettings = async (plugin: PluginInstance<PluginSettings>, registration?: PluginRegistrationOptions) => {
     if (!registration || !registration.settings) {
       return;
     }
@@ -193,8 +190,8 @@ export class SettingsManager<PluginSettings extends PluginSettingsBase> {
   updateParsedJsonResults = (pluginsLoaded: boolean = false) => {
     this._parsedJsonResults = FromJson(structuredClone(this._settingsSchema), this._settings);
 
-    // Plugins just loaded, and we want to now use a fully parsedJsonResult
-    // too unmask our settings correctly and completely
+    // Plugins just loaded, which means they injected new settings.
+    // We want to now use a fully parsedJsonResult to unmask our settings completely.
     if (pluginsLoaded) {
       this.toggleMaskSettings(this._settings, false);
     }

@@ -75,7 +75,7 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
   /**
    * Create a new {@link SettingsRenderer | `SettingsRenderer`}.
    *
-   * @param options Incoming Options for this Renderer.
+   * @param options - Incoming Options for this Renderer.
    * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
    */
   constructor(private options: RendererInstanceOptions<PluginSettings>) {
@@ -170,7 +170,7 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
    * Iterates over all currently known Registered {@link PluginInstances | `PluginInstances`} and calls `renderSettings` to allow it to
    * do it's own manipulation of the DOM/Settings/etc.
    *
-   * @param plugins Currently known Registered {@link PluginInstances | `PluginInstances`}.
+   * @param plugins - Currently known Registered {@link PluginInstances | `PluginInstances`}.
    */
   private renderPluginSettings(plugins: PluginInstances<PluginSettings>) {
     // Iterate over every loaded plugin, and call `renderSettings` to manipulate the Settings view
@@ -267,14 +267,20 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
     formOptions?.addEventListener('click', this.onSettingsOptionClick);
     formOptions?.addEventListener('change', this.onSettingsOptionChange);
 
-    resultsArea?.addEventListener('click', this.onUrlClick);
-    resultsArea?.addEventListener('mouseenter', this._onUrlMouseEnterDebouncer.handler);
-    resultsArea?.addEventListener('mouseleave', this.onUrlMousePresence);
-
     pluginJumper?.addEventListener('change', this.onJumpPlugin);
 
     // Delegate Common Interaction Events
     Forms.BindInteractionEvents(form);
+
+    // Clipboard is disabled for some reason, gracefully degrade...
+    if (!globalThis.navigator.clipboard) {
+      resultsArea.classList.add('reveal');
+      resultsArea.querySelector('.results-reveal')?.remove();
+    } else {
+      resultsArea?.addEventListener('click', this.onUrlClick);
+      resultsArea?.addEventListener('mouseenter', this._onUrlMouseEnterDebouncer.handler);
+      resultsArea?.addEventListener('mouseleave', this.onUrlMousePresence);
+    }
   }
 
   /**
@@ -570,7 +576,8 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
       return;
     }
 
-    const infoText = this.elements['link-results-area'].querySelector('.results-reveal')!;
+    const resultsArea = this.elements['link-results-area'];
+    const infoText = resultsArea.querySelector('.results-reveal')!;
     const oldInfo = infoText.innerHTML;
 
     // Cancel the delayed `mouseenter` event
@@ -581,7 +588,7 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
     globalThis.navigator.clipboard.writeText(url);
 
     // Write COPIED into clicked area, and replace content after a delay
-    this.elements['link-results-area'].classList.remove('reveal');
+    resultsArea.classList.remove('reveal');
     infoText.innerHTML = '<h2>Copied!</h2>';
 
     this.urlClicked = true;

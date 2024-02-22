@@ -27,7 +27,7 @@ export class AppRenderer<PluginSettings extends PluginSettingsBase> implements R
   /**
    * Create a new {@link AppRenderer | `AppRenderer`}.
    *
-   * @param options Incoming Options for this Renderer.
+   * @param options - Incoming Options for this Renderer.
    * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
    */
   constructor(private options: RendererInstanceOptions<PluginSettings>) {}
@@ -75,7 +75,7 @@ export class AppRenderer<PluginSettings extends PluginSettingsBase> implements R
    * Iterates over all currently known Registered {@link PluginInstances | `PluginInstances`} and calls `renderApp` to allow it to
    * do it's own manipulation of the DOM/Settings/etc.
    *
-   * @param plugins Currently known Registered {@link PluginInstances | `PluginInstances`}.
+   * @param plugins - Currently known Registered {@link PluginInstances | `PluginInstances`}.
    * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
    */
   private renderPluginApp(plugins: PluginInstances<PluginSettings>) {

@@ -1,6 +1,6 @@
 /**
  * Helpers that just couldn't find it's own namespace
- * 
+ *
  * @module
  */
 
@@ -46,7 +46,7 @@ export const DEFAULT_TWITCH_COLORS = [
  *
  * > This is not very exhaustive, does not avoid collissions, and is a very weak hash calculation!
  *
- * @param input Input String to generate a Hash
+ * @param input - Input String to generate a Hash
  */
 export const HashCode = (input: string) =>
   input.split('').reduce((s, c) => (Math.imul(31, s) + c.charCodeAt(0)) | 0, 0);
@@ -57,7 +57,7 @@ export const HashCode = (input: string) =>
  *
  * This function is idempotent!
  *
- * @param userName Username input to get a color
+ * @param userName - Username input to get a color
  */
 export const GetColorForUsername = (userName: string) =>
   DEFAULT_TWITCH_COLORS[Math.abs(HashCode(userName)) % (DEFAULT_TWITCH_COLORS.length - 1)];

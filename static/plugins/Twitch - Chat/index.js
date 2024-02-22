@@ -74,8 +74,6 @@ export default class TwitchChat {
     const { nameStreamer } = this.options.getSettings();
     const hasChannelName = !!nameStreamer;
 
-    this.#updateSettingsUI();
-
     if (hasChannelName) {
       return true;
     }
@@ -107,6 +105,8 @@ export default class TwitchChat {
       btn.removeEventListener('click', this.#onClickAuth);
       refreshButtons[idx].removeEventListener('click', this.#onClickRefresh);
     });
+
+    body.querySelector('form#settings')?.removeEventListener('change', this.#updateSettingsUI);
   }
 
   /**
@@ -144,9 +144,19 @@ export default class TwitchChat {
    */
   async renderSettings(forceSyncSettings) {
     this.forceSyncSettings = forceSyncSettings;
+
+    // Update state of UI on changes
+    // prettier-ignore
+    globalThis
+      .document
+      .body
+      .querySelector('form#settings')
+      ?.addEventListener('change', this.#updateSettingsUI);
+
+    this.#updateSettingsUI();
   }
 
-  #updateSettingsUI() {
+  #updateSettingsUI = () => {
     const body = globalThis.document.body;
 
     /** @type {NodeListOf<HTMLInputElement> | undefined} */
@@ -171,7 +181,7 @@ export default class TwitchChat {
       btn.disabled = hasBothTokens;
       refreshButtons[idx].disabled = !hasBothTokens;
     });
-  }
+  };
 
   /**
    * @param {Event} event

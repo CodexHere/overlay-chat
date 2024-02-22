@@ -6,10 +6,15 @@
   "types": "dist/types/index.d.ts",
   "type": "module",
   "scripts": {
+    "prestart": "npm run __install",
+    "predocs": "npm run __install",
+    "predocs:dev": "npm run __install",
+    "prebuild": "npm run __install",
+    "__install": "[ -f package-lock.json ] && npm ci || npm i",
     "start": "vite .",
-    "build": "vite build",
+    "docs:dev": "typedoc --watch & npx http-server ./docs -p 9999",
     "docs": "typedoc",
-    "docs:dev": "typedoc --watch & npx http-server ./docs -p 9999"
+    "build": "vite build"
   },
   "engines": {
     "node": ">=18"
@@ -32,8 +37,7 @@
     "typedoc": "^0.25.8",
     "typedoc-material-theme": "^1.0.2",
     "vite": "^5.0.12",
-    "vite-plugin-dts": "^3.7.1",
-    "vite-plugin-package-version": "^1.1.0"
+    "vite-plugin-dts": "^3.7.1"
   },
   "dependencies": {
     "@picocss/pico": "^1.5.11",
