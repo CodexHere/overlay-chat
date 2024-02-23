@@ -1,48 +1,91 @@
-// First we declare our types.
+/**
+ * Middleware Chain and Link implementations for handling in-order operations
+ * 
+ * @module
+ */
 
-export type Next<Context extends {}> = (error?: Error) => Promise<Middleware<Context>> | Promise<void>;
+/**
+ * Next Function injected into each Middleware Link.
+ *
+ * @typeParam Context - Contextual State passed from Link to Link.
+ * @param error - If supplied, the entire Chain is in Error.
+ */
+export type Next<Context extends {}> = (error?: Error) => Promise<MiddlewareLink<Context>> | Promise<void>;
 
-export type Middleware<Context extends {}> = (
+/**
+ * Middleware Link is a Handler that recieves a `<Context>`.
+ * If the Middleware Link recieves an `Error`, it is expected for the Chain to fail.
+ *
+ * @typeParam Context - Contextual State passed from Link to Link.
+ * @param context - Contextual State passed from Link to Link.
+ * @param next - `Next` function to call in order to progress Chain.
+ * @param error - If supplied, the entire Chain is in Error.
+ */
+export type MiddlewareLink<Context extends {}> = (
   context: Context,
   next: Next<Context>,
   error?: Error
 ) => Promise<void> | void;
 
 /**
- * Declare a new middleware Chain.
+ * A Middleware Chain is a collection of Links that can operate on a given `Context`, which
+ * gets passed from Link to Link until the entire Chain is completed.
+ *
+ * Generally speaking, an Error in the Chain causes the entire Chain to fail,
+ * and an error returned to `next()` will in turn execute the *final* Link as an Error Handler.
+ *
+ * @typeParam Context - Contextual State passed from Link to Link.
  */
 export class MiddlewareChain<Context extends {}> {
   /**
-   * @param stack A list of middlewares to add to the Chain on instantiation.
+   * @param stack A list of Links to add to the Chain on instantiation.
    */
-  constructor(protected stack: Middleware<Context>[] = []) {}
+  constructor(protected stack: MiddlewareLink<Context>[] = []) {}
 
   /**
-   * Add middlewares to the Chain.
-   * @param middlewares A list of middlewares to add to the current Chain.
+   * Add Middleware Links to the Chain.
+   *
+   * @param links A list of Middleware Links to add to the current Chain.
    */
-  use(...middlewares: Middleware<Context>[]) {
-    this.stack.push(...middlewares);
+  use(...links: MiddlewareLink<Context>[]) {
+    this.stack.push(...links);
   }
 
   /**
-   * Execute a Chain, and move context through each middleware in turn.
-   * @param context The contect object to be sent through the Chain.
+   * Execute a Chain, and move context through each Middleware Link in turn.
+   *
+   * If an `Error` is injected to the function, the LAST Link is selected for execution.
+   *
+   * > NOTE: In this last Link, you can opt to continue the Chain by calling `next()`!
+   *
+   * @param context - Contextual State passed from Link to Link.
    */
-  async execute(ctx: Context) {
-    return await this.executeMiddleware(ctx, this.stack);
+  async execute(context: Context) {
+    return await this.executeChain(context, this.stack);
   }
 
-  private async executeMiddleware(context: Context, middlewares: Middleware<Context>[], error?: Error): Promise<void> {
-    if (!middlewares.length) return;
+  /**
+   * Perform Executing each Link of the Middleware Chain.
+   *
+   * As each Link is executed, the chain that is recursively injected is mutated
+   * to represent the remainder of the actual chain.
+   *
+   * If an `Error` is injected to the function, the LAST Link is selected for execution.
+   *
+   * @param context - Contextual State passed from Link to Link.
+   * @param links - Collection of Links remaining in the current Chain execution.
+   * @param error - Possible `Error` to handle in our Link.
+   */
+  private async executeChain(context: Context, links: MiddlewareLink<Context>[], error?: Error): Promise<void> {
+    if (!links.length) return;
 
     // If an error is detected, skip to the end and attempt to handle the error before it throws.
-    const slice: Middleware<Context> = error ? middlewares[middlewares.length - 1] : middlewares[0];
+    const slice: MiddlewareLink<Context> = error ? links[links.length - 1] : links[0];
 
     // If an error is detected, give the opportunity to continue the Chain after testing error,
     // otherwise skip to the next (and remainder of) list.
-    const nextMiddlewares = error ? middlewares : middlewares.slice(1);
-    const nextNext = async (error?: Error) => await this.executeMiddleware(context, nextMiddlewares, error);
+    const nextMiddlewares = error ? links : links.slice(1);
+    const nextNext = async (error?: Error) => await this.executeChain(context, nextMiddlewares, error);
 
     return await slice(context, nextNext, error);
   }

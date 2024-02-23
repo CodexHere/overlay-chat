@@ -1,0 +1,17 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+
+  "out": "docs",
+
+  "entryPoints": ["./src/scripts"],
+  "entryPointStrategy": "expand",
+
+  "includeVersion": true,
+  "hideGenerator": true,
+  "sourceLinkExternal": true,
+
+  "plugin": ["@mxssfd/typedoc-theme"],
+  "theme": "my-theme"
+  // "plugin": ["typedoc-material-theme"],
+  // "themeColor": "#cb9820"
+}

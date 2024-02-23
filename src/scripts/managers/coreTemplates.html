@@ -18,21 +18,34 @@
     <form id="settings">{{formElements}}</form>
 
     <form id="settings-options">
-      <div class="link-results">
-        <div class="textarea-wrapper"><textarea rows="4"></textarea></div>
-        <div class="load-options">
+      <div class="left-column">
+        <div class="textarea-wrapper">
+          <textarea class="url" rows="4"></textarea>
+          <div class="results-reveal">
+            <h2>Hover to Reveal</h2>
+            <h5>Click to Copy</h5>
+          </div>
+        </div>
+
+        <div class="settings-options">
+          <label for="settings-options-format">
+            Format:
+            <select id="settings-options-format" name="format" class="settings-option">
+              <option>uri</option>
+              <option>compressed</option>
+            </select>
+          </label>
+
+          <div class="spacer"></div>
+        </div>
+      </div>
+
+      <div class="right-column">
+        <div class="options-load-app">
           <button class="button-load-app" disabled>Load App</button>
           <label><input type="checkbox" class="settings-option" name="new-window" /> New Window?</label>
           <button class="button-settings-reset secondary">Reset Settings</button>
         </div>
-      </div>
-
-      <div class="settings-options">
-        <label for="settings-options-format"> Format: </label>
-        <select id="settings-options-format" name="format" class="settings-option">
-          <option>uri</option>
-          <option>compressed</option>
-        </select>
       </div>
     </form>
 

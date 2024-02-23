@@ -6,7 +6,7 @@
   --hhtheme-colorRevealText2: #f23373;
   --hhtheme-colorRevealText3: transparent;
   --hhtheme-colorBorder: #bc91f8;
-  --hhtheme-revealDelay: 0.1s;
+  --hhtheme-revealDelay: 100;
 
   --hhtheme-background: url('../../../images/bg_wood.jpg');
 }
@@ -33,6 +33,8 @@ body:has(#container-settings) {
 
 #container.app .chat-message.removing {
   transform-origin: top left;
+
+  animation: remove-message 1s forwards;
 }
 
 #container.app .chat-message .leader {

@@ -22,12 +22,25 @@ services:
     volumes:
       - .:/app
 
+  app-docs:
+    image: node:21-alpine
+    container_name: app-docs
+    profiles: ['docs']
+    command: npm run docs:dev
+    working_dir: /app
+    user: '1000'
+    ports:
+      - '9999:9999'
+    volumes:
+      - .:/app
+
   app-deploy:
     image: local/act
     build:
       dockerfile: .docker/images/act.Dockerfile
     profiles: ['deploy']
     working_dir: /act
+    env_file: .env
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - .:/act

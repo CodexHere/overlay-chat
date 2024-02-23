@@ -17,7 +17,7 @@ import tmiJs from 'https://esm.sh/tmi.js@1.8.5';
  * @typedef {import('../../../src/scripts/utils/Forms.js').FormEntryGrouping} FormEntryFieldGroup
  * @typedef {import('../../../src/scripts/utils/Forms.js').FormValidatorResults<PluginSettings>} SettingsValidatorResults
  * @typedef {import('../../../src/scripts/types/Managers.js').BusManagerContext_Init<{}>} BusManagerContext_Init
- * @typedef {import('../../../src/scripts/types/Middleware.js').PluginMiddlewareMap} PluginMiddlewareMap
+ * @typedef {import('../../../src/scripts/types/Plugin.js').PluginMiddlewareMap} PluginMiddlewareMap
  * @typedef {import('../../../src/scripts/types/Plugin.js').PluginEventRegistration} PluginEventMap
  * @typedef {import('../../../src/scripts/types/Plugin.js').PluginOptions<PluginSettings>} PluginInjectables
  * @typedef {import('../../../src/scripts/types/Plugin.js').PluginInstance<PluginSettings>} PluginInstance
@@ -116,11 +116,11 @@ export default class TwitchChat {
     console.log(`[${this.name}] Registering Events`);
 
     return {
-      receives: {
+      recieves: {
         'chat:twitch:sendMessage': this._onBusSendMessage,
         'chat:twitch:hasAuth': this._onBusHasAuth
       },
-      sends: ['chat:twitch:onMessage']
+      sends: ['chat:twitch:onChat']
     };
   }
 
@@ -258,7 +258,6 @@ export default class TwitchChat {
 
   /**
    * @param {*} create
-   * @returns
    */
   async waitForAuth(create) {
     const start = new Date().getTime();
@@ -384,12 +383,12 @@ export default class TwitchChat {
       channel,
       isSelf,
       message,
-      isBot: false
+      clientType: 'streamer'
     };
 
     console.log('Streamer Got: ', message);
 
-    this.options.emitter.emit('chat:twitch:onMessage', ctx);
+    this.options.emitter.emit('chat:twitch:onChat', ctx);
   };
 
   /**
@@ -405,12 +404,12 @@ export default class TwitchChat {
       channel,
       isSelf,
       message,
-      isBot: true
+      clientType: 'bot'
     };
 
     console.log('Bot Got: ', message);
 
-    this.options.emitter.emit('chat:twitch:onMessage', ctx);
+    this.options.emitter.emit('chat:twitch:onChat', ctx);
   };
 
   /**
