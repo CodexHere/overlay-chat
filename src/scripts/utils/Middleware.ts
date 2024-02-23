@@ -1,6 +1,6 @@
 /**
  * Middleware Chain and Link implementations for handling in-order operations
- *
+ * 
  * @module
  */
 
@@ -8,7 +8,7 @@
  * Next Function injected into each Middleware Link.
  *
  * @typeParam Context - Contextual State passed from Link to Link.
- * @param {Error} error - If supplied, the entire Chain is in Error.
+ * @param error - If supplied, the entire Chain is in Error.
  */
 export type Next<Context extends {}> = (error?: Error) => Promise<MiddlewareLink<Context>> | Promise<void>;
 
@@ -17,9 +17,9 @@ export type Next<Context extends {}> = (error?: Error) => Promise<MiddlewareLink
  * If the Middleware Link recieves an `Error`, it is expected for the Chain to fail.
  *
  * @typeParam Context - Contextual State passed from Link to Link.
- * @param {Context} context - Contextual State passed from Link to Link.
- * @param {Next} next - `Next` function to call in order to progress Chain.
- * @param {Error} error - If supplied, the entire Chain is in Error.
+ * @param context - Contextual State passed from Link to Link.
+ * @param next - `Next` function to call in order to progress Chain.
+ * @param error - If supplied, the entire Chain is in Error.
  */
 export type MiddlewareLink<Context extends {}> = (
   context: Context,

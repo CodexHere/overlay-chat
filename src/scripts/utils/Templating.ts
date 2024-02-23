@@ -1,6 +1,6 @@
 /**
  * Helpers for parsing, mapping, and processing Templates and injecting into DOM
- *
+ * 
  * @module
  */
 

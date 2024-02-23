@@ -94,7 +94,7 @@ export class AppBootstrapper<PluginSettings extends PluginSettingsBase> implemen
       getMaskedSettings: this.settingsManager!.getMaskedSettings,
       getParsedJsonResults: this.settingsManager!.getParsedJsonResults,
       getPlugins: this.pluginManager!.getPlugins,
-      pluginLoader: this.pluginManager!.loadPlugins,
+      pluginLoader: this.pluginManager!.registerAllPlugins,
       validateSettings: this.pluginManager!.validateSettings,
       errorDisplay: this
     });

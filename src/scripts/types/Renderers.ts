@@ -1,6 +1,6 @@
 /**
  * Types for Renderers
- *
+ * 
  * @module
  */
 

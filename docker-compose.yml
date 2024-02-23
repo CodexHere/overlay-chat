@@ -26,9 +26,11 @@ services:
     image: node:21-alpine
     container_name: app-docs
     profiles: ['docs']
-    command: npm run docs -- --watch
+    command: npm run docs:dev
     working_dir: /app
     user: '1000'
+    ports:
+      - '9999:9999'
     volumes:
       - .:/app
 

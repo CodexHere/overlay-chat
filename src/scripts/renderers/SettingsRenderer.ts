@@ -1,6 +1,6 @@
 /**
  * Renderer for Settings portion of the Application
- *
+ * 
  * @module
  */
 
@@ -10,7 +10,7 @@ import * as Forms from '../utils/Forms.js';
 import { GetLocalStorageItem, SetLocalStorageItem } from '../utils/LocalStorage.js';
 import { RenderTemplate } from '../utils/Templating.js';
 import * as URI from '../utils/URI.js';
-import { debounce } from '../utils/misc.js';
+import { DebounceResult, debounce } from '../utils/misc.js';
 
 /**
  * Elements we know about in this {@link RendererInstance | `RendererInstance`}.
@@ -18,7 +18,7 @@ import { debounce } from '../utils/misc.js';
 type ElementMap = {
   form: HTMLFormElement;
   'form-options': HTMLFormElement;
-  'link-results': HTMLElement;
+  'link-results-area': HTMLElement;
   'link-results-output': HTMLTextAreaElement;
 };
 
@@ -38,6 +38,9 @@ const isScrollTTYExpired = () => {
   return elapsed >= ScrollTTY * 1000;
 };
 
+// How many ms it takes to reveal the URL
+const URL_REVEAL_TTY = 2 * 1000;
+
 // Unique ID created on load of this file. This is a re-use/busting ID for the "New Window" feature.
 const instanceId = new Date().getTime();
 // RegEx to find array-like index naming (i.e., `myObj[1]` would match).
@@ -52,9 +55,11 @@ const RemoveArrayIndex = (paramName: string) => paramName.replace(indexRegExp, '
  */
 export class SettingsRenderer<PluginSettings extends PluginSettingsBase> implements RendererInstance {
   /** Debounced Handler called any of the Settings Form inputs are changed. */
-  private _onSettingsChanged: (event: Event) => Promise<void>;
+  private _onSettingsChanged: (event: Event) => void;
   /** Handler for when the Settings Form is scrolled. */
   private _onFormScrolled: (event: Event) => void;
+  /** Debounced Handler for when the URL Text is Moused. */
+  private _onUrlMouseEnterDebouncer: DebounceResult;
   /** Local `ElementMap` mapping name -> Element the {@link RendererInstance | `RendererInstance`} needs to access. */
   private elements: ElementMap = {} as ElementMap;
   /** Local Deserialized instance of the Settings Options Form data. */
@@ -74,8 +79,9 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
    * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
    */
   constructor(private options: RendererInstanceOptions<PluginSettings>) {
-    this._onSettingsChanged = debounce(this.onSettingsChanged, 750);
-    this._onFormScrolled = debounce(this.onFormScrolled, 100);
+    this._onSettingsChanged = debounce(this.onSettingsChanged, 750).handler;
+    this._onFormScrolled = debounce(this.onFormScrolled, 100).handler;
+    this._onUrlMouseEnterDebouncer = debounce(this.onUrlMousePresence, URL_REVEAL_TTY);
   }
 
   /**
@@ -101,18 +107,17 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
 
     Forms.Hydrate(this.elements['form'], settings);
 
-    this.updateUrlState();
+    this.createPluginJumper();
+    this.restoreViewState(settings);
 
     // Update Form Validity state data only if we're starting with settings
     // > 1, because a 'format' is enforced on the settings object
     if (Object.keys(settings).length > 1) {
       const validations = this.options.validateSettings();
       Forms.UpdateFormValidators(this.elements.form, validations);
+      this.saveSettingsOptions();
+      this.updateUrlState();
     }
-
-    this.createPluginJumper();
-
-    this.restoreViewState();
   }
 
   /**
@@ -162,10 +167,10 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
   }
 
   /**
-   * Iterates over all currently known Registered Plugins and calls `renderSettings` to allow it to
+   * Iterates over all currently known Registered {@link PluginInstances | `PluginInstances`} and calls `renderSettings` to allow it to
    * do it's own manipulation of the DOM/Settings/etc.
    *
-   * @param plugins Currently known Registered Plugins.
+   * @param plugins Currently known Registered {@link PluginInstances | `PluginInstances`}.
    */
   private renderPluginSettings(plugins: PluginInstances<PluginSettings>) {
     // Iterate over every loaded plugin, and call `renderSettings` to manipulate the Settings view
@@ -201,7 +206,7 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
     // Update the Settings Form Validation states
     Forms.UpdateFormValidators(this.elements.form, validations);
     // Update/Store the Settings Options
-    this.updateSettingsOptions();
+    this.saveSettingsOptions();
     // Update the URL State
     this.updateUrlState();
   };
@@ -212,12 +217,12 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
   private buildElementMap() {
     const body = globalThis.document.body;
 
-    const linkResults = body.querySelector<HTMLElement>('.link-results')!;
+    const formOptions = body.querySelector('form#settings-options')!;
 
     this.elements['form'] = body.querySelector('form#settings')!;
     this.elements['form-options'] = body.querySelector('form#settings-options')!;
-    this.elements['link-results'] = linkResults;
-    this.elements['link-results-output'] = linkResults.querySelector('textarea')!;
+    this.elements['link-results-area'] = formOptions.querySelector('.textarea-wrapper')!;
+    this.elements['link-results-output'] = formOptions.querySelector('textarea.url')!;
   }
 
   /**
@@ -226,6 +231,7 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
   private unbindEvents() {
     const form = this.elements['form'];
     const formOptions = this.elements['form-options'];
+    const resultsArea = this.elements['link-results-area'];
     const pluginJumper = this.pluginJumper;
 
     form?.removeEventListener('input', this._onSettingsChanged);
@@ -234,6 +240,10 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
 
     formOptions?.removeEventListener('click', this.onSettingsOptionClick);
     formOptions?.removeEventListener('change', this.onSettingsOptionChange);
+
+    resultsArea?.removeEventListener('click', this.onUrlClick);
+    resultsArea?.removeEventListener('mouseenter', this._onUrlMouseEnterDebouncer.handler);
+    resultsArea?.removeEventListener('mouseleave', this.onUrlMousePresence);
 
     pluginJumper?.removeEventListener('change', this.onJumpPlugin);
 
@@ -247,6 +257,7 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
   private bindEvents() {
     const form = this.elements['form'];
     const formOptions = this.elements['form-options'];
+    const resultsArea = this.elements['link-results-area'];
     const pluginJumper = this.pluginJumper;
 
     form?.addEventListener('input', this._onSettingsChanged);
@@ -255,6 +266,10 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
 
     formOptions?.addEventListener('click', this.onSettingsOptionClick);
     formOptions?.addEventListener('change', this.onSettingsOptionChange);
+
+    resultsArea?.addEventListener('click', this.onUrlClick);
+    resultsArea?.addEventListener('mouseenter', this._onUrlMouseEnterDebouncer.handler);
+    resultsArea?.addEventListener('mouseleave', this.onUrlMousePresence);
 
     pluginJumper?.addEventListener('change', this.onJumpPlugin);
 
@@ -269,7 +284,7 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
    * Because of this, this method is called to quickly put the View State back to what it was to appear
    * as if nothing happened in the UI.
    */
-  private restoreViewState() {
+  private restoreViewState(settings: PluginSettings) {
     const body = globalThis.document.body;
 
     // Re-open Details groups based on previously opened states saved in Local Storage.
@@ -293,6 +308,12 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
     const settingsOptions: PluginSettings = GetLocalStorageItem('settingsOptions');
     if (settingsOptions) {
       Forms.Hydrate(this.elements['form-options'], settingsOptions);
+
+      // Set the Format option to the incoming Settings value
+      const formatElem = this.elements['form-options'].querySelector('#settings-options-format');
+      if (formatElem instanceof HTMLSelectElement) {
+        formatElem.value = settings.format ?? 'uri';
+      }
     }
   }
 
@@ -389,14 +410,14 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
 
     // Settings Option was changed
 
-    this.updateSettingsOptions();
+    this.saveSettingsOptions();
     this.updateUrlState();
   };
 
   /**
    * Updates the Local Form Data cache, and saves it into Local Storage.
    */
-  private updateSettingsOptions() {
+  private saveSettingsOptions() {
     // Serialize Form into JSON and store in LocalStorage
     this.settingsOptionsFormCache = Forms.GetData(this.elements['form-options']);
     SetLocalStorageItem('settingsOptions', this.settingsOptionsFormCache);
@@ -413,7 +434,7 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
     const target = event.target! as HTMLInputElement;
     const form = target.form!;
 
-    this.updateSettingsOptions();
+    this.saveSettingsOptions();
 
     const formData = Forms.GetData<PluginSettings>(form);
     const targetName = RemoveArrayIndex(target.name);
@@ -519,7 +540,7 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
    *
    * @param event - Event from PluginJumper Element
    */
-  private onJumpPlugin(event: Event) {
+  private onJumpPlugin = (event: Event) => {
     if (false === event.target instanceof HTMLSelectElement) {
       return;
     }
@@ -531,5 +552,35 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
     pluginContainer?.scrollIntoView({
       behavior: 'smooth'
     });
-  }
+  };
+
+  private onUrlMousePresence = (event: Event) => {
+    if (false === event.target instanceof HTMLElement) {
+      return;
+    }
+
+    this._onUrlMouseEnterDebouncer.cancel();
+
+    event.target.classList.toggle('reveal', 'mouseenter' === event.type);
+  };
+
+  private onUrlClick = (_event: Event) => {
+    const infoText = this.elements['link-results-area'].querySelector('.results-reveal')!;
+    const oldInfo = infoText.innerHTML;
+
+    // Cancel the delayed `mouseenter` event
+    this._onUrlMouseEnterDebouncer.cancel();
+
+    // Generate the URL and put it in the User's Clipboard
+    const url = this.generateUrl();
+    globalThis.navigator.clipboard.writeText(url);
+
+    // Write COPIED into clicked area, and replace content after a delay
+    this.elements['link-results-area'].classList.remove('reveal');
+    infoText.innerHTML = '<h2>Copied!</h2>';
+
+    setTimeout(() => {
+      infoText.innerHTML = oldInfo;
+    }, 2000);
+  };
 }

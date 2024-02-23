@@ -1,10 +1,12 @@
 {
   "$schema": "https://typedoc.org/schema.json",
 
-  "entryPoints": ["./src/scripts"],
   "out": "docs",
 
+  "entryPoints": ["./src/scripts"],
   "entryPointStrategy": "expand",
+
+  "hideGenerator": true,
   "includeVersion": true,
   "plugin": ["@mxssfd/typedoc-theme"],
   "theme": "my-theme"

@@ -8,7 +8,8 @@
   "scripts": {
     "start": "vite .",
     "build": "vite build",
-    "docs": "typedoc"
+    "docs": "typedoc",
+    "docs:dev": "typedoc --watch & npx http-server ./docs -p 9999"
   },
   "engines": {
     "node": ">=18"

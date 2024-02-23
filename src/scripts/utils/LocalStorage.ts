@@ -1,6 +1,6 @@
 /**
  * Helpers for retrieving and setting complex objects as JSON strings into LocalStorage
- *
+ * 
  * @module
  */
 

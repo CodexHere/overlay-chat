@@ -1,6 +1,6 @@
 /**
  * Miscellaneous methods for interacting with the DOM
- *
+ * 
  * @module
  */
 

@@ -1,6 +1,6 @@
 /**
  * Helpers that just couldn't find it's own namespace
- *
+ * 
  * @module
  */
 
@@ -62,6 +62,11 @@ export const HashCode = (input: string) =>
 export const GetColorForUsername = (userName: string) =>
   DEFAULT_TWITCH_COLORS[Math.abs(HashCode(userName)) % (DEFAULT_TWITCH_COLORS.length - 1)];
 
+export type DebounceResult = {
+  handler: (...args: any) => void;
+  cancel: () => void;
+};
+
 /**
  * Simple Debounce wrapper.
  *
@@ -70,15 +75,19 @@ export const GetColorForUsername = (userName: string) =>
  * @param callback - Function to delay calling
  * @param wait - Amount (in milliseconds) to wait before calling the `callback`
  */
-export function debounce<T extends (...args: any[]) => any>(callback: T, wait: number) {
+export function debounce<T extends (...args: any[]) => any>(callback: T, wait: number): DebounceResult {
   let timeoutId: number;
 
-  const callable = (...args: any) => {
-    clearTimeout(timeoutId);
+  const cancel = () => clearTimeout(timeoutId);
+  const handler = (...args: any) => {
+    cancel();
     timeoutId = setTimeout(() => callback(...args), wait);
   };
 
-  return <T>(<any>callable);
+  return {
+    handler,
+    cancel
+  };
 }
 
 /**

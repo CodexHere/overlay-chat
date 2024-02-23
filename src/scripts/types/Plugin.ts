@@ -1,6 +1,6 @@
 /**
  * Types for Plugins
- *
+ * 
  * @module
  */
 
@@ -19,11 +19,18 @@ import { BusManagerEmitter, DisplayManager } from './Managers.js';
 export type PluginInstances<PluginSettings extends PluginSettingsBase> = PluginInstance<PluginSettings>[];
 
 /**
- * A collection of URLs to dynamically import, or instances of {@link PluginConstructor | `PluginConstructor`} to instantiate as necessary.
+ * A single URLs to dynamically import, or an instance of {@link PluginConstructor | `PluginConstructor`} to instantiate as necessary.
  *
  * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
  */
-export type PluginLoaders<PluginSettings extends PluginSettingsBase> = Set<string | PluginConstructor<PluginSettings>>;
+export type PluginLoader<PluginSettings extends PluginSettingsBase> = string | PluginConstructor<PluginSettings>;
+
+/**
+ * A collection of {@link PluginConstructor | `PluginConstructor`}s.
+ *
+ * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
+ */
+export type PluginLoaders<PluginSettings extends PluginSettingsBase> = Set<PluginLoader<PluginSettings>>;
 
 /**
  * A Good vs Bad mapping the results of a collection of Plugin Importing.
@@ -98,9 +105,9 @@ export type PluginSettingsBase = DefaultQueryString & {
   /** Force the {@link AppBootstrapper.AppBootstrapper | `AppBootstrapper`} to show Settings Renderer */
   forceShowSettings?: boolean;
   /** Collection of Names of Built-In Plugins */
-  plugins?: string[];
+  plugins?: string | string[];
   /** Collection of URLs of Remote/Custom Plugins */
-  customPlugins?: string[];
+  customPlugins?: string | string[];
 };
 
 /**

@@ -2,10 +2,14 @@
 
 ## TODO
 
+******
+* Documenting BusManager!!!
+******
 
 * Look at Plugins' `#updateSettingsUI` and do UX behaviors on Form input event!
 * Heavily Document everything
   * Left `Forms` undocumented, because we're considering a rewrite.
+* Core Plugin needs to require Twitch-Chat
 * Refactor:
   * SettingsRenderer - Pull some stuff out into helper classes, particularly the Settings Options stuff. 
   * Forms - should use clases to generate output, consider design patterns (Builder, Visitor)
@@ -13,6 +17,14 @@
   * PluginContext - PluginRegistrar, and PluginServices
     * Needs rendererType: 'app' | 'settings'
   * PluginConstructor - needs to take in PluginContext
+  * Bootstrapper
+    * should take in a list of Built-In plugins
+    * take in a list of required plugins (built-in, or remote)
+  * Consider adding `debug` and replace `console.log`
+    * https://bundlephobia.com/package/debug@4.3.4
+    * If we don't add it, remove `console.log`
+* Add About/FAQ/ETC links on Settings Page
+  * How to use it, etc.
 * Create some cool examples:
   * renderSettings, listen to click of button, show error
     * This should replace the timeout errors

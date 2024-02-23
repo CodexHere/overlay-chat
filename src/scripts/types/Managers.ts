@@ -1,6 +1,6 @@
 /**
  * Types for all the `Manager` classes used throughout the Application Lifecycle
- *
+ * 
  * @module
  */
 
@@ -74,7 +74,7 @@ export type PluginManagerEmitter<PluginSettings extends PluginSettingsBase> = Pl
 // BusManager
 
 /**
- * When a Middleware Chain is executed, this special Context is used to initiate the hain, by
+ * When a MiddlewareChain is executed, this special Context is used to initiate the hain, by
  * targeting the name of the Chain. This structure also defines the initial context value, and
  * mark the plugin as initiating the execution request.
  *

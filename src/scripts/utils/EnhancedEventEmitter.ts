@@ -1,6 +1,6 @@
 /**
  * A slightly hacky/modified version of the EventEmitter!
- *
+ * 
  * @module
  */
 
@@ -63,6 +63,7 @@ export class EnhancedEventEmitter extends EventEmitter {
     const listeners = this._storeListenersMap[type] ?? [];
 
     // Loop through all of the stored values and remove if the listener matches the incoming listener
+    // NOTE: We're starting from the end of the list to avoid changing index counts on removals.
     for (let idx = calledValues.length - 1; idx >= 0; idx--) {
       const [storedListener] = calledValues[idx];
 
@@ -72,6 +73,7 @@ export class EnhancedEventEmitter extends EventEmitter {
     }
 
     // Loop through all the listeners and remove from internal map, as well as call `super`
+    // NOTE: We're starting from the end of the list to avoid changing index counts on removals.
     for (let idx = listeners.length - 1; idx >= 0; idx--) {
       const [storedListener, newListener] = listeners[idx];
 
@@ -103,7 +105,7 @@ export class EnhancedEventEmitter extends EventEmitter {
    * @typeParam ReturnType - The expected return type of the Listeners.
    * @param type - Name/ID of the Event to trigger.
    * @param args - Arguments Payload to send along with the Event.
-   * @returns Array of resposes from callback Listeners.
+   * @returns Array of responses from callback Listeners.
    */
   call = <ReturnType>(type: string | number, ...args: any[]): ReturnType[] => {
     this._storeValuesMap[type] = [];

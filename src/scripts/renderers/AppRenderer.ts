@@ -1,3 +1,9 @@
+/**
+ * Renderer for App portion of the Application
+ * 
+ * @module
+ */
+
 import { PluginInstances, PluginSettingsBase } from '../types/Plugin.js';
 import { RendererInstance, RendererInstanceOptions } from '../types/Renderers.js';
 import { RenderTemplate } from '../utils/Templating.js';
@@ -66,10 +72,10 @@ export class AppRenderer<PluginSettings extends PluginSettingsBase> implements R
   }
 
   /**
-   * Iterates over all currently known Registered Plugins and calls `renderApp` to allow it to
+   * Iterates over all currently known Registered {@link PluginInstances | `PluginInstances`} and calls `renderApp` to allow it to
    * do it's own manipulation of the DOM/Settings/etc.
    *
-   * @param plugins Currently known Registered Plugins.
+   * @param plugins Currently known Registered {@link PluginInstances | `PluginInstances`}.
    * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
    */
   private renderPluginApp(plugins: PluginInstances<PluginSettings>) {

@@ -1,8 +1,9 @@
 /**
  * Load and Cache TemplateMaps from all Plugins
- *
+ * 
  * @module
  */
+
 import { BuildTemplateMap, TemplateMap } from '../utils/Templating.js';
 import coreTemplate from './coreTemplates.html?raw';
 

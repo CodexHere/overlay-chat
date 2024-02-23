@@ -14,8 +14,7 @@ import SettingsSchemaDefault from './schemaSettingsCore.json';
 /**
  * Manages the Application's Settings State.
  *
- * This includes parsing from URI on `init`, and the ability to transform Settings to be
- * Masked (aka, encrypted values for certain types).
+ * On `init`, Settings are parsed from the URI, and Unmasked (aka, decrypted values for certain types).
  *
  * This class is also part of the {@link types/Plugin.PluginRegistrar | `PluginRegistrar`},
  * providing various Registration points.
@@ -41,7 +40,9 @@ export class SettingsManager<PluginSettings extends PluginSettingsBase> {
   constructor(private locationHref: string) {}
 
   /**
-   * Initialize the Settings Manager, which will deserialize Settings from the Location HREF.
+   * Initialize the Settings Manager.
+   *
+   * This will deserialize Settings from the Location HREF.
    *
    * > The settings will be unmasked once deserialized.
    */
@@ -55,7 +56,7 @@ export class SettingsManager<PluginSettings extends PluginSettingsBase> {
   }
 
   /**
-   * Accessor Function for Settings
+   * Accessor Function for Settings.
    */
   getSettings = (): PluginSettings => {
     return structuredClone(this._settings);
@@ -69,7 +70,7 @@ export class SettingsManager<PluginSettings extends PluginSettingsBase> {
   };
 
   /**
-   * Action Function to Set Settings
+   * Action Function to Set Settings.
    *
    * @param settings - Settings to store for the System.
    * @param forceEncode - Whether or not to force encoding appropriate values.
@@ -93,7 +94,7 @@ export class SettingsManager<PluginSettings extends PluginSettingsBase> {
   /**
    * Reset the Settings Schema to the default value.
    *
-   * Generally this is only used when resetting the `PluginManager`.
+   * Generally this is only used when resetting the {@link managers/PluginManager | `PluginManager`}.
    */
   resetSettingsSchema() {
     this._settingsSchema = structuredClone(this._settingsSchemaDefault);
