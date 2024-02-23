@@ -398,7 +398,7 @@ export default class TwitchChat {
 
     console.log('Streamer Got: ', message);
 
-    this.options.emitter.emit('chat:twitch:onChat', ctx);
+    this.options.getEmitter().emit('chat:twitch:onChat', ctx);
   };
 
   /**
@@ -419,7 +419,7 @@ export default class TwitchChat {
 
     console.log('Bot Got: ', message);
 
-    this.options.emitter.emit('chat:twitch:onChat', ctx);
+    this.options.getEmitter().emit('chat:twitch:onChat', ctx);
   };
 
   /**

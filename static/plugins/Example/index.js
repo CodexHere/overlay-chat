@@ -247,10 +247,12 @@ export default class Plugin_Example {
   };
 
   renderSettings() {
+    const emitter = this.options.getEmitter();
+
     console.log(`[${this.name}] [renderSettings]`);
 
-    this.options.emitter.emit('test-event', ['Some Test Value'], { foo: true, bar: false });
-    const val = this.options.emitter.call('test-event', ['Some Test Value'], { foo: true, bar: false });
+    emitter.emit('test-event', ['Some Test Value'], { foo: true, bar: false });
+    const val = emitter.call('test-event', ['Some Test Value'], { foo: true, bar: false });
     console.log(`[${this.name}] Event Output:`, val);
 
     const btn = document.querySelector('[name="example--btnExample"]');
@@ -278,12 +280,12 @@ export default class Plugin_Example {
 
       // Fails because we didn't initially register this middleware chain
       console.warn(`[${this.name}] About to execute a middleware that this plugin did not register. Expect an error!`);
-      this.options.emitter.emit('middleware-execute', ctx);
+      emitter.emit('middleware-execute', ctx);
 
       // Fails because the emitter is locked down after plugins are registered
       console.warn(`[${this.name}] Attempting to register a new event on the eventbus, this should fail with an error`);
       try {
-        this.options.emitter.addListener('thisShouldFail', () => {});
+        emitter.addListener('thisShouldFail', () => {});
       } catch (err) {
         console.warn('Swallowing error, but showing, for example only!');
         console.error(err);
@@ -292,6 +294,8 @@ export default class Plugin_Example {
   }
 
   renderApp() {
+    const emitter = this.options.getEmitter();
+
     console.log(`[${this.name}] [renderApp]`);
 
     setTimeout(() => {
@@ -315,11 +319,11 @@ export default class Plugin_Example {
       if (settings['example--sendMessageAtRuntime']) {
         try {
           console.log('Sending Messages to Chat');
-          this.options.emitter.emit(
+          emitter.emit(
             'chat:twitch:sendMessage',
             '[from Bot if available] ' + settings['example--sendMessageAtRuntime-message']
           );
-          this.options.emitter.emit(
+          emitter.emit(
             'chat:twitch:sendMessage',
             '[from Streamer if available] ' + settings['example--sendMessageAtRuntime-message'],
             'streamer'
@@ -330,7 +334,7 @@ export default class Plugin_Example {
         }
       }
 
-      const hasAuth = this.options.emitter.call('chat:twitch:hasAuth').slice(-1)[0];
+      const hasAuth = emitter.call('chat:twitch:hasAuth').slice(-1)[0];
       console.log('Checking Auth Values', hasAuth);
       if (hasAuth) {
         this.options.display.showInfo(`* Streamer: ${hasAuth.streamer}<br/>* Bot: ${hasAuth.bot}`, 'Do we have auth?');

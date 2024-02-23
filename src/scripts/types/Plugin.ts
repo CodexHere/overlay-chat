@@ -157,8 +157,7 @@ export type PluginOptions<PluginSettings extends PluginSettingsBase> = {
   /** Accessor Function for Settings */
   getSettings: () => PluginSettings;
   /** Accessor Function for Event Emitter */
-  // TODO: Change to actual Accessor Function to match other items
-  emitter: Readonly<BusManagerEmitter>;
+  getEmitter: () => Readonly<BusManagerEmitter>;
   /**
    * Accessor Function for Templates
    * @typeParam TemplateIDs - Union Type of accepted `TemplateIDs`.

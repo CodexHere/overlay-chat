@@ -163,7 +163,7 @@ export default class Plugin_Core<PluginSettings extends AppSettings_Chat> implem
       initiatingPlugin: this
     };
 
-    return this.options.emitter.emit(BusManagerEvents.MIDDLEWARE_EXECUTE, initCtx);
+    return this.options.getEmitter().emit(BusManagerEvents.MIDDLEWARE_EXECUTE, initCtx);
   };
 
   /**

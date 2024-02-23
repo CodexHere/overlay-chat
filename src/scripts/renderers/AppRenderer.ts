@@ -1,9 +1,10 @@
 /**
  * Renderer for App portion of the Application
- * 
+ *
  * @module
  */
 
+import { EventEmitter } from 'events';
 import { PluginInstances, PluginSettingsBase } from '../types/Plugin.js';
 import { RendererInstance, RendererInstanceOptions } from '../types/Renderers.js';
 import { RenderTemplate } from '../utils/Templating.js';
@@ -20,7 +21,7 @@ type ElementMap = {
  *
  * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
  */
-export class AppRenderer<PluginSettings extends PluginSettingsBase> implements RendererInstance {
+export class AppRenderer<PluginSettings extends PluginSettingsBase> extends EventEmitter implements RendererInstance {
   /** Local `ElementMap` mapping name -> Element the {@link RendererInstance | `RendererInstance`} needs to access. */
   private elements: ElementMap = {} as ElementMap;
 
@@ -30,7 +31,9 @@ export class AppRenderer<PluginSettings extends PluginSettingsBase> implements R
    * @param options - Incoming Options for this Renderer.
    * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
    */
-  constructor(private options: RendererInstanceOptions<PluginSettings>) {}
+  constructor(private options: RendererInstanceOptions<PluginSettings>) {
+    super();
+  }
 
   /**
    * Initialize the Renderer, kicking off the Lifecycle.

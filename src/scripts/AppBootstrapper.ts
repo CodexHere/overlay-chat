@@ -13,7 +13,7 @@ import { AppRenderer } from './renderers/AppRenderer.js';
 import { SettingsRenderer } from './renderers/SettingsRenderer.js';
 import { AppBootstrapperOptions, PluginManagerEmitter, PluginManagerEvents } from './types/Managers.js';
 import { PluginImportResults, PluginSettingsBase } from './types/Plugin.js';
-import { RendererConstructor, RendererInstance } from './types/Renderers.js';
+import { RendererConstructor, RendererInstance, RendererInstanceEvents } from './types/Renderers.js';
 import { AddStylesheet } from './utils/DOM.js';
 
 /**
@@ -54,6 +54,8 @@ export class AppBootstrapper<PluginSettings extends PluginSettingsBase> {
   private pluginManager?: PluginManagerEmitter<PluginSettings>;
   /** Instance of the {@link TemplateManager | `TemplateManager`}. */
   private templateManager?: TemplateManager;
+  /** Instance of the {@link RendererInstance | `RendererInstance`} chosen to present to the User. */
+  private renderer?: RendererInstance;
 
   /**
    * Create a new {@link AppBootstrapper | `AppBootstrapper`}.
@@ -106,7 +108,7 @@ export class AppBootstrapper<PluginSettings extends PluginSettingsBase> {
       },
 
       pluginOptions: {
-        emitter: this.busManager.emitter,
+        getEmitter: this.busManager.getEmitter,
         getSettings: this.settingsManager.getSettings,
         getTemplates: this.templateManager.getTemplates,
         display: this.displayManager
@@ -154,20 +156,25 @@ export class AppBootstrapper<PluginSettings extends PluginSettingsBase> {
     }
 
     // Construct the `RendererConstructor` to instantiate a `RendererInstance`!
-    const renderer: RendererInstance = new rendererClass({
+    this.renderer = new rendererClass({
       getTemplates: this.templateManager!.getTemplates,
       getSettings: this.settingsManager!.getSettings,
       setSettings: this.settingsManager!.setSettings,
       getMaskedSettings: this.settingsManager!.getMaskedSettings,
       getParsedJsonResults: this.settingsManager!.getParsedJsonResults,
       getPlugins: this.pluginManager!.getPlugins,
-      pluginLoader: this.pluginManager!.registerAllPlugins,
       validateSettings: this.pluginManager!.validateSettings,
       display: this.displayManager!
     });
 
+    // Upon Plugin List being changed, we want to reload all Plugins and restart the `RendererInstance`.
+    this.renderer?.addListener(RendererInstanceEvents.PLUGINS_STALE, async () => {
+      await this.pluginManager?.registerAllPlugins();
+      await this.renderer?.init();
+    });
+
     // Init the Renderer
-    await renderer.init();
+    await this.renderer.init();
   }
 
   /**

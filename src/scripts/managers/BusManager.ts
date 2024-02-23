@@ -96,13 +96,6 @@ export class BusManager<PluginSettings extends PluginSettingsBase> {
   private _emitter: BusManagerEmitter;
 
   /**
-   * Get a `Readonly` instance of the {@link BusManagerEmitter | `BusManagerEmitter`}.
-   */
-  get emitter(): Readonly<BusManagerEmitter> {
-    return this._emitter;
-  }
-
-  /**
    * Create a new {@link BusManager | `BusManager`}.
    *
    * Also instantiates an `EventEmitter`.
@@ -118,8 +111,15 @@ export class BusManager<PluginSettings extends PluginSettingsBase> {
    */
   async init() {
     // Register "Middleware Execute" event to execute Chain
-    this.emitter.on(BusManagerEvents.MIDDLEWARE_EXECUTE, this.startMiddlewareChainByName);
+    this._emitter.on(BusManagerEvents.MIDDLEWARE_EXECUTE, this.startMiddlewareChainByName);
   }
+
+  /**
+   * Get a `Readonly` instance of the {@link BusManagerEmitter | `BusManagerEmitter`}.
+   */
+  getEmitter = (): Readonly<BusManagerEmitter> => {
+    return this._emitter;
+  };
 
   /**
    * Mark the `EventEmitter` as not allowing anymore `Listeners` to be added.
@@ -186,7 +186,7 @@ export class BusManager<PluginSettings extends PluginSettingsBase> {
 
     for (const [eventName, eventFunction] of Object.entries(registration.events.recieves)) {
       // AddListener on behalf of the plugin, and force-bind the function to the PluginInstance
-      this.emitter.addListener(eventName, eventFunction.bind(plugin));
+      this._emitter.addListener(eventName, eventFunction.bind(plugin));
     }
   };
 
