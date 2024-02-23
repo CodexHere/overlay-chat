@@ -6,8 +6,10 @@
   "entryPoints": ["./src/scripts"],
   "entryPointStrategy": "expand",
 
-  "hideGenerator": true,
   "includeVersion": true,
+  "hideGenerator": true,
+  "sourceLinkExternal": true,
+
   "plugin": ["@mxssfd/typedoc-theme"],
   "theme": "my-theme"
   // "plugin": ["typedoc-material-theme"],

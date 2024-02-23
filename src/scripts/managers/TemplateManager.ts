@@ -1,6 +1,6 @@
 /**
  * Load and Cache TemplateMaps from all Plugins
- * 
+ *
  * @module
  */
 
@@ -13,7 +13,7 @@ import coreTemplate from './coreTemplates.html?raw';
 export type TemplateIDsBase = 'modalMessage' | 'app' | 'settings';
 
 /**
- * Load and Cache {@link TemplateMap | `TemplateMap`s}  from all Plugins.
+ * Load and Cache {@link TemplateMap | `TemplateMap`}s  from all Plugins.
  *
  * This class is also part of the {@link types/Plugin.PluginRegistrar | `PluginRegistrar`},
  * providing various Registration points.

@@ -66,6 +66,7 @@ export class SilentlyFailChainError extends Error {
   };
 
   /**
+   * Create a new {@link SilentlyFailChainError | `SilentlyFailChainError`}.
    *
    * @param message - Justification for why the {@link MiddlewareChain | `MiddlewareChain`} is silently failing.
    */

@@ -41,7 +41,7 @@ export class PluginManager<PluginSettings extends PluginSettingsBase>
   /**
    * Create a new {@link PluginManager | `PluginManager`}.
    *
-   * @param options - Incoming Options for this Manager.
+   * @param options - Incoming Options for the {@link PluginManager | `PluginManager`}.
    * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
    */
   constructor(private options: PluginManagerOptions<PluginSettings>) {

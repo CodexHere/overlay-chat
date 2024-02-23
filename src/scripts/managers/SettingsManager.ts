@@ -107,7 +107,10 @@ export class SettingsManager<PluginSettings extends PluginSettingsBase> {
    * @param registration - The Plugin Instance's Registration Options.
    * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
    */
-  registerSettings = async (plugin: PluginInstance<PluginSettings>, registration?: PluginRegistrationOptions) => {
+  registerSettings = async (
+    plugin: PluginInstance<PluginSettings>,
+    registration?: PluginRegistrationOptions
+  ) => {
     if (!registration || !registration.settings) {
       return;
     }

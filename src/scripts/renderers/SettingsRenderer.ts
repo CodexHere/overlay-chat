@@ -1,6 +1,6 @@
 /**
  * Renderer for Settings portion of the Application
- * 
+ *
  * @module
  */
 
@@ -564,7 +564,12 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
     event.target.classList.toggle('reveal', 'mouseenter' === event.type);
   };
 
+  private urlClicked = false;
   private onUrlClick = (_event: Event) => {
+    if (true === this.urlClicked) {
+      return;
+    }
+
     const infoText = this.elements['link-results-area'].querySelector('.results-reveal')!;
     const oldInfo = infoText.innerHTML;
 
@@ -579,7 +584,9 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
     this.elements['link-results-area'].classList.remove('reveal');
     infoText.innerHTML = '<h2>Copied!</h2>';
 
+    this.urlClicked = true;
     setTimeout(() => {
+      this.urlClicked = false;
       infoText.innerHTML = oldInfo;
     }, 2000);
   };

@@ -120,7 +120,7 @@ export default class TwitchChat {
         'chat:twitch:sendMessage': this._onBusSendMessage,
         'chat:twitch:hasAuth': this._onBusHasAuth
       },
-      sends: ['chat:twitch:onMessage']
+      sends: ['chat:twitch:onChat']
     };
   }
 
@@ -383,12 +383,12 @@ export default class TwitchChat {
       channel,
       isSelf,
       message,
-      isBot: false
+      clientType: 'streamer'
     };
 
     console.log('Streamer Got: ', message);
 
-    this.options.emitter.emit('chat:twitch:onMessage', ctx);
+    this.options.emitter.emit('chat:twitch:onChat', ctx);
   };
 
   /**
@@ -404,12 +404,12 @@ export default class TwitchChat {
       channel,
       isSelf,
       message,
-      isBot: true
+      clientType: 'bot'
     };
 
     console.log('Bot Got: ', message);
 
-    this.options.emitter.emit('chat:twitch:onMessage', ctx);
+    this.options.emitter.emit('chat:twitch:onChat', ctx);
   };
 
   /**

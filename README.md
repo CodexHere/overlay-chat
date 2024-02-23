@@ -10,6 +10,7 @@
 * Heavily Document everything
   * Left `Forms` undocumented, because we're considering a rewrite.
 * Core Plugin needs to require Twitch-Chat
+  * Need to make sure we have `Twitch - Chat` enabled
 * Refactor:
   * SettingsRenderer - Pull some stuff out into helper classes, particularly the Settings Options stuff. 
   * Forms - should use clases to generate output, consider design patterns (Builder, Visitor)
