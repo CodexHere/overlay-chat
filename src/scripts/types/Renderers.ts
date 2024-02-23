@@ -1,12 +1,12 @@
 /**
  * Types for Renderers
- * 
+ *
  * @module
  */
 
 import { FormValidatorResults, ParsedJsonResults } from '../utils/Forms.js';
 import { TemplateMap } from '../utils/Templating.js';
-import { DisplayManager } from './Managers.js';
+import { DisplayAccessor } from './Managers.js';
 import { PluginInstances, PluginSettingsBase } from './Plugin.js';
 
 /**
@@ -39,10 +39,8 @@ export type RendererInstanceOptions<PluginSettings extends PluginSettingsBase> =
   getPlugins: () => PluginInstances<PluginSettings>;
   /** Action Function to Reinitialize Plugins */
   pluginLoader: () => void;
-  /** Accessor Function for Display Manager */
-  // TODO: Change to actual Accessor Function to match other items
-  // TODO: Rename away from `errorDisplay`
-  errorDisplay: DisplayManager;
+  /** Accessor for Display Manager */
+  display: DisplayAccessor;
 };
 
 /**

@@ -5,7 +5,7 @@
  */
 
 import { BusManagerContext_Init, BusManagerEmitter, BusManagerEvents } from '../types/Managers.js';
-import { PluginEventMap, PluginInstance, PluginMiddlewareMap, PluginSettingsBase } from '../types/Plugin.js';
+import { PluginInstance, PluginRegistrarAccessor, PluginSettingsBase } from '../types/Plugin.js';
 import { EnhancedEventEmitter } from '../utils/EnhancedEventEmitter.js';
 import { MiddlewareChain, MiddlewareLink } from '../utils/Middleware.js';
 
@@ -116,7 +116,7 @@ export class BusManager<PluginSettings extends PluginSettingsBase> {
   /**
    * Initialize `BusManager` for executing {@link MiddlewareChain | `MiddlewareChain`}s.
    */
-  init() {
+  async init() {
     // Register "Middleware Execute" event to execute Chain
     this.emitter.on(BusManagerEvents.MIDDLEWARE_EXECUTE, this.startMiddlewareChainByName);
   }
@@ -147,12 +147,12 @@ export class BusManager<PluginSettings extends PluginSettingsBase> {
    * @param plugin - Instance of the Plugin to register against.
    * @param queriedMiddleware - Middleware Chain Mapping to register with the Plugin instance.
    */
-  registerMiddleware = (plugin: PluginInstance<PluginSettings>, queriedMiddleware: PluginMiddlewareMap | undefined) => {
-    if (!queriedMiddleware) {
+  registerMiddleware: PluginRegistrarAccessor<PluginSettings> = async (plugin, registration) => {
+    if (!registration || !registration.middlewares) {
       return;
     }
 
-    for (const [middlewareName, middlewareLinks] of Object.entries(queriedMiddleware)) {
+    for (const [middlewareName, middlewareLinks] of Object.entries(registration.middlewares)) {
       let chosenChain = this.chains.get(middlewareName);
 
       // This is the first registration for the Chain
@@ -178,16 +178,13 @@ export class BusManager<PluginSettings extends PluginSettingsBase> {
 
   /**
    * Register Events with the system.
-   *
-   * @param plugin - Instance of the Plugin to register against.
-   * @param eventMap - {@link PluginEventMap | `PluginEventMap`} for the currently Registering Plugin.
    */
-  registerEvents = (plugin: PluginInstance<PluginSettings>, eventMap?: PluginEventMap) => {
-    if (!eventMap) {
+  registerEvents: PluginRegistrarAccessor<PluginSettings> = async (plugin, registration) => {
+    if (!registration || !registration.events || !registration.events.recieves) {
       return;
     }
 
-    for (const [eventName, eventFunction] of Object.entries(eventMap)) {
+    for (const [eventName, eventFunction] of Object.entries(registration.events.recieves)) {
       // AddListener on behalf of the plugin, and force-bind the function to the PluginInstance
       this.emitter.addListener(eventName, eventFunction.bind(plugin));
     }

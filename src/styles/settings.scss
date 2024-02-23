@@ -30,7 +30,7 @@
     min-width: 12em;
 
     & + [data-input-type='arraygroup'] {
-      margin-top: var(--spacing);
+      margin-top: var(--pico-spacing);
     }
   }
 
@@ -80,7 +80,7 @@
     align-items: center;
 
     &:not(:last-child) {
-      margin-bottom: calc(var(--spacing) * 0.25);
+      margin-bottom: calc(var(--pico-spacing) * 0.25);
     }
 
     input {
@@ -97,12 +97,12 @@
   [data-input-type='radio'] {
     .input-group {
       padding: 0.5em;
-      border: 1px solid var(--card-border-color);
-      background: var(--card-background-color);
-      border-radius: var(--border-radius);
+      border: 1px solid var(--pico-card-border-color);
+      background: var(--pico-card-background-color);
+      border-radius: var(--pico-border-radius);
 
       &:not(:last-child) {
-        margin-bottom: var(--spacing);
+        margin-bottom: var(--pico-spacing);
       }
     }
   }
@@ -127,6 +127,10 @@
         gap: 1rem;
         margin-left: auto;
         margin-right: 1rem;
+
+        button {
+          width: 100%;
+        }
       }
     }
 
@@ -147,6 +151,15 @@
   form#settings {
     [data-input-type='arraygroup'],
     [data-input-type='arraylist'] {
+      td,
+      th {
+        background-color: transparent;
+
+        button {
+          width: 100%;
+        }
+      }
+
       td > [data-input-type] {
         &:not([data-input-type='switch']):not([data-input-type='checkbox']) {
           & > label {
@@ -158,10 +171,10 @@
   }
 
   .description {
-    border: 1px solid var(--card-border-color);
-    padding: calc(var(--spacing) / 2);
+    border: 1px solid var(--pico-card-border-color);
+    padding: calc(var(--pico-spacing) / 2);
     margin: 0;
-    margin-bottom: var(--spacing);
+    margin-bottom: var(--pico-spacing);
     font-size: 0.8em;
     background-color: var(--description-background-color);
   }
@@ -169,7 +182,7 @@
   .table-wrapper {
     max-width: 100%;
     overflow: auto;
-    margin-bottom: var(--spacing);
+    margin-bottom: var(--pico-spacing);
 
     table {
       margin-bottom: 0;
@@ -179,22 +192,22 @@
   .content {
     position: relative;
 
-    padding: var(--spacing);
-    border: 1px solid var(--card-border-color);
+    padding: var(--pico-spacing);
+    border: 1px solid var(--pico-card-border-color);
     border-top: 0;
-    background: var(--card-background-color);
+    background: var(--pico-card-background-color);
   }
 
   [title]:after {
-    --size: 0.75rem;
+    --_size: 0.75rem;
     display: inline-flex;
     content: 'i';
-    background: var(--primary);
+    background: var(--pico-primary);
     border-radius: 50%;
     border: 1px solid #fff;
-    font-size: var(--size);
-    width: var(--size);
-    height: var(--size);
+    font-size: var(--_size);
+    width: var(--_size);
+    height: var(--_size);
     justify-content: center;
     align-items: center;
     position: relative;
@@ -210,31 +223,32 @@
     flex: 1;
     overflow-y: auto;
     margin-bottom: 1rem;
-    background: var(--card-background-color);
-    border: 1px solid var(--card-border-color);
-    border-top-left-radius: var(--border-radius);
-    border-bottom-left-radius: var(--border-radius);
+    background: var(--pico-card-background-color);
+    border: 1px solid var(--pico-card-border-color);
+    border-top-left-radius: var(--pico-border-radius);
+    border-bottom-left-radius: var(--pico-border-radius);
     padding: 1rem;
 
     input:not([type='submit'], [type='button'], [type='reset'], [type='range'], [type='file'], [readonly]):focus,
     select:focus,
     textarea:focus {
-      --box-shadow: 0 0 var(--outline-width) var(--outline-width) var(--form-element-focus-color);
+      --pico-box-shadow: 0 0 var(--outline-width) var(--outline-width) var(--pico-form-element-focus-color);
     }
 
     input:invalid,
     input:focus:invalid {
-      --border-color: var(--form-element-invalid-focus-color);
-      --background-color: #f4bc1e55;
+      --pico-form-element-background-color: #f4bc1e55;
+      --pico-form-element-border-color: var(--pico-form-element-invalid-focus-color);
+      --pico-form-element-active-background-color: var(--pico-form-element-invalid-focus-color);
       border-width: 2px;
       outline: none;
       background-position: center right 0.75rem;
-      background-image: var(--icon-invalid);
+      background-image: var(--pico-icon-invalid);
     }
 
     input:focus:invalid {
-      --border-color: var(--form-element-invalid-border-color);
-      --box-shadow: 0 0 var(--outline-width) var(--outline-width) var(--form-element-invalid-border-color);
+      --pico-form-element-border-color: var(--pico-form-element-invalid-border-color);
+      --pico-box-shadow: 0 0 var(--outline-width) var(--outline-width) var(--pico-form-element-invalid-border-color);
     }
 
     label {
@@ -311,7 +325,7 @@
 
         font-size: 2em;
 
-        background-color: var(--card-background-color);
+        background-color: var(--pico-card-background-color);
         opacity: 1;
         transition: opacity var(--link-results-reveal-duration);
 
@@ -347,12 +361,12 @@
     }
 
     .settings-options {
-      --font-size: 0.85em;
-      font-size: var(--font-size);
+      --pico-font-size: 0.85em;
+      font-size: var(--pico-font-size);
       display: flex;
 
       &:has(*) {
-        padding: calc(var(--spacing) / 2);
+        padding: calc(var(--pico-spacing) / 2);
         margin-bottom: 0;
       }
 
@@ -365,7 +379,7 @@
         padding: 0.25em;
 
         &:not(:last-child) {
-          margin-right: calc(var(--spacing) * 2);
+          margin-right: calc(var(--pico-spacing) * 2);
         }
       }
 
@@ -376,7 +390,7 @@
 
       label {
         display: inline-block;
-        margin-right: calc(var(--spacing) / 3);
+        margin-right: calc(var(--pico-spacing) / 3);
       }
 
       .spacer {
@@ -389,11 +403,11 @@
       flex-direction: column;
 
       .button-load-app {
-        margin-bottom: calc(var(--spacing) * 0.25);
+        margin-bottom: calc(var(--pico-spacing) * 0.25);
       }
 
       .button-settings-reset {
-        margin-top: var(--spacing);
+        margin-top: var(--pico-spacing);
         margin-bottom: 0;
       }
     }

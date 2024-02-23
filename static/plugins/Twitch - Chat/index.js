@@ -21,7 +21,7 @@ import tmiJs from 'https://esm.sh/tmi.js@1.8.5';
  * @typedef {import('../../../src/scripts/types/Plugin.js').PluginEventRegistration} PluginEventMap
  * @typedef {import('../../../src/scripts/types/Plugin.js').PluginOptions<PluginSettings>} PluginInjectables
  * @typedef {import('../../../src/scripts/types/Plugin.js').PluginInstance<PluginSettings>} PluginInstance
- * @typedef {import('../../../src/scripts/types/Plugin.js').PluginRegistrationOptions} PluginRegistrationOptions
+ * @typedef {import('../../../src/scripts/types/Plugin.js').PluginRegistration} PluginRegistration
  * @typedef {import('../../../src/scripts/utils/Middleware.js').Next<Context>} Next
  */
 
@@ -89,7 +89,7 @@ export default class TwitchChat {
   }
 
   /**
-   * @returns {Promise<PluginRegistrationOptions>}
+   * @returns {Promise<PluginRegistration>}
    */
   registerPlugin = async () => ({
     events: this._getEvents(),
@@ -135,7 +135,7 @@ export default class TwitchChat {
         errors.push(new Error('Try going to Settings, and refreshing your Auth Token!'));
       }
 
-      this.options.errorDisplay.showError(errors);
+      this.options.display.showError(errors);
     }
   }
 
@@ -211,7 +211,7 @@ export default class TwitchChat {
       event.target.disabled = false;
 
       const errInst = /** @type {Error} */ (/** @type {unknown} */ err);
-      this.options.errorDisplay.showError(errInst);
+      this.options.display.showError(errInst);
     }
   };
 

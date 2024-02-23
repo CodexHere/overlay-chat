@@ -10,7 +10,7 @@
     "predocs": "npm run __install",
     "predocs:dev": "npm run __install",
     "prebuild": "npm run __install",
-    "__install": "[ -f package-lock.json ] && npm ci || npm i",
+    "__install": "npm i",
     "start": "vite .",
     "docs:dev": "typedoc --watch & npx http-server ./docs -p 9999",
     "docs": "typedoc",
@@ -40,7 +40,7 @@
     "vite-plugin-dts": "^3.7.1"
   },
   "dependencies": {
-    "@picocss/pico": "^1.5.11",
+    "@picocss/pico": "^2.0.3",
     "events": "^3.3.0",
     "handlebars": "^4.7.8",
     "lodash.get": "^4.4.2",

@@ -6,7 +6,7 @@
 
 import get from 'lodash.get';
 import set from 'lodash.set';
-import { PluginInstance, PluginRegistrationOptions, PluginSettingsBase } from '../types/Plugin.js';
+import { PluginInstance, PluginRegistration, PluginSettingsBase } from '../types/Plugin.js';
 import { FormEntry, FormEntryGrouping, FromJson, ParsedJsonResults } from '../utils/Forms.js';
 import * as URI from '../utils/URI.js';
 import SettingsSchemaDefault from './schemaSettingsCore.json';
@@ -107,7 +107,7 @@ export class SettingsManager<PluginSettings extends PluginSettingsBase> {
    * @param registration - The Plugin Instance's Registration Options.
    * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
    */
-  registerSettings = async (plugin: PluginInstance<PluginSettings>, registration?: PluginRegistrationOptions) => {
+  registerSettings = async (plugin: PluginInstance<PluginSettings>, registration?: PluginRegistration) => {
     if (!registration || !registration.settings) {
       return;
     }
@@ -137,10 +137,7 @@ export class SettingsManager<PluginSettings extends PluginSettingsBase> {
    * @param plugin - Instance of the Plugin to register against.
    * @param registration - Registration object to garner metadata against
    */
-  private getPluginMetaInputs(
-    plugin: PluginInstance<PluginSettings>,
-    registration: PluginRegistrationOptions
-  ): FormEntry[] {
+  private getPluginMetaInputs(plugin: PluginInstance<PluginSettings>, registration: PluginRegistration): FormEntry[] {
     return [
       {
         inputType: 'text',

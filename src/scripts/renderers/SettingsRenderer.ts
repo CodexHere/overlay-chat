@@ -455,7 +455,7 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase> impleme
         // Re-init this Renderer
         await this.init();
       } catch (err) {
-        this.options.errorDisplay.showError(err as Error);
+        this.options.display.showError(err as Error);
       }
     } else {
       // NO restart necessary, let's sync settings from User changes.

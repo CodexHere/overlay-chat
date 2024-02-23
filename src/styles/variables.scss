@@ -1,29 +1,31 @@
 // Specificity-hack!
 :root:root {
-  // Core color needs better naming convention
-  --color: white;
   --base-background: #2b3e62;
   --base-background-2: color-mix(in srgb, #000 85%, var(--base-background));
   --base-background-animation-speed: 120s;
 
-  --primary: #f4511e;
-  --primary-hover: #ff5722;
-  --primary-focus: rgba(244, 81, 30, 0.25);
-  --primary-inverse: #fff;
+  --pico-color: white;
 
-  --card-background-color: rgba(0, 0, 0, 0.667);
-  --card-border-color: rgba(255, 255, 255, 0.3);
+  --pico-primary: rgba(199, 60, 18, 0.75);
+  --pico-primary-background: var(--pico-primary);
+  --pico-primary-hover-background: #f4511e;
+  --pico-primary-hover-border: #963213;
+  --pico-primary-focus: rgba(180, 53, 14, 0.25);
+  --pico-primary-inverse: #fff;
 
-  --form-element-focus-color: var(--primary);
+  --pico-card-background-color: rgba(0, 0, 0, 0.667);
+  --pico-card-border-color: rgba(255, 255, 255, 0.3);
 
-  --form-element-spacing-vertical: 0.5rem;
-  --form-element-spacing-horizontal: 0.5rem;
-  --form-element-background-color: color-mix(in srgb, #000 50%, var(--primary-focus));
-  --form-element-border-color: color-mix(in srgb, #000 50%, var(--primary));
+  --pico-form-element-focus-color: var(--pico-primary);
 
-  --form-element-invalid-border-color: rgba(244, 187, 30, 0.788);
-  --form-element-invalid-focus-color: color-mix(in srgb, #000 20%, var(--form-element-invalid-border-color));
-  --form-element-invalid-active-border-color: white;
+  --pico-form-element-spacing-vertical: 0.5rem;
+  --pico-form-element-spacing-horizontal: 0.5rem;
+  --pico-form-element-background-color: color-mix(in srgb, #000 50%, var(--pico-primary-focus));
+  --pico-form-element-border-color: color-mix(in srgb, #000 50%, var(--pico-primary));
+
+  --pico-form-element-invalid-border-color: rgba(244, 187, 30, 0.788);
+  --pico-form-element-invalid-focus-color: color-mix(in srgb, #000 20%, var(--pico-form-element-invalid-border-color));
+  --pico-form-element-invalid-active-border-color: white;
 
   --description-background-color: color-mix(in srgb, #000 60%, var(--base-background));
 }

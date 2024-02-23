@@ -2,20 +2,9 @@
 
 ## TODO
 
-******
-* Documenting BusManager!!!
-******
-
-* Core Plugin needs to require Twitch-Chat
-  * Need to make sure we have `Twitch - Chat` enabled
-  * Maybe this is unnecessary if the process enforces enabling as mentioned in `Refactor > Bootstrapper`
 * Refactor:
   * SettingsRenderer - Pull some stuff out into helper classes, particularly the Settings Options stuff. 
   * Forms - should use clases to generate output, consider design patterns (Builder, Visitor)
-  * PluginOptions - rename to PluginServices
-  * PluginContext - PluginRegistrar, and PluginServices
-    * Needs rendererType: 'app' | 'settings'
-  * PluginConstructor - needs to take in PluginContext
   * Bootstrapper
     * Change schema to be just an arraylist with columns:
       * Enabled
@@ -29,6 +18,9 @@
   * Consider adding `debug` and replace `console.log`
     * https://bundlephobia.com/package/debug@4.3.4
     * If we don't add it, remove `console.log`
+* Core Plugin needs to require Twitch-Chat
+  * Need to make sure we have `Twitch - Chat` enabled
+  * Maybe this is unnecessary if the process enforces enabling as mentioned in `Refactor > Bootstrapper`
 * Add About/FAQ/ETC links on Settings Page
   * How to use it, etc.
   * or should it be a github wiki?
@@ -39,7 +31,7 @@
       * ?? This could replace the timeout errors
     * Inject a Settings Option:
       * Color Element
-      * Changes the `--card-background-color` value to modify settings css!
+      * Changes the `--pico-card-background-color` value to modify settings css!
 	* Generally where I come up with ideas and flesh them out before moving into final plugin
 		* Just don't delete stuff!!!
 	* Custom Chains

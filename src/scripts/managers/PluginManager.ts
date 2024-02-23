@@ -385,28 +385,28 @@ export class PluginManager<PluginSettings extends PluginSettingsBase>
 
       // Register Middleware Chains from Plugins
       try {
-        pluginRegistrar.registerMiddleware(plugin, registration.middlewares);
+        pluginRegistrar.registerMiddleware(plugin, registration);
       } catch (err) {
         importResults.bad.push(new Error(`Could not Register Middleware for Plugin: ${plugin.name}`));
       }
 
       // Register Events from Plugins
       try {
-        pluginRegistrar.registerEvents(plugin, registration.events?.recieves);
+        pluginRegistrar.registerEvents(plugin, registration);
       } catch (err) {
         importResults.bad.push(new Error(`Could not Register Events for Plugin: ${plugin.name}`));
       }
 
       // Register Templates from Plugins
       try {
-        pluginRegistrar.registerTemplates(registration.templates);
+        pluginRegistrar.registerTemplates(plugin, registration);
       } catch (err) {
         importResults.bad.push(new Error(`Could not Register Templates for Plugin: ${plugin.name}`));
       }
 
       // Load Styles from Plugins
       if (registration.stylesheet) {
-        pluginRegistrar.registerStylesheet(registration.stylesheet);
+        pluginRegistrar.registerStylesheet(plugin, registration);
       }
     }
   }

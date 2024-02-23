@@ -14,7 +14,7 @@
  * @typedef {import('../../../src/scripts/types/Plugin.js').PluginEventRegistration} PluginEventMap
  * @typedef {import('../../../src/scripts/types/Plugin.js').PluginOptions<PluginSettings>} PluginInjectables
  * @typedef {import('../../../src/scripts/types/Plugin.js').PluginInstance<PluginSettings>} PluginInstance
- * @typedef {import('../../../src/scripts/types/Plugin.js').PluginRegistrationOptions} PluginRegistrationOptions
+ * @typedef {import('../../../src/scripts/types/Plugin.js').PluginRegistration} PluginRegistration
  * @typedef {import('../../../src/scripts/utils/Middleware.js').Next<Context>} Next
  */
 
@@ -68,7 +68,7 @@ export default class Plugin_Twitch_EmoteSwap {
   }
 
   /**
-   * @returns {PluginRegistrationOptions}
+   * @returns {PluginRegistration}
    */
   registerPlugin = () => ({
     settings: new URL(`${BaseUrl()}/settings.json`),

@@ -13,7 +13,7 @@ import {
   PluginInstance,
   PluginMiddlewareMap,
   PluginOptions,
-  PluginRegistrationOptions,
+  PluginRegistration,
   PluginSettingsBase
 } from './types/Plugin.js';
 import { IsInViewPort } from './utils/DOM.js';
@@ -83,7 +83,7 @@ export default class Plugin_Core<PluginSettings extends AppSettings_Chat> implem
   /**
    * Register this Plugin with the System.
    */
-  registerPlugin = (): PluginRegistrationOptions => ({
+  registerPlugin = (): PluginRegistration => ({
     middlewares: this._getMiddleware(),
     events: this._getEvents(),
     templates: new URL(`${BaseUrl()}/templates/twitch-chat.html`)

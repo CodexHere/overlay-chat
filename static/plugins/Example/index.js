@@ -18,7 +18,7 @@
  * @typedef {import('../../../src/scripts/types/Plugin.js').PluginEventRegistration} PluginEventMap
  * @typedef {import('../../../src/scripts/types/Plugin.js').PluginOptions<PluginSettings>} PluginInjectables
  * @typedef {import('../../../src/scripts/types/Plugin.js').PluginInstance<PluginSettings>} PluginInstance
- * @typedef {import('../../../src/scripts/types/Plugin.js').PluginRegistrationOptions} PluginRegistrationOptions
+ * @typedef {import('../../../src/scripts/types/Plugin.js').PluginRegistration} PluginRegistration
  * @typedef {import('../../../src/scripts/utils/Middleware.js').Next<Context>} Next
  */
 
@@ -43,7 +43,7 @@ export default class Plugin_Example {
   }
 
   /**
-   * @returns {PluginRegistrationOptions}
+   * @returns {PluginRegistration}
    */
   registerPlugin = () => ({
     settings: new URL(`${BaseUrl()}/settings.json`),
@@ -300,13 +300,13 @@ export default class Plugin_Example {
       if (true === settings['example--showErrorAtRuntime']) {
         // Shows an error to the user as an example
         console.warn(`[${this.name}] Show an error to the user`);
-        this.options.errorDisplay.showError(new Error('This error should be shown to the user!'));
+        this.options.display.showError(new Error('This error should be shown to the user!'));
       }
 
       if (true === settings['example--showInfoAtRuntime']) {
         // Shows an error to the user as an example
         console.warn(`[${this.name}] Show an error to the user`);
-        this.options.errorDisplay.showInfo(
+        this.options.display.showInfo(
           `Your Message: ${settings['example--showInfoAtRuntime-message']}`,
           'Custom Info Alert Coming At Ya!'
         );
@@ -326,17 +326,14 @@ export default class Plugin_Example {
           );
         } catch (err) {
           const errInst = /** @type {Error} */ (/** @type {unknown} */ err);
-          this.options.errorDisplay.showError(errInst);
+          this.options.display.showError(errInst);
         }
       }
 
       const hasAuth = this.options.emitter.call('chat:twitch:hasAuth').slice(-1)[0];
       console.log('Checking Auth Values', hasAuth);
       if (hasAuth) {
-        this.options.errorDisplay.showInfo(
-          `* Streamer: ${hasAuth.streamer}<br/>* Bot: ${hasAuth.bot}`,
-          'Do we have auth?'
-        );
+        this.options.display.showInfo(`* Streamer: ${hasAuth.streamer}<br/>* Bot: ${hasAuth.bot}`, 'Do we have auth?');
       }
     }, 3000);
   }
