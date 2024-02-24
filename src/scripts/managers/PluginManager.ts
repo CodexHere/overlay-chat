@@ -15,7 +15,7 @@ import {
   PluginLoaders,
   PluginSettingsBase
 } from '../types/Plugin.js';
-import { FormValidatorResults } from '../utils/Forms.js';
+import { FormValidatorResults } from '../utils/Forms/types.js';
 import * as URI from '../utils/URI.js';
 import { IsValidValue } from '../utils/misc.js';
 

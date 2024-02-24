@@ -17,7 +17,7 @@ import {
   PluginSettingsBase
 } from './types/Plugin.js';
 import { IsInViewPort } from './utils/DOM.js';
-import { FormValidatorResult, FormValidatorResults } from './utils/Forms.js';
+import { FormValidatorResult, FormValidatorResults } from './utils/Forms/types.js';
 import { MiddlewareLink } from './utils/Middleware.js';
 import { RenderTemplate } from './utils/Templating.js';
 import { BaseUrl } from './utils/URI.js';

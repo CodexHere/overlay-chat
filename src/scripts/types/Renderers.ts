@@ -5,7 +5,7 @@
  */
 
 import { EventEmitter } from 'events';
-import { FormValidatorResults, ParsedJsonResults } from '../utils/Forms.js';
+import { FormValidatorResults, ProcessedJsonResults } from '../utils/Forms/types.js';
 import { TemplateMap } from '../utils/Templating.js';
 import { DisplayAccessor } from './Managers.js';
 import { PluginInstances, PluginSettingsBase } from './Plugin.js';
@@ -25,7 +25,7 @@ export enum RendererInstanceEvents {
  */
 export type RendererInstanceOptions<PluginSettings extends PluginSettingsBase> = {
   /** Accessor Function to get the Parsed JSON Results of processing a {@link FormEntry | `FormEntry[]`}. */
-  getParsedJsonResults?: () => ParsedJsonResults | undefined;
+  getParsedJsonResults?: () => ProcessedJsonResults | undefined;
   /** Action Function to initiate Validating Settings for all Plugins. */
   validateSettings: () => FormValidatorResults<PluginSettings>;
   /** Accessor Function to retrieve the Settings masked. */

@@ -11,8 +11,8 @@
  *
  * @typedef {import('../../../src/scripts/Plugin_Core.js').MiddewareContext_Chat} ConcreteContext
  * @typedef {Partial<ConcreteContext>} Context
- * @typedef {import('../../../src/scripts/utils/Forms.js').FormEntryGrouping} FormEntryFieldGroup
- * @typedef {import('../../../src/scripts/utils/Forms.js').FormValidatorResults<PluginSettings>} SettingsValidatorResults
+ * @typedef {import('../../../src/scripts/utils/Forms/types.js').SettingsSchemaGrouping} SettingsSchemaGrouping
+ * @typedef {import('../../../src/scripts/utils/Forms/types.js').FormValidatorResults<PluginSettings>} SettingsValidatorResults
  * @typedef {import('../../../src/scripts/types/Managers.js').BusManagerContext_Init<{}>} BusManagerContext_Init
  * @typedef {import('../../../src/scripts/types/Plugin.js').PluginMiddlewareMap} PluginMiddlewareMap
  * @typedef {import('../../../src/scripts/types/Plugin.js').PluginEventRegistration} PluginEventMap
@@ -259,7 +259,7 @@ export default class Plugin_Example {
     btn?.addEventListener('click', event => {
       event.stopImmediatePropagation();
       event.preventDefault();
-      const txt = btn.closest('[data-input-type="arraygroup"]')?.querySelector('[name="example--txtExample"]');
+      const txt = btn.closest('[data-input-type="grouparray"]')?.querySelector('[name="example--txtExample"]');
       /** @type {HTMLInputElement} */
       (btn).disabled = true;
       if (txt instanceof HTMLInputElement) {

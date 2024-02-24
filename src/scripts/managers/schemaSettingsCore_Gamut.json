@@ -1,123 +1,127 @@
 [
   {
     "name": "testArea1",
-    "inputType": "fieldgroup",
-    "label": "Testing Field Group Stuff",
-    "description": "Just testing things dawg",
-    "tooltip": "We're testing every type of item",
+    "inputType": "group-subschema",
+    "label": "Simple Group-SubSchema Demonstration",
+    "description": "This Grouping represents all the supported HTML Form/Input Elements this library provides. The Group-SubSchema (<code>group-subschema</code>) built here shows how you can nest and group Settings within a collapsable area.",
+    "tooltip": "A nesting and grouping of Settings",
     "values": [
       {
         "name": "simpleInputs",
-        "inputType": "fieldgroup",
+        "inputType": "group-subschema",
         "label": "Simple Inputs",
-        "description": "These are single-value inputs",
+        "description": "These are single-value inputs, and the simplest of User Inputs.",
+        "tooltip": "The most common Inputs for getting data from Users",
         "values": [
           {
-            "name": "myOption-1",
+            "name": "simpleInputs-text",
             "inputType": "text"
           },
           {
-            "name": "myOption-2",
+            "name": "simpleInputs-password",
             "inputType": "password"
           },
           {
-            "name": "myOption-3",
-            "inputType": "number"
+            "name": "simpleInputs-number",
+            "inputType": "number",
+            "min": 123,
+            "max": 456,
+            "step": 3
           },
           {
-            "name": "myOption-4",
+            "name": "simpleInputs-checkbox",
             "inputType": "checkbox"
           },
           {
-            "name": "myOption-5",
+            "name": "simpleInputs-switch",
             "inputType": "switch"
           },
           {
-            "name": "myOption-6",
+            "name": "simpleInputs-range",
             "inputType": "range",
             "min": 10,
             "max": 1000,
             "step": 100
           },
           {
-            "name": "myOption-7",
+            "name": "simpleInputs-color",
             "inputType": "color"
           },
           {
-            "name": "myOption-8",
+            "name": "simpleInputs-email",
             "inputType": "email"
           },
           {
-            "name": "myOption-9",
+            "name": "simpleInputs-file",
             "inputType": "file"
           },
           {
-            "name": "myOption-10",
-            "label": "myOption-11",
+            "name": "simpleInputs-hidden",
             "inputType": "hidden"
           },
           {
-            "name": "myOption-12",
+            "name": "simpleInputs-search",
             "inputType": "search"
           },
           {
-            "name": "myOption-13",
+            "name": "simpleInputs-tel",
             "inputType": "tel"
           },
           {
-            "name": "myOption-14",
+            "name": "simpleInputs-url",
             "inputType": "url"
           },
           {
-            "name": "myOption-15",
+            "name": "simpleInputs-date",
             "inputType": "date"
           },
           {
-            "name": "myOption-16",
+            "name": "simpleInputs-datetime-local",
             "inputType": "datetime-local"
           },
           {
-            "name": "myOption-17",
+            "name": "simpleInputs-month",
             "inputType": "month"
           },
           {
-            "name": "myOption-18",
+            "name": "simpleInputs-time",
             "inputType": "time"
           },
           {
-            "name": "myOption-19",
+            "name": "simpleInputs-week",
             "inputType": "week"
           }
         ]
       },
       {
         "name": "multiInputs",
-        "inputType": "fieldgroup",
+        "inputType": "group-subschema",
         "label": "Multiple Inputs",
-        "description": "These are multiple-value inputs",
+        "description": "These are inputs with multiple-values, some allowing multiple selections.",
+        "tooltip": "Slightly more complex but useful Inputs for getting data from Users",
         "values": [
           {
-            "name": "myOption-20",
+            "name": "multiInputs-select",
             "inputType": "select",
             "values": ["sel Item Entry 1", "sel Item Entry Two"]
           },
           {
-            "name": "myOption-21",
+            "name": "multiInputs-radio",
             "inputType": "radio",
             "values": ["rdo Item Entry 1", "rdo Item Entry Two"]
           },
           {
-            "name": "myOption-22",
+            "name": "multiInputs-checkbox-multiple",
             "inputType": "checkbox-multiple",
             "values": ["chk Item Entry 1", "chk Item Entry Two"]
           },
           {
-            "name": "myOption-23",
+            "name": "multiInputs-switch-multiple",
             "inputType": "switch-multiple",
             "values": ["chk Item Entry 1", "chk Item Entry Two"]
           },
           {
-            "name": "myOption-24",
+            "name": "multiInputs-select-multiple",
             "inputType": "select-multiple",
             "values": ["sm Item Entry 1", "sm Item Entry Two"]
           }
@@ -128,108 +132,108 @@
 
   {
     "name": "testArea2",
-    "inputType": "arraygroup",
-    "label": "Testing Array Group Stuff",
-    "description": "Just testing things dawg",
-    "tooltip": "We're testing every type of item as an Array Group",
+    "inputType": "grouparray",
+    "label": "GroupArray Demonstration",
+    "description": "A GroupArray (<code>grouparray</code>) is essentially a Grouping of horizontally stacked <code>SettingsSchemaEntry</code> values. This allows you to cleanly group settings without requiring a collapsable area like the GroupList (<code>grouplist</code> - demonstrated next).",
+    "tooltip": "GroupArrays are great for grouping a few settings together",
     "values": [
       {
-        "name": "myOption-25",
+        "name": "grouparray-text",
         "inputType": "text"
       },
       {
-        "name": "myOption-26",
+        "name": "grouparray-password",
         "inputType": "password"
       },
       {
-        "name": "myOption-27",
+        "name": "grouparray-number",
         "inputType": "number"
       },
       {
-        "name": "myOption-28",
+        "name": "grouparray-checkbox",
         "inputType": "checkbox"
       },
       {
-        "name": "myOption-29",
+        "name": "grouparray-switch",
         "inputType": "switch"
       },
       {
-        "name": "myOption-30",
+        "name": "grouparray-range",
         "inputType": "range",
         "min": 10,
         "max": 1000,
         "step": 100
       },
       {
-        "name": "myOption-31",
+        "name": "grouparray-color",
         "inputType": "color"
       },
       {
-        "name": "myOption-32",
+        "name": "grouparray-email",
         "inputType": "email"
       },
       {
-        "name": "myOption-33",
+        "name": "grouparray-file",
         "inputType": "file"
       },
       {
-        "name": "myOption-34",
+        "name": "grouparray-hidden",
         "inputType": "hidden"
       },
       {
-        "name": "myOption-35",
+        "name": "grouparray-search",
         "inputType": "search"
       },
       {
-        "name": "myOption-36",
+        "name": "grouparray-tel",
         "inputType": "tel"
       },
       {
-        "name": "myOption-37",
+        "name": "grouparray-url",
         "inputType": "url"
       },
       {
-        "name": "myOption-38",
+        "name": "grouparray-date",
         "inputType": "date"
       },
       {
-        "name": "myOption-39",
+        "name": "grouparray-datetime-local",
         "inputType": "datetime-local"
       },
       {
-        "name": "myOption-40",
+        "name": "grouparray-month",
         "inputType": "month"
       },
       {
-        "name": "myOption-41",
+        "name": "grouparray-time",
         "inputType": "time"
       },
       {
-        "name": "myOption-42",
+        "name": "grouparray-week",
         "inputType": "week"
       },
       {
-        "name": "myOption-43",
+        "name": "grouparray-select",
         "inputType": "select",
         "values": ["sel Item Entry 1", "sel Item Entry Two"]
       },
       {
-        "name": "myOption-44",
+        "name": "grouparray-radio",
         "inputType": "radio",
         "values": ["rdo Item Entry 1", "rdo Item Entry Two"]
       },
       {
-        "name": "myOption-45",
+        "name": "grouparray-checkbox-multiple",
         "inputType": "checkbox-multiple",
         "values": ["chk Item Entry 1", "chk Item Entry Two"]
       },
       {
-        "name": "myOption-46",
+        "name": "grouparray-switch-multiple",
         "inputType": "switch-multiple",
         "values": ["chk Item Entry 1", "chk Item Entry Two"]
       },
       {
-        "name": "myOption-47",
+        "name": "grouparray-select-multiple",
         "inputType": "select-multiple",
         "values": ["sm Item Entry 1", "sm Item Entry Two"]
       }
@@ -238,103 +242,103 @@
 
   {
     "name": "testArea3",
-    "inputType": "arraylist",
-    "label": "Testing Array List Stuff",
-    "description": "Just testing things dawg",
+    "inputType": "grouplist",
+    "label": "GroupList Demonstration",
+    "description": "A GroupList (<code>grouplist</code>) is structurally identicaly to a GroupArray (<code>grouparray</code>), however the User is given the opportunity to Add and Remove new rows to the Settings dynamically. Similar to the Group-SubSchema (<code>group-subschema</code>), this Grouping is in a collapsable area.",
     "tooltip": "We're testing every type of item as an Array List",
     "values": [
       {
-        "name": "myOption-48",
+        "name": "grouplist-text",
         "inputType": "text"
       },
       {
-        "name": "myOption-49",
+        "name": "grouplist-password",
         "inputType": "password"
       },
       {
-        "name": "myOption-50",
+        "name": "grouplist-number",
         "inputType": "number"
       },
       {
-        "name": "myOption-51",
+        "name": "grouplist-checkbox",
         "inputType": "checkbox"
       },
       {
-        "name": "myOption-52",
+        "name": "grouplist-switch",
         "inputType": "switch"
       },
       {
-        "name": "myOption-53",
+        "name": "grouplist-range",
         "inputType": "range",
         "min": 10,
         "max": 1000,
         "step": 100
       },
       {
-        "name": "myOption-54",
+        "name": "grouplist-color",
         "inputType": "color"
       },
       {
-        "name": "myOption-55",
+        "name": "grouplist-email",
         "inputType": "email"
       },
       {
-        "name": "myOption-56",
+        "name": "grouplist-file",
         "inputType": "file"
       },
       {
-        "name": "myOption-57",
+        "name": "grouplist-hidden",
         "inputType": "hidden"
       },
       {
-        "name": "myOption-58",
+        "name": "grouplist-search",
         "inputType": "search"
       },
       {
-        "name": "myOption-59",
+        "name": "grouplist-tel",
         "inputType": "tel"
       },
       {
-        "name": "myOption-60",
+        "name": "grouplist-url",
         "inputType": "url"
       },
       {
-        "name": "myOption-61",
+        "name": "grouplist-date",
         "inputType": "date"
       },
       {
-        "name": "myOption-62",
+        "name": "grouplist-datetime-local",
         "inputType": "datetime-local"
       },
       {
-        "name": "myOption-63",
+        "name": "grouplist-month",
         "inputType": "month"
       },
       {
-        "name": "myOption-64",
+        "name": "grouplist-time",
         "inputType": "time"
       },
       {
-        "name": "myOption-65",
+        "name": "grouplist-week",
         "inputType": "week"
       },
       {
-        "name": "myOption-66",
+        "name": "grouplist-select",
         "inputType": "select",
         "values": ["sel Item Entry 1", "sel Item Entry Two"]
       },
       {
-        "name": "myOption-67",
+        "name": "grouplist-radio",
         "inputType": "radio",
         "values": ["rdo Item Entry 1", "rdo Item Entry Two"]
       },
       {
-        "name": "myOption-68",
+        "name": "grouplist-checkbox-multiple",
         "inputType": "checkbox-multiple",
         "values": ["chk Item Entry 1", "chk Item Entry Two"]
       },
       {
-        "name": "myOption-69",
+        "name": "grouplist-select-multiple",
         "inputType": "select-multiple",
         "values": ["sm Item Entry 1", "sm Item Entry Two"]
       }

@@ -7,9 +7,10 @@
 import get from 'lodash.get';
 import set from 'lodash.set';
 import { PluginInstance, PluginRegistration, PluginSettingsBase } from '../types/Plugin.js';
-import { FormEntry, FormEntryGrouping, FromJson, ParsedJsonResults } from '../utils/Forms.js';
+import { FromJson } from '../utils/Forms/index.js';
+import { ProcessedJsonResults, SettingsSchemaEntry, SettingsSchemaGrouping } from '../utils/Forms/types.js';
 import * as URI from '../utils/URI.js';
-import SettingsSchemaDefault from './schemaSettingsCore.json';
+import SettingsSchemaDefault from './schemaSettingsCore_Gamut.json';
 
 /**
  * Manages the Application's Settings State.
@@ -23,13 +24,13 @@ import SettingsSchemaDefault from './schemaSettingsCore.json';
  */
 export class SettingsManager<PluginSettings extends PluginSettingsBase> {
   /** Cached store of the parsed JSON results from the Settings Schema. */
-  private _parsedJsonResults?: ParsedJsonResults;
+  private _parsedJsonResults?: ProcessedJsonResults;
   /** The Settings values, as the System currently sees them. */
   private _settings: PluginSettings = {} as PluginSettings;
   /** The Settings Schema, as the System currently sees them. */
-  private _settingsSchema: FormEntry[] = [];
+  private _settingsSchema: SettingsSchemaEntry[] = [];
   /** The Default Settings Schema, when the System inits/resets. */
-  private _settingsSchemaDefault: FormEntry[] = [];
+  private _settingsSchemaDefault: SettingsSchemaEntry[] = [];
 
   /**
    * Create a new {@link SettingsManager | `SettingsManager`}.
@@ -51,7 +52,7 @@ export class SettingsManager<PluginSettings extends PluginSettingsBase> {
     this._settings = this.toggleMaskSettings(settings, false);
 
     // Load Core Settings Schema
-    this._settingsSchemaDefault = structuredClone(SettingsSchemaDefault as FormEntry[]);
+    this._settingsSchemaDefault = structuredClone(SettingsSchemaDefault as SettingsSchemaEntry[]);
     this.resetSettingsSchema();
   }
 
@@ -86,8 +87,8 @@ export class SettingsManager<PluginSettings extends PluginSettingsBase> {
   };
 
   /**
-   * Accessor Function to get the Parsed JSON Results of processing a {@link FormEntry | `FormEntry[]`}. */
-  getParsedJsonResults = (): ParsedJsonResults | undefined => {
+   * Accessor Function to get the Parsed JSON Results of processing a {@link SettingsSchemaEntry | `FormEntry[]`}. */
+  getParsedJsonResults = (): ProcessedJsonResults | undefined => {
     return this._parsedJsonResults;
   };
 
@@ -113,31 +114,36 @@ export class SettingsManager<PluginSettings extends PluginSettingsBase> {
     }
 
     // Load the Settings Schema file as JSON
-    const fieldGroup: FormEntryGrouping = await (await fetch(registration.settings.href)).json();
-    // Enforce a `name` for the Plugin Settings as a named FieldGroup. This is for sanity sake later.
-    fieldGroup.name = plugin.name.toLocaleLowerCase().replaceAll(' ', '_');
-    fieldGroup.values = fieldGroup.values ?? [];
+    const grouping: SettingsSchemaGrouping = await (await fetch(registration.settings.href)).json();
+    // Enforce a `name` for the Plugin Settings as a named GroupSubSchema. This is for sanity sake later.
+    grouping.name = plugin.name.toLocaleLowerCase().replaceAll(' ', '_');
+    // Ensure incoming Grouping is a subschema definition.
+    grouping.inputType = 'group-subschema';
+    grouping.values = grouping.values ?? [];
 
-    // Push a final FieldGroup into the values with Plugin Metadata
-    fieldGroup.values.push({
-      inputType: 'fieldgroup',
+    // Push a final GroupSubSchema into the values with Plugin Metadata
+    grouping.values.push({
+      inputType: 'group-subschema',
       label: 'Plugin Metadata',
       name: `pluginMetadata-${plugin.name}`,
       values: this.getPluginMetaInputs(plugin, registration)
     });
 
-    this._settingsSchema.push(fieldGroup);
+    this._settingsSchema.push(grouping);
   };
 
   /**
-   * Generate the Plugin Metadata {@link FormEntry | `FormEntry`} Settings Schema.
+   * Generate the Plugin Metadata {@link SettingsSchemaEntry | `FormEntry`} Settings Schema.
    *
    * > NOTE: This is mostly for displaying in Settings configurator.
    *
    * @param plugin - Instance of the Plugin to register against.
    * @param registration - Registration object to garner metadata against
    */
-  private getPluginMetaInputs(plugin: PluginInstance<PluginSettings>, registration: PluginRegistration): FormEntry[] {
+  private getPluginMetaInputs(
+    plugin: PluginInstance<PluginSettings>,
+    registration: PluginRegistration
+  ): SettingsSchemaEntry[] {
     return [
       {
         inputType: 'text',

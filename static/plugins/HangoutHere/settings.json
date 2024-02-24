@@ -1,5 +1,5 @@
 {
-  "inputType": "fieldgroup",
+  "inputType": "group-subschema",
   "label": "HangoutHere Theme",
   "values": [
     {
@@ -10,7 +10,7 @@
     },
 
     {
-      "inputType": "arraygroup",
+      "inputType": "grouparray",
       "label": "Leading Chat Colors",
       "name": "leading_chat",
       "description": "This will stylize the username based on Role",
@@ -22,7 +22,7 @@
     },
 
     {
-      "inputType": "arraygroup",
+      "inputType": "grouparray",
       "label": "Text Reveal Colors",
       "name": "text_reveal_colors",
       "values": [

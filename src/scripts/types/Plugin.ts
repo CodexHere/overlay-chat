@@ -5,7 +5,7 @@
  */
 
 import { Listener } from 'events';
-import { FormValidatorResults } from '../utils/Forms.js';
+import { FormValidatorResults } from '../utils/Forms/types.js';
 import { MiddlewareLink } from '../utils/Middleware.js';
 import { TemplateMap } from '../utils/Templating.js';
 import { DefaultQueryString } from '../utils/URI.js';

@@ -1,14 +1,14 @@
 [
   {
     "name": "globalSettings",
-    "inputType": "fieldgroup",
+    "inputType": "group-subschema",
     "label": "Global Settings",
     "tooltip": "These are settings that generally apply to the entire App.",
     "values": [
       {
         "name": "fontSettings",
         "label": "Font Settings",
-        "inputType": "fieldgroup",
+        "inputType": "group-subschema",
         "values": [
           { "name": "fontSize", "label": "Font Size", "inputType": "number", "defaultValue": 16, "isRequired": true },
           {
@@ -23,13 +23,13 @@
       {
         "name": "pluginLoadSettings",
         "label": "Plugins",
-        "inputType": "fieldgroup",
+        "inputType": "group-subschema",
         "description": "Select the Plugins you'd like to load at the startup of the App! These may perform operations on data, the way the App renders, or supply additional Settings! You can use built-in Plugins, or supply your own!",
         "values": [
           {
             "name": "pluginSettings",
             "label": "Built-In Plugins",
-            "inputType": "fieldgroup",
+            "inputType": "group-subschema",
             "description": "Select a set of Built-In Plugins to load at startup! Warning: Certain Plugins can override functionality and cause conflicts or errors, so be sure they're compatible!",
             "values": [
               {
@@ -42,7 +42,7 @@
           },
           {
             "name": "customPlugins",
-            "inputType": "arraylist",
+            "inputType": "grouplist",
             "label": "Custom Plugins",
             "description": "Enter a direct URL to a Plugin JS file, or a folder to autoload <code>index.js</code>.<br />Example: https://mywebsite.com/pluginFolder/myPlugin.js",
             "values": [

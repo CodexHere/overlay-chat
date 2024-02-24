@@ -7,7 +7,7 @@
 import { EventEmitter } from 'events';
 import { PluginInstances, PluginSettingsBase } from '../types/Plugin.js';
 import { RendererInstance, RendererInstanceEvents, RendererInstanceOptions } from '../types/Renderers.js';
-import * as Forms from '../utils/Forms.js';
+import * as Forms from '../utils/Forms/index.js';
 import { GetLocalStorageItem, SetLocalStorageItem } from '../utils/LocalStorage.js';
 import { RenderTemplate } from '../utils/Templating.js';
 import { debounce } from '../utils/misc.js';

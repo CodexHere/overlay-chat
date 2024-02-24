@@ -3,8 +3,21 @@
 ## TODO
 
 * Refactor:
-  * SettingsRenderer - Pull some stuff out into helper classes, particularly the Settings Options stuff. 
   * Forms - should use clases to generate output, consider design patterns (Builder, Visitor)
+    * BUGS After Refactor:
+      * Passwords aren't being masked anymore???? I think my processed json mapping responses are wrong
+      * <Labels> are showing in rows again...
+        * Find old/broken CSS and remove or adapt
+        * Don't forget that checkboxes/radio's need to keep their labels
+      * Adding new Items in an GroupList isn't working
+      * CSS Needs Love:
+        * Invalid Form Elements - Focus/Unfocused
+        * Spacing/Padding/Margins overall:
+          * Particularly `data-input-type` in a `group-subschema` are 0-gapped
+        * `.settings-options` under the `textarea` the Label for the dropdown has a margin
+          that's making things goofy.
+        * Tooltip cursor should affect entire bar, not just the `i` icon
+          * Also consider a new iconography like a diamond or something
   * Bootstrapper
     * Change schema to be just an arraylist with columns:
       * Enabled
@@ -21,6 +34,7 @@
 * Core Plugin needs to require Twitch-Chat
   * Need to make sure we have `Twitch - Chat` enabled
   * Maybe this is unnecessary if the process enforces enabling as mentioned in `Refactor > Bootstrapper`
+* Work on Forms Validator Input types, make sure regexes are REALLY good!
 * Add About/FAQ/ETC links on Settings Page
   * How to use it, etc.
   * or should it be a github wiki?
@@ -32,6 +46,8 @@
     * Inject a Settings Option:
       * Color Element
       * Changes the `--pico-card-background-color` value to modify settings css!
+  * Gamut Settings should be loaded with a plugin?
+    * If we refactor Registering to injecting rather than retrieving from a function call, we can possibly even find a way to break the lifecycle from being so rigid? Seemingly should be possible to start and stop plugins at-will. Right now, it's whole-sale/scorched-earth destroy and rebuild.
 	* Generally where I come up with ideas and flesh them out before moving into final plugin
 		* Just don't delete stuff!!!
 	* Custom Chains

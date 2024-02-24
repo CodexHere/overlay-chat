@@ -5,7 +5,7 @@
  */
 import { PluginSettingsBase } from '../types/Plugin.js';
 import { RendererInstanceOptions } from '../types/Renderers.js';
-import { GetData, Hydrate } from '../utils/Forms.js';
+import { GetData, Hydrate } from '../utils/Forms/index.js';
 import { GetLocalStorageItem, SetLocalStorageItem } from '../utils/LocalStorage.js';
 import { BaseUrl, JsonToQueryString } from '../utils/URI.js';
 import { DebounceResult, debounce } from '../utils/misc.js';

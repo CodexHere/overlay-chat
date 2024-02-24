@@ -29,7 +29,7 @@
     flex-direction: column;
     min-width: 12em;
 
-    & + [data-input-type='arraygroup'] {
+    & + [data-input-type='grouparray'] {
       margin-top: var(--pico-spacing);
     }
   }
@@ -45,12 +45,12 @@
       }
 
       button {
+        display: inline-block;
+        position: absolute;
         width: auto;
         background-color: transparent;
         border: none;
         right: 0.4rem;
-        display: inline-block;
-        position: absolute;
       }
     }
   }
@@ -107,8 +107,8 @@
     }
   }
 
-  [data-input-type='arraygroup'],
-  [data-input-type='arraylist'] {
+  [data-input-type='grouparray'],
+  [data-input-type='grouplist'] {
     .description {
       margin: 0.5em;
     }
@@ -140,34 +140,29 @@
     .input-group {
       margin-bottom: 0;
     }
+
+    td,
+    th {
+      background-color: transparent;
+
+      button {
+        width: 100%;
+      }
+    }
+
+    // For ArrayGroup/Lists, we want to hide labels to avoid redundant labeling in a Table
+    // However, in these we may have switch/checkboxes which we *DO* need the labels for.
+    td > [data-input-type] {
+      &:not([data-input-type='switch']):not([data-input-type='checkbox']) {
+        & > label {
+          display: none;
+        }
+      }
+    }
   }
 
   [data-col-type='hidden'] {
     display: none;
-  }
-
-  // For ArrayGroup/Lists, we want to hide labels to avoid redundant labeling in a Table
-  // However, in these we may have switch/checkboxes which we *DO* need the labels for.
-  form#settings {
-    [data-input-type='arraygroup'],
-    [data-input-type='arraylist'] {
-      td,
-      th {
-        background-color: transparent;
-
-        button {
-          width: 100%;
-        }
-      }
-
-      td > [data-input-type] {
-        &:not([data-input-type='switch']):not([data-input-type='checkbox']) {
-          & > label {
-            display: none;
-          }
-        }
-      }
-    }
   }
 
   .description {

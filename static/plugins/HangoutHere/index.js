@@ -8,8 +8,8 @@
  *
  * @typedef {import('../../../src/scripts/Plugin_Core.js').MiddewareContext_Chat} ConcreteContext
  * @typedef {Partial<ConcreteContext>} Context
- * @typedef {import('../../../src/scripts/utils/Forms.js').FormEntryGrouping} FormEntryFieldGroup
- * @typedef {import('../../../src/scripts/utils/Forms.js').FormValidatorResults<PluginSettings>} SettingsValidatorResults
+ * @typedef {import('../../../src/scripts/utils/Forms/types.js').SettingsSchemaGrouping} SettingsSchemaGrouping
+ * @typedef {import('../../../src/scripts/utils/Forms/types.js').FormValidatorResults<PluginSettings>} SettingsValidatorResults
  * @typedef {import('../../../src/scripts/types/Managers.js').BusManagerContext_Init<{}>} BusManagerContext_Init
  * @typedef {import('../../../src/scripts/types/Plugin.js').PluginMiddlewareMap} PluginMiddlewareMap
  * @typedef {import('../../../src/scripts/types/Plugin.js').PluginEventRegistration} PluginEventMap
