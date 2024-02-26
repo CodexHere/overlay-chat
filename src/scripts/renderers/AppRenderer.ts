@@ -97,7 +97,7 @@ export class AppRenderer<PluginSettings extends PluginSettingsBase> extends Even
   }
 
   /**
-   * Build the Local `ElementMap` this {@link RendererInstance | `RendererInstance`} needs to access.
+   * Build the Local `ElementMap` this {@link types/Renderers.RendererInstance | `RendererInstance`} needs to access.
    */
   private buildElementMap() {
     const body = globalThis.document.body;

@@ -24,17 +24,17 @@ export const BaseUrl = () => {
   return `${url.origin}${url.pathname}`.replace(/\/+$/, '');
 };
 
-export const QueryStringToJson = <SettingsType extends DefaultQueryString>(urlHref: string): SettingsType => {
+export const QueryStringToJson = <CustomData extends DefaultQueryString>(urlHref: string): CustomData => {
   const params = new URL(urlHref.replaceAll('#', '')).searchParams;
 
-  const format = (params.get('format') as SettingsType['format']) ?? 'uri';
+  const format = (params.get('format') as CustomData['format']) ?? 'uri';
   const data = params.get('data');
   const formatIsParsed = ['compressed'].includes(format);
 
   params.delete('data');
   params.delete('format');
 
-  let settings = {} as SettingsType;
+  let customData = {} as CustomData;
 
   if (formatIsParsed && !data) {
     throw new Error('URI Data Format is a compressed/processed format, and missing any actual Data');
@@ -42,14 +42,14 @@ export const QueryStringToJson = <SettingsType extends DefaultQueryString>(urlHr
 
   try {
     if ('compressed' === format) {
-      settings = JSON.parse(decompressFromEncodedURIComponent(data!)) as SettingsType;
+      customData = JSON.parse(decompressFromEncodedURIComponent(data!)) as CustomData;
     }
 
     // If we decompressed, then we also want to spread any other top-level params onto
     // the JSON output object. Also ensure a good `format` value with fallback above.
-    settings = { ...settings, ...paramsToJson(params), format };
+    customData = { ...customData, ...paramsToJson(params), format };
 
-    return settings;
+    return customData;
   } catch (error) {
     throw new Error('Could not deserialize Query String to JSON');
   }
@@ -58,14 +58,14 @@ export const QueryStringToJson = <SettingsType extends DefaultQueryString>(urlHr
 /**
  * Builds a final form of a param, coercing true/false values to actual booleans
  */
-const buildParam = <SettingsType, SettingsKey extends keyof SettingsType>(
-  paramValue: SettingsType[SettingsKey]
-): SettingsType[SettingsKey] => {
+const buildParam = <CustomData, DataKey extends keyof CustomData>(
+  paramValue: CustomData[DataKey]
+): CustomData[DataKey] => {
   const isTrue = BOOLEAN_TRUES.includes(paramValue as string);
   const isFalse = BOOLEAN_FALSES.includes(paramValue as string);
 
   if (isTrue || isFalse) {
-    paramValue = ((isTrue && !isFalse) || !(!isTrue && isFalse)) as SettingsType[SettingsKey];
+    paramValue = ((isTrue && !isFalse) || !(!isTrue && isFalse)) as CustomData[DataKey];
   }
 
   return paramValue;
@@ -74,11 +74,11 @@ const buildParam = <SettingsType, SettingsKey extends keyof SettingsType>(
 /**
  * Converts a URLSearchParams to our desired JSON structure
  */
-const paramsToJson = <SettingsType, SettingsKey extends keyof SettingsType>(params: URLSearchParams) => {
-  const options: SettingsType = {} as SettingsType;
+const paramsToJson = <CustomData, DataKey extends keyof CustomData>(params: URLSearchParams) => {
+  const options: CustomData = {} as CustomData;
 
   params.forEach((param, paramName) => {
-    const builtParam = buildParam(param as SettingsType[SettingsKey]);
+    const builtParam = buildParam(param as CustomData[DataKey]);
     set(options as object, paramName, builtParam);
   });
 
@@ -103,32 +103,32 @@ const buildObjectString = (prefix: string, propVal: any) => {
   return kvp;
 };
 
-export const JsonToQueryString = <SettingsType extends DefaultQueryString>(json: SettingsType): string => {
+export const JsonToQueryString = <CustomData extends DefaultQueryString>(json: CustomData): string => {
   const format = json.format ?? 'uri';
   delete json.format;
 
   try {
-    let settings = JSON.stringify(json);
+    let customData = JSON.stringify(json);
 
     switch (format) {
       case 'compressed':
-        settings = 'data=' + compressToEncodedURIComponent(settings);
+        customData = 'data=' + compressToEncodedURIComponent(customData);
         break;
 
       case 'uri':
       default:
-        settings = jsonToCustomQueryString(json);
+        customData = jsonToCustomQueryString(json);
     }
 
-    settings += `&format=${format}`;
+    customData += `&format=${format}`;
 
-    return settings;
+    return customData;
   } catch (err) {
     throw new Error('Could not serialize JSON to Query String');
   }
 };
 
-const jsonToCustomQueryString = <SettingsType extends DefaultQueryString>(json: SettingsType) =>
+const jsonToCustomQueryString = <CustomData extends DefaultQueryString>(json: CustomData) =>
   Object.entries(json)
     .reduce<string[]>((kvp, [propName, propVal]) => {
       kvp.push(...buildObjectString(propName, propVal));

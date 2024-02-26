@@ -1,11 +1,11 @@
-import { SettingsSchemaSelect } from '../types.js';
+import { FormSchemaSelect } from '../../types.js';
 import { SimpleInput } from './SimpleInput.js';
 
-export class SelectInput extends SimpleInput<SettingsSchemaSelect> {
+export class SelectInput extends SimpleInput<FormSchemaSelect> {
   override toString(): string {
-    const entry = this.entry;
+    const entry = this.entries;
     const { defaultData, required } = this.getCleanedEntryValues();
-    const isMulti = 'select-multiple' === this.entry.inputType ? 'multiple' : '';
+    const isMulti = 'select-multiple' === this.entries.inputType ? 'multiple' : '';
     const options = entry.values.reduce(
       (_options, value) => `${_options}<option value="${value}">${value}</option>`,
       ''

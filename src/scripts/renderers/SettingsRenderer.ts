@@ -7,7 +7,8 @@
 import { EventEmitter } from 'events';
 import { PluginInstances, PluginSettingsBase } from '../types/Plugin.js';
 import { RendererInstance, RendererInstanceEvents, RendererInstanceOptions } from '../types/Renderers.js';
-import * as Forms from '../utils/Forms/index.js';
+import { BindInteractionEvents, UnbindInteractionEvents, UpdateFormValidators } from '../utils/Forms/Interaction.js';
+import { Deserialize, Serialize } from '../utils/Forms/Serializer.js';
 import { GetLocalStorageItem, SetLocalStorageItem } from '../utils/LocalStorage.js';
 import { RenderTemplate } from '../utils/Templating.js';
 import { debounce } from '../utils/misc.js';
@@ -18,6 +19,8 @@ import { SettingsRendererHelper } from './SettingsRendererHelper.js';
  */
 type ElementMap = {
   form: HTMLFormElement;
+  'plugin-jumper': HTMLSelectElement;
+  'plugin-jumper-wrapper': HTMLElement;
 };
 
 // Changes to these Settings properties should restart the PluginManager
@@ -48,13 +51,6 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase>
   private elements: ElementMap = {} as ElementMap;
 
   /**
-   * Get the PluginJumper Element, if it exists
-   */
-  private get pluginJumper() {
-    return globalThis.document.getElementById('plugin-jumper') as HTMLSelectElement | undefined;
-  }
-
-  /**
    * Create a new {@link SettingsRenderer | `SettingsRenderer`}.
    *
    * @param options - Incoming Options for this Renderer.
@@ -76,7 +72,7 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase>
     this.unbindEvents();
     this.renderApp();
     this.buildElementMap();
-    this.subInit();
+    await this.subInit();
     this.renderPluginSettings(plugins);
 
     this.bindEvents();
@@ -85,12 +81,12 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase>
   /**
    * Custom Initialization for this Renderer that doesn't fit into other Lifecycle methods.
    */
-  private subInit() {
+  private async subInit() {
     const settings = this.options.getSettings();
 
-    this.createPluginJumper();
+    await this.createPluginJumper();
 
-    Forms.Hydrate(this.elements['form'], settings);
+    Deserialize(this.elements['form'], settings);
 
     this.helper = new SettingsRendererHelper(this.options);
     this.helper.init();
@@ -99,7 +95,7 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase>
     // > 1, because a 'format' is enforced on the settings object
     if (Object.keys(settings).length > 1) {
       const validations = this.options.validateSettings();
-      Forms.UpdateFormValidators(this.elements.form, validations);
+      UpdateFormValidators(this.elements.form, validations);
       this.helper?.saveSettingsOptions();
       this.helper?.updateUrlState();
     }
@@ -121,7 +117,7 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase>
     rootContainer.innerHTML = '';
 
     RenderTemplate(rootContainer, settings, {
-      formElements: this.options.getParsedJsonResults?.()?.results
+      formElements: this.options.getProcessedSchema?.()?.html
     });
   }
 
@@ -154,6 +150,8 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase>
     const body = globalThis.document.body;
 
     this.elements['form'] = body.querySelector('form#settings')!;
+    this.elements['plugin-jumper'] = body.querySelector('#plugin-jumper')!;
+    this.elements['plugin-jumper-wrapper'] = body.querySelector('#plugin-jumper-wrapper')!;
   }
 
   /**
@@ -165,11 +163,11 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase>
     form?.removeEventListener('click', this.onFormClicked);
     form?.removeEventListener('scroll', this._onFormScrolled);
 
-    const pluginJumper = this.pluginJumper;
+    const pluginJumper = this.elements['plugin-jumper'];
     pluginJumper?.removeEventListener('change', this.onJumpPlugin);
 
     // Delegate Common Interaction Events
-    Forms.UnbindInteractionEvents(form);
+    UnbindInteractionEvents(form);
   }
 
   /**
@@ -181,11 +179,11 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase>
     form?.addEventListener('click', this.onFormClicked);
     form?.addEventListener('scroll', this._onFormScrolled);
 
-    const pluginJumper = this.pluginJumper;
+    const pluginJumper = this.elements['plugin-jumper'];
     pluginJumper?.addEventListener('change', this.onJumpPlugin);
 
     // Delegate Common Interaction Events
-    Forms.BindInteractionEvents(form);
+    BindInteractionEvents(form);
   }
 
   ///////////////////////////////////////////////////////////////
@@ -205,7 +203,7 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase>
 
     this.helper?.saveSettingsOptions();
 
-    const formData = Forms.GetData<PluginSettings>(form);
+    const formData = Serialize<PluginSettings>(form);
     const targetName = RemoveArrayIndex(target.name);
 
     // The Settings value changed is one that should cause a programmatic Restart
@@ -233,14 +231,14 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase>
   private _forceSyncSettings = () => {
     // Get the current Settings Form data, and set it as the current System Settings
     const form = this.elements.form;
-    const formData = Forms.GetData<PluginSettings>(form);
+    const formData = Serialize<PluginSettings>(form);
     this.options.setSettings(formData);
 
     // Validate Settings through all Plugins
     const validations = this.options.validateSettings();
 
     // Update the Settings Form Validation states
-    Forms.UpdateFormValidators(this.elements.form, validations);
+    UpdateFormValidators(this.elements.form, validations);
     // Update/Store the Settings Options
     this.helper?.saveSettingsOptions();
     // Update the URL State
@@ -330,19 +328,32 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase>
   /**
    * Creates the PluginJumper Component, adding the Plugin Name as Options.
    */
-  private createPluginJumper() {
+  private async createPluginJumper() {
     const plugins = this.options.getPlugins();
-    const pluginJumper = this.pluginJumper;
+    const pluginJumper = this.elements['plugin-jumper'];
+    let addedPlugins = false;
 
     // Add the plugin name to the Plugin Jumper
-    plugins.forEach(plugin => {
+    for (const plugin of plugins) {
+      const registration = await plugin.registerPlugin?.();
+
+      if (!registration || !registration.settings) {
+        continue;
+      }
+
       const newOpt = globalThis.document.createElement('option');
       const nameAsValue = plugin.name.toLocaleLowerCase().replaceAll(' ', '_');
 
       newOpt.value = nameAsValue;
       newOpt.text = plugin.name;
       pluginJumper?.add(newOpt);
-    });
+
+      addedPlugins = true;
+    }
+
+    if (false === addedPlugins) {
+      this.elements['plugin-jumper-wrapper']?.remove();
+    }
   }
 
   /**

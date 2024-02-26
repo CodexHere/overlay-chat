@@ -1,6 +1,6 @@
-import { Grouping } from './Grouping.js';
+import { GroupingBase } from './Grouping.js';
 
-export class GroupArray extends Grouping {
+export class GroupArray extends GroupingBase {
   protected override toString(): string {
     const { tooltip, chosenLabel, nameOrLabelId } = this.getCleanedEntryValues();
     const coreContent = super.toString();
@@ -8,7 +8,7 @@ export class GroupArray extends Grouping {
     return `
       <div
         id="${nameOrLabelId}" 
-        data-input-type="${this.entry.inputType}"
+        data-input-type="${this.entries.inputType}"
       >
       <div class="label-wrapper" ${tooltip}>${chosenLabel}</div>
       ${coreContent}

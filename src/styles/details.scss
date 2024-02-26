@@ -2,6 +2,7 @@ details {
   margin-bottom: var(--pico-spacing);
   padding-bottom: 0;
   border-bottom: none;
+  border: 1px solid var(--pico-card-border-color);
 
   &:has(input:invalid) {
     border: 1px solid red;

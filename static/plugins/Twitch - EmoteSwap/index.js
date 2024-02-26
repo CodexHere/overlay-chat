@@ -7,8 +7,8 @@
  *
  * @typedef {import('../../../src/scripts/Plugin_Core.js').MiddewareContext_Chat} ConcreteContext
  * @typedef {Partial<ConcreteContext>} Context
- * @typedef {import('../../../src/scripts/utils/Forms/types.js').SettingsSchemaGrouping} SettingsSchemaGrouping
- * @typedef {import('../../../src/scripts/utils/Forms/types.js').FormValidatorResults<PluginSettings>} SettingsValidatorResults
+ * @typedef {import('../../../src/scripts/utils/Forms/types.js').FormSchemaGrouping} FormSchemaGrouping
+ * @typedef {import('../../../src/scripts/utils/Forms/types.js').FormValidatorResults<PluginSettings>} FormValidatorResults
  * @typedef {import('../../../src/scripts/types/Managers.js').BusManagerContext_Init<{}>} BusManagerContext_Init
  * @typedef {import('../../../src/scripts/types/Plugin.js').PluginMiddlewareMap} PluginMiddlewareMap
  * @typedef {import('../../../src/scripts/types/Plugin.js').PluginEventRegistration} PluginEventMap
@@ -35,7 +35,7 @@ export default class Plugin_Twitch_EmoteSwap {
   priority = 20;
 
   /**
-   * @returns {true | SettingsValidatorResults}
+   * @returns {true | FormValidatorResults}
    */
   isConfigured() {
     const { 'twitchEmoteSwap--clientId': clientId, refreshTokenBot, refreshTokenStreamer } = this.options.getSettings();
@@ -44,7 +44,7 @@ export default class Plugin_Twitch_EmoteSwap {
       return true;
     }
 
-    /** @type {SettingsValidatorResults} */
+    /** @type {FormValidatorResults} */
     let retMap = {};
 
     if (false === !!clientId) {

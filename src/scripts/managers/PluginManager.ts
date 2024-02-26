@@ -356,7 +356,7 @@ export class PluginManager<PluginSettings extends PluginSettingsBase>
   }
 
   /**
-   * Utilize the {@link types/Plugins.PluginRegistrar | `PluginRegistrar`} to Register various parts of a Plugin.
+   * Utilize the {@link types/Plugin.PluginRegistrar | `PluginRegistrar`} to Register various parts of a Plugin.
    *
    * @param importResults - Result mapping after attempted Imports of Plugins.
    */

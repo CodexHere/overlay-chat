@@ -1,11 +1,11 @@
-import { SettingsSchemaMinMax } from '../types.js';
+import { FormSchemaMinMax } from '../../types.js';
 import { SimpleInput } from './SimpleInput.js';
 
-export class MinMaxInput<MinMaxSchema extends SettingsSchemaMinMax> extends SimpleInput<MinMaxSchema> {
+export class MinMaxInput<MinMaxSchema extends FormSchemaMinMax> extends SimpleInput<MinMaxSchema> {
   protected override getCleanedEntryValues() {
-    const min = this.entry.min ? `min="${this.entry.min}"` : '';
-    const max = this.entry.max ? `max="${this.entry.max}"` : '';
-    const step = this.entry.step ? `step="${this.entry.step}"` : '';
+    const min = this.entries.min ? `min="${this.entries.min}"` : '';
+    const max = this.entries.max ? `max="${this.entries.max}"` : '';
+    const step = this.entries.step ? `step="${this.entries.step}"` : '';
 
     return {
       ...super.getCleanedEntryValues(),
@@ -27,7 +27,7 @@ export class MinMaxInput<MinMaxSchema extends SettingsSchemaMinMax> extends Simp
   }
 }
 
-export class RangeInput extends MinMaxInput<SettingsSchemaMinMax> {
+export class RangeInput extends MinMaxInput<FormSchemaMinMax> {
   override toString(): string {
     const { min, max, step } = this.getCleanedEntryValues();
 

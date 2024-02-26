@@ -1,31 +1,31 @@
 import merge from 'lodash.merge';
-import { SettingsSchemaGrouping } from '../types.js';
-import { BaseSettingsSchemaProcessor } from './BaseSettingsSchemaProcessor.js';
+import { FormSchemaGrouping } from '../../types.js';
+import { BaseFormSchemaProcessor } from '../BaseFormSchemaProcessor.js';
 import { GroupingRow } from './GroupingRow.js';
 
-export class Grouping extends BaseSettingsSchemaProcessor<SettingsSchemaGrouping> {
-  private getNumSettings(): number {
-    const rowEntries = this.entry.values;
+export class GroupingBase extends BaseFormSchemaProcessor<FormSchemaGrouping> {
+  private getNumValues(): number {
+    const rowEntries = this.entries.values;
     // Get all the Entry Names of the Entries in our Row
     const groupParamNames = rowEntries.map(fe => fe.name);
 
-    // For every Input's Name, keep track of the max number of supplied settings...
+    // For every Input's Name, keep track of the max number of supplied sevaluesttings...
     // This will be the number of Rows we need to generate to `Process()`
     return groupParamNames.reduce((maxCount, paramName) => {
-      const paramVal = this.settings[paramName];
-      const settingsCount = Array.isArray(paramVal) ? paramVal.length : 1;
+      const paramVal = this.formData[paramName];
+      const valuesCount = Array.isArray(paramVal) ? paramVal.length : 1;
 
-      return Math.max(maxCount, settingsCount);
+      return Math.max(maxCount, valuesCount);
     }, 0);
   }
 
   protected override toString(): string {
-    const entry = this.entry;
+    const entry = this.entries;
     const isList = 'grouplist' === entry.inputType;
-    const numSettings = this.getNumSettings();
+    const numValues = this.getNumValues();
     const description = entry.description ? `<blockquote class="description">${entry.description}</blockquote>` : '';
 
-    const groupingRowResults = Array(numSettings)
+    const groupingRowResults = Array(numValues)
       .fill(0)
       .map((_empty, settingIdx) => {
         const childInput = new GroupingRow(
@@ -35,19 +35,19 @@ export class Grouping extends BaseSettingsSchemaProcessor<SettingsSchemaGrouping
             arrayIndex: isList ? settingIdx : undefined,
             values: entry.values
           },
-          this.settings
+          this.formData
         );
 
         const childResults = childInput.process();
         this.mapping = merge({}, this.mapping, childResults.mapping);
-        return childResults.results;
+        return childResults.html;
       });
 
     const headers = entry.values.reduce(
-      (out, settingsSchema) => `
+      (out, formSchema) => `
         ${out}
-        <th data-col-type="${settingsSchema.inputType}">
-          ${settingsSchema.label ?? settingsSchema.name}
+        <th data-col-type="${formSchema.inputType}">
+          ${formSchema.label ?? formSchema.name}
         </th>
       `,
       ''

@@ -1,4 +1,4 @@
-import { SettingsSchemaValidated } from '../types.js';
+import { FormSchemaValidated } from '../../types.js';
 import { SimpleInput } from './SimpleInput.js';
 
 const PATTERN_DEFAULTS = {
@@ -7,9 +7,9 @@ const PATTERN_DEFAULTS = {
   url: ''
 };
 
-export class ValidatedInput extends SimpleInput<SettingsSchemaValidated> {
+export class ValidatedInput extends SimpleInput<FormSchemaValidated> {
   protected override getCleanedEntryValues() {
-    const chosenPattern = this.entry.pattern ?? PATTERN_DEFAULTS[this.entry.inputType];
+    const chosenPattern = this.entries.pattern ?? PATTERN_DEFAULTS[this.entries.inputType];
 
     return {
       ...super.getCleanedEntryValues(),

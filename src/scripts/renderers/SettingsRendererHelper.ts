@@ -5,7 +5,7 @@
  */
 import { PluginSettingsBase } from '../types/Plugin.js';
 import { RendererInstanceOptions } from '../types/Renderers.js';
-import { GetData, Hydrate } from '../utils/Forms/index.js';
+import { Deserialize, Serialize } from '../utils/Forms/Serializer.js';
 import { GetLocalStorageItem, SetLocalStorageItem } from '../utils/LocalStorage.js';
 import { BaseUrl, JsonToQueryString } from '../utils/URI.js';
 import { DebounceResult, debounce } from '../utils/misc.js';
@@ -154,12 +154,18 @@ export class SettingsRendererHelper<PluginSettings extends PluginSettingsBase> {
     // Restore the Settings Options Form data from stringified data in Local Storage.
     const settingsOptions: PluginSettings = GetLocalStorageItem('settingsOptions');
     if (settingsOptions) {
-      Hydrate(this.elements['form-options'], settingsOptions);
+      Deserialize(this.elements['form-options'], settingsOptions);
 
       // Set the Format option to the incoming Settings value
-      const formatElem = this.elements['form-options'].querySelector('#settings-options-format');
+      const formatElem = this.elements['form-options'].querySelector('[name="format"]');
       if (formatElem instanceof HTMLSelectElement) {
         formatElem.value = settings.format ?? 'uri';
+      }
+
+      // Toggle Focus Mode
+      const focusMode = this.elements['form-options'].querySelector('[name="focus-mode"]');
+      if (focusMode instanceof HTMLInputElement) {
+        this.elements['form'].classList.toggle('focus-mode', focusMode.checked);
       }
     }
   }
@@ -257,7 +263,7 @@ export class SettingsRendererHelper<PluginSettings extends PluginSettingsBase> {
    */
   public saveSettingsOptions() {
     // Serialize Form into JSON and store in LocalStorage
-    this.settingsOptionsFormCache = GetData(this.elements['form-options']);
+    this.settingsOptionsFormCache = Serialize(this.elements['form-options']);
     SetLocalStorageItem('settingsOptions', this.settingsOptionsFormCache);
   }
 
@@ -267,22 +273,37 @@ export class SettingsRendererHelper<PluginSettings extends PluginSettingsBase> {
    * @param event - Event from Settings Option Input Element
    */
   private onSettingsOptionClick = (event: Event) => {
-    if (false === event.target instanceof HTMLButtonElement) {
+    if (false === event.target instanceof Element) {
       return;
     }
 
-    // Don't let the form reload the page
-    event.stopImmediatePropagation();
-    event.preventDefault();
-
-    // "Load App" Button Clicked
-    if (event.target.classList.contains('button-load-app')) {
-      this.loadApp();
-    } else if (event.target.classList.contains('button-settings-reset')) {
-      // Reset Button Clicked
-      localStorage.clear();
-      globalThis.location.href = BaseUrl();
+    if (false === event.target.classList.contains('settings-option')) {
+      return;
     }
+
+    if (event.target instanceof HTMLButtonElement) {
+      // Don't let the form reload the page
+      event.stopImmediatePropagation();
+      event.preventDefault();
+
+      // "Load App" Button Clicked
+      if (event.target.classList.contains('button-load-app')) {
+        this.loadApp();
+      } else if (event.target.classList.contains('button-settings-reset')) {
+        // Reset Button Clicked
+        localStorage.clear();
+        globalThis.location.href = BaseUrl();
+      }
+    }
+
+    if (event.target instanceof HTMLInputElement) {
+      if (event.target.name === 'focus-mode') {
+        // Focus Mode clicked
+        this.elements['form'].classList.toggle('focus-mode', event.target.checked);
+      }
+    }
+
+    return true;
   };
 
   /**

@@ -29,7 +29,7 @@ function isSilentlyFailChainError(err: unknown): err is SilentlyFailChainError {
 /**
  * An `Error` type for enforcing a silent failure of an entire chain.
  *
- * `throw` this error, or return an instance of it to a {@link Next | `Next`} function to
+ * `throw` this error, or return an instance of it to a {@link utils/Middleware.Next | `Next`} function to
  * programattically bypass the current and remaining {@link MiddlewareLink | `MiddlewareLink`} in a {@link MiddlewareChain | `MiddlewareChain`}.
  *
  * If you're reading this documentation and are using vanilla JS, or don't need/want to import
@@ -79,8 +79,8 @@ export class SilentlyFailChainError extends Error {
 /**
  * Manages {@link MiddlewareChain | `MiddlewareChain`} and Event Buses.
  *
- * Protects {@link MiddlewareChain | `MiddlewareChain`} Execution by limiting it to the {@link PluginInstance | `PluginInstance`} that *first* Registered with the System.
- * > If you're writing a Plugin and need to be higher in the Chain, set your {@link PluginInstance.priority | Priority} to a lower value to load earlier (but be reasonable!).
+ * Protects {@link MiddlewareChain | `MiddlewareChain`} Execution by limiting it to the {@link types/Plugin.PluginInstance | `PluginInstance`} that *first* Registered with the System.
+ * > If you're writing a Plugin and need to be higher in the Chain, set your {@link PluginInstance.priority | `Priority`} to a lower value to load earlier (but be reasonable!).
  *
  * This class is also part of the {@link types/Plugin.PluginRegistrar | `PluginRegistrar`},
  * providing various Registration points.

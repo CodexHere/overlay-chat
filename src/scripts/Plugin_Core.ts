@@ -42,7 +42,7 @@ export type MiddewareContext_Chat = {
   isSelf: boolean;
   /** The Message sent in the Chat. */
   message: string;
-  /** Userstate from {@link tmiJs.CommonUserstate | `TMIjs`}. */
+  /** Userstate from {@link https://github.com/DefinitelyTyped/DefinitelyTyped/blob/0.1.450/types/tmi.js/index.d.ts#L135 | `TMIjs`}. */
   userState: tmiJs.CommonUserstate;
   /** The type of the Client Handling the Chat Event */
   clientType: 'bot' | 'streamer';

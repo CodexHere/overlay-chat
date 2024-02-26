@@ -3,6 +3,7 @@
 ## TODO
 
 * Refactor:
+  * Finalize FOCUS MODE
   * Forms - should use clases to generate output, consider design patterns (Builder, Visitor)
     * BUGS After Refactor:
       * Passwords aren't being masked anymore???? I think my processed json mapping responses are wrong
@@ -18,7 +19,15 @@
           that's making things goofy.
         * Tooltip cursor should affect entire bar, not just the `i` icon
           * Also consider a new iconography like a diamond or something
+  * Plugins
+    * Add Author field
+      * FreeForm? (i.e., `CodexHere <codexhere@outlook.com>` or `Discord: CodexHere#1111`)
+    * Add Homepage field
+      * Useful to link to github or an official page
+  * PluginManager - Still consider refactoring to an injections process
+    * event from AppBootstrapper indicating Renderer mode?
   * Bootstrapper
+    * -- New train of thought for all this, Core Plugin injects what is now the Core Schema, and THAT has defaults set in it!
     * Change schema to be just an arraylist with columns:
       * Enabled
       * Plugin Name or URL
@@ -31,6 +40,8 @@
   * Consider adding `debug` and replace `console.log`
     * https://bundlephobia.com/package/debug@4.3.4
     * If we don't add it, remove `console.log`
+  * Consider creating a new bg style, or various themes:
+    * https://www.joshwcomeau.com/gradient-generator/
 * Core Plugin needs to require Twitch-Chat
   * Need to make sure we have `Twitch - Chat` enabled
   * Maybe this is unnecessary if the process enforces enabling as mentioned in `Refactor > Bootstrapper`

@@ -46,7 +46,7 @@ import { AddStylesheet } from './utils/DOM.js';
 export class AppBootstrapper<PluginSettings extends PluginSettingsBase> {
   /** Instance of the {@link DisplayManager | `DisplayManager`}. */
   private displayManager?: DisplayManager;
-  /** Instance of the {@link BusManager | `BusManager`}. */
+  /** Instance of the {@link managers/BusManager.BusManager | `BusManager`}. */
   private busManager?: BusManager<PluginSettings>;
   /** Instance of the {@link SettingsManager | `SettingsManager`}. */
   private settingsManager?: SettingsManager<PluginSettings>;
@@ -161,7 +161,7 @@ export class AppBootstrapper<PluginSettings extends PluginSettingsBase> {
       getSettings: this.settingsManager!.getSettings,
       setSettings: this.settingsManager!.setSettings,
       getMaskedSettings: this.settingsManager!.getMaskedSettings,
-      getParsedJsonResults: this.settingsManager!.getParsedJsonResults,
+      getProcessedSchema: this.settingsManager!.getProcessedSchema,
       getPlugins: this.pluginManager!.getPlugins,
       validateSettings: this.pluginManager!.validateSettings,
       display: this.displayManager!
@@ -192,7 +192,7 @@ export class AppBootstrapper<PluginSettings extends PluginSettingsBase> {
       (importResults: PluginImportResults<PluginSettings>) => {
         this.busManager!.init();
         this.busManager!.disableAddingListeners();
-        this.settingsManager!.updateParsedJsonResults(true);
+        this.settingsManager!.updateProcessedSchema(true);
 
         if (importResults.bad && 0 !== importResults.bad.length) {
           this.displayManager?.showError(importResults.bad);

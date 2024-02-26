@@ -3,6 +3,8 @@
   --base-background: #2b3e62;
   --base-background-2: color-mix(in srgb, #000 85%, var(--base-background));
   --base-background-animation-speed: 120s;
+  --base-effect-inactive-blur: 0.125rem;
+  --base-effect-inactive-opacity: 0.4;
 
   --pico-color: white;
 
@@ -14,7 +16,7 @@
   --pico-primary-inverse: #fff;
 
   --pico-card-background-color: rgba(0, 0, 0, 0.667);
-  --pico-card-border-color: rgba(255, 255, 255, 0.3);
+  --pico-card-border-color: rgb(27, 27, 27);
 
   --pico-form-element-focus-color: var(--pico-primary);
 

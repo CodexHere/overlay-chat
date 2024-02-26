@@ -1,13 +1,13 @@
-export type SettingsSchemaProcessorConstructor = {
-  new (entry: SettingsSchemaEntryBase, settings: Record<string, any>): SettingsSchemaProcessor;
+export type FormSchemaEntryProcessorConstructor = {
+  new (entry: FormSchemaEntryBase, formData: Record<string, any>): FormSchemaEntryProcessor;
 };
 
-export type SettingsSchemaProcessor = {
+export type FormSchemaEntryProcessor = {
   uniqueId: string;
-  process(): ProcessedJsonResults;
+  process(): ProcessedFormSchema;
 };
 
-export type SettingsSchemaEntryBase = {
+export type FormSchemaEntryBase = {
   name: string;
   label?: string;
   tooltip?: string;
@@ -16,77 +16,79 @@ export type SettingsSchemaEntryBase = {
   inputType?: string;
 };
 
-export type SettingsSchemaButton = {
+export type FormSchemaButton = {
   inputType: 'button';
   name: string;
   label: string;
 };
 
-export type SettingsSchemaPasswordInput = SettingsSchemaEntryBase & {
+export type FormSchemaPasswordInput = FormSchemaEntryBase & {
   inputType: 'password';
 };
 
-export type SettingsSchemaCheckedInput = SettingsSchemaEntryBase & {
+export type FormSchemaCheckedInput = FormSchemaEntryBase & {
   inputType: 'checkbox' | 'switch' | 'radio-option';
 };
 
-export type SettingsSchemaSimpleInput = SettingsSchemaEntryBase & {
+export type FormSchemaSimpleInput = FormSchemaEntryBase & {
   inputType: 'color' | 'file' | 'hidden' | 'search' | 'text';
 };
 
-export type SettingsSchemaValidated = SettingsSchemaEntryBase & {
+export type FormSchemaValidated = FormSchemaEntryBase & {
   inputType: 'email' | 'tel' | 'url';
   pattern?: string;
 };
 
-export type SettingsSchemaGrouping = SettingsSchemaEntryBase & {
+export type FormSchemaGrouping = FormSchemaEntryBase & {
   inputType: 'group-subschema' | 'grouparray' | 'grouplist';
   label: string;
-  values: SettingsSchemaEntry[];
+  values: FormSchema;
   description?: string;
 };
 
-export type SettingsSchemaGroupingRow = SettingsSchemaEntryBase & {
+export type FormSchemaGroupingRow = FormSchemaEntryBase & {
   inputType: 'grouprow';
-  values: SettingsSchemaEntry[];
+  values: FormSchema;
   arrayIndex?: number;
   description?: string;
 };
 
-export type SettingsSchemaCheckedMultiInput = SettingsSchemaEntryBase & {
+export type FormSchemaCheckedMultiInput = FormSchemaEntryBase & {
   inputType: 'radio' | 'checkbox-multiple' | 'switch-multiple';
   values: string[];
 };
 
-export type SettingsSchemaSelect = SettingsSchemaEntryBase & {
+export type FormSchemaSelect = FormSchemaEntryBase & {
   inputType: 'select' | 'select-multiple';
   values: string[];
 };
 
-export type SettingsSchemaMinMax = SettingsSchemaEntryBase & {
+export type FormSchemaMinMax = FormSchemaEntryBase & {
   inputType: 'number' | 'range' | 'date' | 'datetime-local' | 'month' | 'time' | 'week';
   max?: number;
   min?: number;
   step?: number;
 };
 
-export type SettingsSchemaEntry =
-  | SettingsSchemaButton
-  | SettingsSchemaCheckedInput
-  | SettingsSchemaCheckedMultiInput
-  | SettingsSchemaGrouping
-  | SettingsSchemaGroupingRow
-  | SettingsSchemaMinMax
-  | SettingsSchemaPasswordInput
-  | SettingsSchemaSelect
-  | SettingsSchemaSimpleInput
-  | SettingsSchemaValidated;
+export type FormSchemaEntry =
+  | FormSchemaButton
+  | FormSchemaCheckedInput
+  | FormSchemaCheckedMultiInput
+  | FormSchemaGrouping
+  | FormSchemaGroupingRow
+  | FormSchemaMinMax
+  | FormSchemaPasswordInput
+  | FormSchemaSelect
+  | FormSchemaSimpleInput
+  | FormSchemaValidated;
 
-export type ProcessedJsonMap = Partial<Record<SettingsSchemaEntry['inputType'], Record<string, SettingsSchemaEntry>>>;
+export type FormSchema = FormSchemaEntry[];
 
-export type ProcessedJsonResults = {
-  results: string;
-  mapping: ProcessedJsonMap;
+export type InputTypeEntryMap = Partial<Record<FormSchemaEntry['inputType'], Record<string, FormSchemaEntry>>>;
+
+export type ProcessedFormSchema = {
+  html: string;
+  mapping: InputTypeEntryMap;
 };
 
 export type FormValidatorResult<FormData extends {}> = true | Partial<Record<keyof FormData, string>>;

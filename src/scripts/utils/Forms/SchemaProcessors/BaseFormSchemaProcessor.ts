@@ -1,14 +1,14 @@
-import { SettingsSchemaEntryBase } from '../types.js';
-import { AbstractSettingsSchemaProcessor } from './AbstractSettingsSchemaProcessor.js';
+import { FormSchemaEntryBase } from '../types.js';
+import { AbstractFormSchemaProcessor } from './AbstractFormSchemaProcessor.js';
 
-export class BaseSettingsSchemaProcessor<
-  SchemaEntryType extends SettingsSchemaEntryBase
-> extends AbstractSettingsSchemaProcessor<SchemaEntryType> {
+export class BaseFormSchemaProcessor<
+  SchemaEntryType extends FormSchemaEntryBase
+> extends AbstractFormSchemaProcessor<SchemaEntryType> {
   protected override getCleanedEntryValues() {
     const base = super.getCleanedEntryValues();
-    const defaultData = this.entry.defaultValue ?? '';
-    const required = this.entry.isRequired ? 'required' : '';
-    const tooltip = this.entry.tooltip ? `title="${this.entry.tooltip}"` : '';
+    const defaultData = this.entries.defaultValue ?? '';
+    const required = this.entries.isRequired ? 'required' : '';
+    const tooltip = this.entries.tooltip ? `title="${this.entries.tooltip}"` : '';
 
     return {
       ...base,
@@ -30,7 +30,7 @@ export class BaseSettingsSchemaProcessor<
     return `
       <input
         id="${this.uniqueId}"
-        name="${this.entry.name}"
+        name="${this.entries.name}"
         placeholder="${chosenLabel}"
         ${value}
         ${extraAttributes}

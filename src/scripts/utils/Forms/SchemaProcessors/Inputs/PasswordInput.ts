@@ -1,16 +1,16 @@
-import { SettingsSchemaPasswordInput } from '../types.js';
+import { FormSchemaPasswordInput } from '../../types.js';
 import { Button } from './Button.js';
 import { SimpleInput } from './SimpleInput.js';
 
-export class PasswordInput extends SimpleInput<SettingsSchemaPasswordInput> {
+export class PasswordInput extends SimpleInput<FormSchemaPasswordInput> {
   override toString(): string {
     const btnPasswdToggle = new Button(
       {
         inputType: 'button',
         label: '👁',
-        name: `password-view-${this.entry.name}`
+        name: `password-view-${this.entries.name}`
       },
-      this.settings
+      this.formData
     );
 
     const btnProcessed = btnPasswdToggle.process();
@@ -18,7 +18,7 @@ export class PasswordInput extends SimpleInput<SettingsSchemaPasswordInput> {
     return `
       <div class='password-wrapper'>
         ${super.toString()}
-        ${btnProcessed.results}
+        ${btnProcessed.html}
       </div>
     `;
   }

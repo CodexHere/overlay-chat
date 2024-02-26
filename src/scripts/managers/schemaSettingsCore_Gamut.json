@@ -134,7 +134,7 @@
     "name": "testArea2",
     "inputType": "grouparray",
     "label": "GroupArray Demonstration",
-    "description": "A GroupArray (<code>grouparray</code>) is essentially a Grouping of horizontally stacked <code>SettingsSchemaEntry</code> values. This allows you to cleanly group settings without requiring a collapsable area like the GroupList (<code>grouplist</code> - demonstrated next).",
+    "description": "A GroupArray (<code>grouparray</code>) is essentially a Grouping of horizontally stacked <code>FormSchemaEntry</code> values. This allows you to cleanly group settings without requiring a collapsable area like the GroupList (<code>grouplist</code> - demonstrated next).",
     "tooltip": "GroupArrays are great for grouping a few settings together",
     "values": [
       {
