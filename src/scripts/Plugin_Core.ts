@@ -17,7 +17,7 @@ import {
   PluginSettingsBase
 } from './types/Plugin.js';
 import { IsInViewPort } from './utils/DOM.js';
-import { FormValidatorResult, FormValidatorResults } from './utils/Forms/types.js';
+import { FormValidatorResults } from './utils/Forms/types.js';
 import { MiddlewareLink } from './utils/Middleware.js';
 import { RenderTemplate } from './utils/Templating.js';
 import { BaseUrl } from './utils/URI.js';
@@ -102,7 +102,7 @@ export default class Plugin_Core<PluginSettings extends AppSettings_Chat> implem
       return true;
     }
 
-    let retMap: FormValidatorResult<PluginSettings> = {};
+    let retMap: FormValidatorResults<PluginSettings> = {};
 
     if (false === hasAnyPlugins) {
       retMap['plugins'] = 'Needs at least one Built-In or Custom Plugin';

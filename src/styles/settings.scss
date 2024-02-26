@@ -200,6 +200,11 @@
   }
 
   // Tooltip Icon, if applied to an Element
+  [title],
+  [title]:after {
+    cursor: help;
+  }
+
   [title]:after {
     --_size: 0.75rem;
     display: inline-flex;
@@ -216,7 +221,6 @@
     top: -0.55em;
     left: 0.25em;
     opacity: 0.5;
-    cursor: help;
   }
 
   form#settings {
@@ -235,11 +239,14 @@
     select:focus,
     textarea:focus {
       --pico-box-shadow: 0 0 var(--outline-width) var(--outline-width) var(--pico-form-element-focus-color);
+      --pico-border-color: var(--pico-form-element-invalid-border-color);
     }
 
     input:invalid,
     input:focus:invalid {
-      --pico-form-element-background-color: #f4bc1e55;
+      --pico-switch-background-color: var(--base-element-invalid-color);
+      --pico-color: var(--base-element-invalid-color);
+      --pico-form-element-background-color: var(--base-element-invalid-color);
       --pico-form-element-border-color: var(--pico-form-element-invalid-focus-color);
       --pico-form-element-active-background-color: var(--pico-form-element-invalid-focus-color);
       border-width: 2px;

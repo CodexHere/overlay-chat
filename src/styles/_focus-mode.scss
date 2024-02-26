@@ -1,4 +1,39 @@
 form#settings {
+  &.focus-mode.x-ray {
+    details {
+      &:not([open]) {
+        background: rgb(38, 2, 2);
+
+        &:hover {
+          background: red;
+        }
+      }
+
+      &[open] {
+        &:not(:focus) {
+          background: yellow;
+        }
+
+        &:hover,
+        &:focus-within {
+          background: green;
+        }
+
+        &:hover {
+          & > .content > details {
+            &:not([open]) {
+              background: yellow;
+
+              &:hover {
+                background: green;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
   &.focus-mode {
     details {
       transition:
@@ -49,45 +84,6 @@ form#settings {
               opacity: 0.8;
 
               // Completely visible open
-              &:hover {
-                filter: blur(0);
-                opacity: 1;
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-
-  &.focus-mode.x-ray {
-    details {
-      &:not([open]) {
-        background: rgb(78, 2, 2);
-
-        &:hover {
-          background: red;
-        }
-      }
-
-      &[open] {
-        &:not(:focus) {
-          filter: blur(0.25rem);
-          opacity: 0.8;
-        }
-
-        &:hover,
-        &:focus-within {
-          filter: blur(0);
-          opacity: 1;
-        }
-
-        &:hover {
-          & > .content > details {
-            &:not([open]) {
-              filter: blur(0.25rem);
-              opacity: 0.8;
-
               &:hover {
                 filter: blur(0);
                 opacity: 1;

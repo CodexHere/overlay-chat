@@ -1,11 +1,22 @@
+/**
+ * FormSchemaCheckedMultiInput Processor
+ *
+ * @module
+ */
+
 import merge from 'lodash.merge';
 import { FormSchemaCheckedMultiInput } from '../../types.js';
 import { InputWrapper } from '../InputWrapper.js';
 import { CheckedInput } from './CheckedInput.js';
 import { SimpleInput } from './SimpleInput.js';
 
-type ChildrenTypes = CheckedInput['entries']['inputType'];
+type ChildrenTypes = CheckedInput['entry']['inputType'];
 
+/**
+ * {@link FormSchemaCheckedMultiInput | `FormSchemaCheckedMultiInput`} Processor.
+ *
+ * Outputs collection of {@link CheckedInput | `CheckedInput`}s.
+ */
 export class CheckedMultiInput extends SimpleInput<FormSchemaCheckedMultiInput> {
   override toString(): string {
     let outString = '';
@@ -13,18 +24,19 @@ export class CheckedMultiInput extends SimpleInput<FormSchemaCheckedMultiInput> 
     // Normalize the `inputType to `radio-option` | `checkbox` | `switch`
     // prettier-ignore
     const childInputType: ChildrenTypes = 
-      'radio' === this.entries.inputType ? 
+      'radio' === this.entry.inputType ? 
         'radio-option' 
-        : this.entries.inputType.replace('-multiple', '') as ChildrenTypes;
+        : this.entry.inputType.replace('-multiple', '') as ChildrenTypes;
 
     // Iterate over all `values` and build children inputs based on the desired `inputType`.
-    this.entries.values.forEach(checkValue => {
+    this.entry.values.forEach(checkValue => {
       const childSchema = {
-        name: this.entries.name,
+        name: this.entry.name,
         label: checkValue,
         inputType: childInputType
       };
 
+      // Create individual `CheckedInput` and Wrap it!
       const childInput = new CheckedInput(childSchema, this.formData);
       const childResults = childInput.process();
 

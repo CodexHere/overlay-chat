@@ -1,3 +1,9 @@
+/**
+ * Form Builder Utility
+ *
+ * @module
+ */
+
 import merge from 'lodash.merge';
 import { Form } from './SchemaProcessors/Form.js';
 import { GroupArray } from './SchemaProcessors/Grouping/GroupArray.js';
@@ -14,7 +20,13 @@ import { SimpleInput } from './SchemaProcessors/Inputs/SimpleInput.js';
 import { ValidatedInput } from './SchemaProcessors/Inputs/ValidatedInput.js';
 import { FormSchema, FormSchemaEntry, FormSchemaEntryProcessorConstructor, ProcessedFormSchema } from './types.js';
 
-export const BuildInput = <FormData extends {}>(entry: FormSchemaEntry, formdata: FormData): ProcessedFormSchema => {
+/**
+ * Builds a single Input from a single {@link FormSchemaEntry | `FormSchemaEntry`}.
+ *
+ * @param entry - Form Schema for the single {@link FormSchemaEntry | `FormSchemaEntry`}.
+ * @param formData - Form Data to evaluate for {@link utils/Forms/types.FormSchemaGrouping | Grouping} Schema Entries.
+ */
+export const BuildInput = <FormData extends {}>(entry: FormSchemaEntry, formData: FormData): ProcessedFormSchema => {
   if (!entry.name) {
     throw new Error('FormEntry does not have a `name` property! ' + JSON.stringify(entry));
   }
@@ -22,7 +34,9 @@ export const BuildInput = <FormData extends {}>(entry: FormSchemaEntry, formdata
   let processorCtor: FormSchemaEntryProcessorConstructor | undefined;
 
   /**
-   * FormSchema Processor Selection
+   * SchemaProcessor Selection
+   *
+   * Selects a Class (aka Constructor) to Instantiate and process polymorphically.
    */
   switch (entry.inputType) {
     // Button
@@ -109,11 +123,14 @@ export const BuildInput = <FormData extends {}>(entry: FormSchemaEntry, formdata
       );
   }
 
-  const processor = new processorCtor!(entry, formdata);
+  // Instantiate and Process!
+  const processor = new processorCtor!(entry, formData);
   const processed = processor.process();
 
   /**
-   * Label Wrapping
+   * Label Wrapping.
+   *
+   * Some FormSchemaEntry types require an InputWrapper, the rest noop.
    */
   switch (entry.inputType) {
     case 'button':
@@ -125,7 +142,9 @@ export const BuildInput = <FormData extends {}>(entry: FormSchemaEntry, formdata
       break;
 
     default:
-      const wrapper = new InputWrapper(entry, formdata, processed.html, processor);
+      const wrapper = new InputWrapper(entry, formData, processed.html, processor);
+      // Update the `processed` HTML results with the newly wrapped HTML
+      // Note: No need to merge `mapping` as the `InputWrapper` provides zero mapping.
       processed.html = wrapper.process().html;
       break;
   }
@@ -134,6 +153,14 @@ export const BuildInput = <FormData extends {}>(entry: FormSchemaEntry, formdata
   return processed;
 };
 
+/**
+ * Builds an entire {@link FormSchema | `FormSchema`} of Inputs.
+ *
+ * > NOTE: This is effectively the internals of a `<form>` Element.
+ *
+ * @param entries - Collection of {@link FormSchemaEntry | `FormSchemaEntry`}s to build as an entire {@link FormSchema | `FormSchema`}.
+ * @param formData - Form Data to evaluate for {@link utils/Forms/types.FormSchemaGrouping | Grouping} Schema Entries.
+ */
 export const BuildFormSchema = <FormData extends {}>(
   entries: Readonly<FormSchema>,
   formData: FormData
@@ -143,9 +170,9 @@ export const BuildFormSchema = <FormData extends {}>(
     mapping: {}
   } as ProcessedFormSchema;
 
+  // Build every `entry` in `entries`
   for (let entryIdx = 0; entryIdx < entries.length; entryIdx++) {
     const entry = entries[entryIdx];
-
     const newInput = BuildInput(entry, formData);
 
     // Accumulate iterative results
@@ -161,6 +188,13 @@ export const BuildFormSchema = <FormData extends {}>(
   return results;
 };
 
+/**
+ * Builds an entire {@link FormSchema | `FormSchema`} of Inputs, and wraps with an `HTMLFormElement` tag (`<form>`) with associative `formId`.
+ *
+ * @param entries - Collection of {@link FormSchemaEntry | `FormSchemaEntry`}s to build as an entire {@link FormSchema | `FormSchema`}.
+ * @param formData - Form Data to evaluate for {@link utils/Forms/types.FormSchemaGrouping | Grouping} Schema Entries.
+ * @param formId - Unique ID to give the `HTMLFormElement` when Processed.
+ */
 export const BuildForm = <FormData extends {}>(
   entries: Readonly<FormSchema>,
   formData: FormData,

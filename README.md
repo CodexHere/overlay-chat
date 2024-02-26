@@ -3,27 +3,6 @@
 ## TODO
 
 * Refactor:
-  * Finalize FOCUS MODE
-  * Forms - should use clases to generate output, consider design patterns (Builder, Visitor)
-    * BUGS After Refactor:
-      * Passwords aren't being masked anymore???? I think my processed json mapping responses are wrong
-      * <Labels> are showing in rows again...
-        * Find old/broken CSS and remove or adapt
-        * Don't forget that checkboxes/radio's need to keep their labels
-      * Adding new Items in an GroupList isn't working
-      * CSS Needs Love:
-        * Invalid Form Elements - Focus/Unfocused
-        * Spacing/Padding/Margins overall:
-          * Particularly `data-input-type` in a `group-subschema` are 0-gapped
-        * `.settings-options` under the `textarea` the Label for the dropdown has a margin
-          that's making things goofy.
-        * Tooltip cursor should affect entire bar, not just the `i` icon
-          * Also consider a new iconography like a diamond or something
-  * Plugins
-    * Add Author field
-      * FreeForm? (i.e., `CodexHere <codexhere@outlook.com>` or `Discord: CodexHere#1111`)
-    * Add Homepage field
-      * Useful to link to github or an official page
   * PluginManager - Still consider refactoring to an injections process
     * event from AppBootstrapper indicating Renderer mode?
   * Bootstrapper

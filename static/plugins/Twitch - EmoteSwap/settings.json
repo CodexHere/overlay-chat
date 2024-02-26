@@ -1,13 +1,13 @@
 {
   "inputType": "group-subschema",
   "label": "Twitch - EmoteSwap",
-  "values": [
+  "subSchema": [
     {
       "inputType": "grouparray",
       "label": "Client ID",
       "name": "twitchEmoteSwap--clientId",
       "description": "In order to retrieve a Client ID automatically, provide a Refresh Token for either the Streamer, or the Bot for the <code>Twitch - Chat</code> Plugin!",
-      "values": [
+      "subSchema": [
         {
           "name": "twitchEmoteSwap--clientId",
           "inputType": "password",

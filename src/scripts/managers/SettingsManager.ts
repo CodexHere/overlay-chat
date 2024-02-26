@@ -119,14 +119,14 @@ export class SettingsManager<PluginSettings extends PluginSettingsBase> {
     grouping.name = plugin.name.toLocaleLowerCase().replaceAll(' ', '_');
     // Ensure incoming Grouping is a subschema definition.
     grouping.inputType = 'group-subschema';
-    grouping.values = grouping.values ?? [];
+    grouping.subSchema = grouping.subSchema ?? [];
 
     // Push a final GroupSubSchema into the values with Plugin Metadata
-    grouping.values.push({
+    grouping.subSchema.push({
       inputType: 'group-subschema',
       label: 'Plugin Metadata',
       name: `pluginMetadata-${plugin.name}`,
-      values: this.getPluginMetaInputs(plugin, registration)
+      subSchema: this.getPluginMetaInputs(plugin, registration)
     });
 
     this._settingsSchema.push(grouping);
@@ -159,6 +159,18 @@ export class SettingsManager<PluginSettings extends PluginSettingsBase> {
         name: ' ',
         label: 'Priority',
         defaultValue: plugin.priority || 'N/A'
+      },
+      {
+        inputType: 'text',
+        name: ' ',
+        label: 'Author',
+        defaultValue: plugin.author || 'N/A'
+      },
+      {
+        inputType: 'text',
+        name: ' ',
+        label: 'Homepage',
+        defaultValue: plugin.homepage || 'N/A'
       },
       {
         inputType: 'text',

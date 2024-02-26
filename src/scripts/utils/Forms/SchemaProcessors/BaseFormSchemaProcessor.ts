@@ -1,14 +1,27 @@
+/**
+ * Base FormSchema Processor Definition
+ *
+ * @module
+ */
+
 import { FormSchemaEntryBase } from '../types.js';
 import { AbstractFormSchemaProcessor } from './AbstractFormSchemaProcessor.js';
 
+/**
+ * Base FormSchema Processor Definition.
+ * 
+ * Outputs HTML Input Tag with common attributes, and cleans common Entry Values.
+ *
+ * @typeParam SchemaEntryType - Subclass of {@link utils/Forms/types.FormSchemaEntry | `FormSchemaEntry`}.
+ */
 export class BaseFormSchemaProcessor<
   SchemaEntryType extends FormSchemaEntryBase
 > extends AbstractFormSchemaProcessor<SchemaEntryType> {
   protected override getCleanedEntryValues() {
     const base = super.getCleanedEntryValues();
-    const defaultData = this.entries.defaultValue ?? '';
-    const required = this.entries.isRequired ? 'required' : '';
-    const tooltip = this.entries.tooltip ? `title="${this.entries.tooltip}"` : '';
+    const defaultData = this.entry.defaultValue ?? '';
+    const required = this.entry.isRequired ? 'required' : '';
+    const tooltip = this.entry.tooltip ? `title="${this.entry.tooltip}"` : '';
 
     return {
       ...base,
@@ -18,6 +31,10 @@ export class BaseFormSchemaProcessor<
     };
   }
 
+  /**
+   * Generate Extra Attributes to be added to the `<input>` field
+   * when processing `toString()`.
+   */
   protected getExtraAttributes() {
     return '';
   }
@@ -30,7 +47,7 @@ export class BaseFormSchemaProcessor<
     return `
       <input
         id="${this.uniqueId}"
-        name="${this.entries.name}"
+        name="${this.entry.name}"
         placeholder="${chosenLabel}"
         ${value}
         ${extraAttributes}

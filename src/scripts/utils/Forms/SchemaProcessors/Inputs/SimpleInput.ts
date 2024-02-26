@@ -1,10 +1,23 @@
+/**
+ * FormSchemaEntryBase Processor
+ *
+ * @module
+ */
+
 import { FormSchemaEntryBase } from '../../types.js';
 import { BaseFormSchemaProcessor } from '../BaseFormSchemaProcessor.js';
 
-export class SimpleInput<SchemaEntry extends FormSchemaEntryBase> extends BaseFormSchemaProcessor<SchemaEntry> {
+/**
+ * {@link FormSchemaEntryBase | `FormSchemaEntryBase`} Processor.
+ *
+ * Outputs HTML Input Tag with `type` attribute.
+ *
+ * @typeParam SchemaEntryType - Subclass of {@link utils/Forms/types.FormSchemaEntry | `FormSchemaEntry`}.
+ */
+export class SimpleInput<SchemaEntryType extends FormSchemaEntryBase> extends BaseFormSchemaProcessor<SchemaEntryType> {
   protected override getExtraAttributes() {
     return `
-      type="${this.entries.inputType}"
+      type="${this.entry.inputType}"
     `;
   }
 }

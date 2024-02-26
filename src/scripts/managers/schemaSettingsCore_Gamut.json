@@ -5,14 +5,14 @@
     "label": "Simple Group-SubSchema Demonstration",
     "description": "This Grouping represents all the supported HTML Form/Input Elements this library provides. The Group-SubSchema (<code>group-subschema</code>) built here shows how you can nest and group Settings within a collapsable area.",
     "tooltip": "A nesting and grouping of Settings",
-    "values": [
+    "subSchema": [
       {
         "name": "simpleInputs",
         "inputType": "group-subschema",
         "label": "Simple Inputs",
         "description": "These are single-value inputs, and the simplest of User Inputs.",
         "tooltip": "The most common Inputs for getting data from Users",
-        "values": [
+        "subSchema": [
           {
             "name": "simpleInputs-text",
             "inputType": "text"
@@ -99,7 +99,7 @@
         "label": "Multiple Inputs",
         "description": "These are inputs with multiple-values, some allowing multiple selections.",
         "tooltip": "Slightly more complex but useful Inputs for getting data from Users",
-        "values": [
+        "subSchema": [
           {
             "name": "multiInputs-select",
             "inputType": "select",
@@ -136,7 +136,7 @@
     "label": "GroupArray Demonstration",
     "description": "A GroupArray (<code>grouparray</code>) is essentially a Grouping of horizontally stacked <code>FormSchemaEntry</code> values. This allows you to cleanly group settings without requiring a collapsable area like the GroupList (<code>grouplist</code> - demonstrated next).",
     "tooltip": "GroupArrays are great for grouping a few settings together",
-    "values": [
+    "subSchema": [
       {
         "name": "grouparray-text",
         "inputType": "text"
@@ -246,7 +246,7 @@
     "label": "GroupList Demonstration",
     "description": "A GroupList (<code>grouplist</code>) is structurally identicaly to a GroupArray (<code>grouparray</code>), however the User is given the opportunity to Add and Remove new rows to the Settings dynamically. Similar to the Group-SubSchema (<code>group-subschema</code>), this Grouping is in a collapsable area.",
     "tooltip": "We're testing every type of item as an Array List",
-    "values": [
+    "subSchema": [
       {
         "name": "grouplist-text",
         "inputType": "text"

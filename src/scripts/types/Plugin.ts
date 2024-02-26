@@ -188,6 +188,10 @@ export type PluginInstance<PluginSettings extends PluginSettingsBase> = {
   ref: Symbol;
   /** A number representing the Priority of the Plugin. Lower Priority values load/operate sooner than Higher Priority values. If not specified, Priority is after all *specified* Priority Plugins, in the order they were given to Load. */
   priority?: number;
+  /** Author Metadata for the Plugin. Can be a Handle, X/Discord/Github Profile, etc. */
+  author?: string;
+  /** Support/Marketing Homepage. Can be a Discord/Github Repository, etc. */
+  homepage?: string;
 
   /**
    * Optionally define this method to intake {@link PluginRegistration | `PluginRegistration`} and Register various aspects of a Plugin.

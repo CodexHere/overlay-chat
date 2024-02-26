@@ -2,68 +2,18 @@
   "inputType": "group-subschema",
   "label": "Examples for Plugins",
   "description": "This Plugin shows examples for both App and Settings Runtimes, so be sure to check out the implementation!<br /><br />Some Chat commands exist (requires `Twitch - Chat` Plugin) to demonstrate various Error handling, Eventing, and Middleware Chain flows:<br />* skipCurrent - Skips the current Link, continues with the rest of the chain.<br />* skipChain1 - Silently fails Chain with a Custom Error type (passes to `next()`).<br />* skipChain2 - Silently fails Chain by <i>throwing</i> a Custom Erorr type.<br />* nextError - Passes a standard Error into `next()`, which fails the entire Chain.<br />* throwError - Throws a standard Error, which fails the entire Chain.",
-  "values": [
+  "subSchema": [
     {
-      "name": "example--showErrorAtRuntime",
-      "label": "Show Error at Runtime?",
-      "inputType": "switch",
-      "tooltip": "If this checked, an error will be shown when the app is ran!"
-    },
-    {
-      "name": "example--showInfoAtRuntime-group",
-      "label": "Show Info at Runtime?",
-      "inputType": "grouparray",
-      "tooltip": "If this checked, an info with your text will be shown when the app is ran!",
-      "values": [
-        {
-          "name": "example--showInfoAtRuntime",
-          "label": "Enabled?",
-          "inputType": "checkbox"
-        },
-        {
-          "name": "example--showInfoAtRuntime-message",
-          "label": "Message",
-          "inputType": "text"
-        }
-      ]
-    },
-
-    {
-      "name": "example--sendMessageAtRuntime-group",
-      "label": "Send a Twitch Chat Message at Runtime?",
-      "inputType": "grouparray",
-      "tooltip": "If this checked, an info with your text will be shown when the app is ran!",
-      "description": "This requires the `Twitch - Chat` Plugin to operate",
-      "values": [
-        {
-          "name": "example--sendMessageAtRuntime",
-          "label": "Enabled?",
-          "inputType": "checkbox"
-        },
-        {
-          "name": "example--sendMessageAtRuntime-message",
-          "label": "Message",
-          "inputType": "text"
-        }
-      ]
-    },
-    {
-      "name": "example--addText",
-      "label": "Add Chat Text",
-      "inputType": "text",
-      "tooltip": "If this value is set, it will add it to the end of the chat message!"
-    },
-    {
-      "name": "example--fg-settingsUI",
+      "name": "example--settingsonly-settingsUI",
       "label": "Settings-Only Interactive Example",
       "inputType": "group-subschema",
       "description": "This examples how a plugin can handle interaction on the Settings page",
-      "values": [
+      "subSchema": [
         {
-          "name": "example--fg-settingsUI-2",
+          "name": "example--settingsonly-settingsUI-2",
           "label": "Interact Below",
           "inputType": "grouparray",
-          "values": [
+          "subSchema": [
             {
               "name": "example--txtExample",
               "label": "Changed by Plugin",
@@ -76,6 +26,65 @@
               "inputType": "button"
             }
           ]
+        }
+      ]
+    },
+
+    {
+      "name": "example--runtime-settingsUI",
+      "label": "Runtime-Only Interactive Example",
+      "inputType": "group-subschema",
+      "description": "This examples how a plugin can handle interaction on the Settings page",
+      "subSchema": [
+        {
+          "name": "example--showErrorAtRuntime",
+          "label": "Show Error at Runtime?",
+          "inputType": "switch",
+          "tooltip": "If this checked, an error will be shown when the app is ran!"
+        },
+        {
+          "name": "example--showInfoAtRuntime-group",
+          "label": "Show Info at Runtime?",
+          "inputType": "grouparray",
+          "tooltip": "If this checked, an info with your text will be shown when the app is ran!",
+          "subSchema": [
+            {
+              "name": "example--showInfoAtRuntime",
+              "label": "Enabled?",
+              "inputType": "checkbox"
+            },
+            {
+              "name": "example--showInfoAtRuntime-message",
+              "label": "Message",
+              "inputType": "text"
+            }
+          ]
+        },
+
+        {
+          "name": "example--sendMessageAtRuntime-group",
+          "label": "Send a Twitch Chat Message at Runtime?",
+          "inputType": "grouparray",
+          "tooltip": "If this checked, an info with your text will be shown when the app is ran!",
+          "description": "This requires the `Twitch - Chat` Plugin to operate",
+          "subSchema": [
+            {
+              "name": "example--sendMessageAtRuntime",
+              "label": "Enabled?",
+              "inputType": "checkbox"
+            },
+            {
+              "name": "example--sendMessageAtRuntime-message",
+              "label": "Message",
+              "inputType": "text"
+            }
+          ]
+        },
+        {
+          "name": "example--addText",
+          "label": "Add Chat Text",
+          "inputType": "text",
+          "tooltip": "If this value is set, it will add it to the end of the chat message!"
         }
       ]
     }
