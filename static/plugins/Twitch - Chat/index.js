@@ -14,14 +14,14 @@ import tmiJs from 'https://esm.sh/tmi.js@1.8.5';
  *
  * @typedef {import('../../../src/scripts/Plugin_Core.js').MiddewareContext_Chat} ConcreteContext
  * @typedef {Partial<ConcreteContext>} Context
- * @typedef {import('../../../src/scripts/utils/Forms.js').FormEntryGrouping} FormEntryFieldGroup
- * @typedef {import('../../../src/scripts/utils/Forms.js').FormValidatorResults<PluginSettings>} SettingsValidatorResults
+ * @typedef {import('../../../src/scripts/utils/Forms/types.js').FormSchemaGrouping} FormSchemaGrouping
+ * @typedef {import('../../../src/scripts/utils/Forms/types.js').FormValidatorResults<PluginSettings>} FormValidatorResults
  * @typedef {import('../../../src/scripts/types/Managers.js').BusManagerContext_Init<{}>} BusManagerContext_Init
  * @typedef {import('../../../src/scripts/types/Plugin.js').PluginMiddlewareMap} PluginMiddlewareMap
  * @typedef {import('../../../src/scripts/types/Plugin.js').PluginEventRegistration} PluginEventMap
  * @typedef {import('../../../src/scripts/types/Plugin.js').PluginOptions<PluginSettings>} PluginInjectables
  * @typedef {import('../../../src/scripts/types/Plugin.js').PluginInstance<PluginSettings>} PluginInstance
- * @typedef {import('../../../src/scripts/types/Plugin.js').PluginRegistrationOptions} PluginRegistrationOptions
+ * @typedef {import('../../../src/scripts/types/Plugin.js').PluginRegistration} PluginRegistration
  * @typedef {import('../../../src/scripts/utils/Middleware.js').Next<Context>} Next
  */
 
@@ -68,19 +68,17 @@ export default class TwitchChat {
   }
 
   /**
-   * @returns {true | SettingsValidatorResults}
+   * @returns {true | FormValidatorResults}
    */
   isConfigured() {
     const { nameStreamer } = this.options.getSettings();
     const hasChannelName = !!nameStreamer;
 
-    this.#updateSettingsUI();
-
     if (hasChannelName) {
       return true;
     }
 
-    /** @type {SettingsValidatorResults} */
+    /** @type {FormValidatorResults} */
     let retMap = {};
 
     if (false === hasChannelName) {
@@ -91,7 +89,7 @@ export default class TwitchChat {
   }
 
   /**
-   * @returns {Promise<PluginRegistrationOptions>}
+   * @returns {Promise<PluginRegistration>}
    */
   registerPlugin = async () => ({
     events: this._getEvents(),
@@ -107,6 +105,8 @@ export default class TwitchChat {
       btn.removeEventListener('click', this.#onClickAuth);
       refreshButtons[idx].removeEventListener('click', this.#onClickRefresh);
     });
+
+    body.querySelector('form#settings')?.removeEventListener('change', this.#updateSettingsUI);
   }
 
   /**
@@ -135,7 +135,7 @@ export default class TwitchChat {
         errors.push(new Error('Try going to Settings, and refreshing your Auth Token!'));
       }
 
-      this.options.errorDisplay.showError(errors);
+      this.options.display.showError(errors);
     }
   }
 
@@ -144,9 +144,19 @@ export default class TwitchChat {
    */
   async renderSettings(forceSyncSettings) {
     this.forceSyncSettings = forceSyncSettings;
+
+    // Update state of UI on changes
+    // prettier-ignore
+    globalThis
+      .document
+      .body
+      .querySelector('form#settings')
+      ?.addEventListener('change', this.#updateSettingsUI);
+
+    this.#updateSettingsUI();
   }
 
-  #updateSettingsUI() {
+  #updateSettingsUI = () => {
     const body = globalThis.document.body;
 
     /** @type {NodeListOf<HTMLInputElement> | undefined} */
@@ -162,7 +172,7 @@ export default class TwitchChat {
       btn.addEventListener('click', this.#onClickAuth);
       refreshButtons[idx].addEventListener('click', this.#onClickRefresh);
 
-      const container = btn.closest('[data-input-type="arraygroup"]');
+      const container = btn.closest('[data-input-type="grouparray"]');
       /** @type {NodeListOf<HTMLInputElement> | undefined} */
       const inputs = container?.querySelectorAll('.password-wrapper input');
 
@@ -171,7 +181,7 @@ export default class TwitchChat {
       btn.disabled = hasBothTokens;
       refreshButtons[idx].disabled = !hasBothTokens;
     });
-  }
+  };
 
   /**
    * @param {Event} event
@@ -201,7 +211,7 @@ export default class TwitchChat {
       event.target.disabled = false;
 
       const errInst = /** @type {Error} */ (/** @type {unknown} */ err);
-      this.options.errorDisplay.showError(errInst);
+      this.options.display.showError(errInst);
     }
   };
 
@@ -218,7 +228,7 @@ export default class TwitchChat {
 
     event.target.disabled = true;
 
-    const container = event.target.closest('[data-input-type="arraygroup"]');
+    const container = event.target.closest('[data-input-type="grouparray"]');
     /** @type {NodeListOf<HTMLInputElement> | undefined} */
     const inputs = container?.querySelectorAll('.password-wrapper input');
 
@@ -239,7 +249,7 @@ export default class TwitchChat {
    * @param {HTMLButtonElement} button
    */
   updateTokenInputs = (tokens, button) => {
-    const container = button.closest('[data-input-type="arraygroup"]');
+    const container = button.closest('[data-input-type="grouparray"]');
     /** @type {NodeListOf<HTMLInputElement> | undefined} */
     const inputs = container?.querySelectorAll('.password-wrapper input, input[type="hidden"]');
 
@@ -388,7 +398,7 @@ export default class TwitchChat {
 
     console.log('Streamer Got: ', message);
 
-    this.options.emitter.emit('chat:twitch:onChat', ctx);
+    this.options.getEmitter().emit('chat:twitch:onChat', ctx);
   };
 
   /**
@@ -409,7 +419,7 @@ export default class TwitchChat {
 
     console.log('Bot Got: ', message);
 
-    this.options.emitter.emit('chat:twitch:onChat', ctx);
+    this.options.getEmitter().emit('chat:twitch:onChat', ctx);
   };
 
   /**

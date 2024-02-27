@@ -1,9 +1,10 @@
 /**
  * Renderer for App portion of the Application
- * 
+ *
  * @module
  */
 
+import { EventEmitter } from 'events';
 import { PluginInstances, PluginSettingsBase } from '../types/Plugin.js';
 import { RendererInstance, RendererInstanceOptions } from '../types/Renderers.js';
 import { RenderTemplate } from '../utils/Templating.js';
@@ -20,17 +21,19 @@ type ElementMap = {
  *
  * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
  */
-export class AppRenderer<PluginSettings extends PluginSettingsBase> implements RendererInstance {
+export class AppRenderer<PluginSettings extends PluginSettingsBase> extends EventEmitter implements RendererInstance {
   /** Local `ElementMap` mapping name -> Element the {@link RendererInstance | `RendererInstance`} needs to access. */
   private elements: ElementMap = {} as ElementMap;
 
   /**
    * Create a new {@link AppRenderer | `AppRenderer`}.
    *
-   * @param options Incoming Options for this Renderer.
+   * @param options - Incoming Options for this Renderer.
    * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
    */
-  constructor(private options: RendererInstanceOptions<PluginSettings>) {}
+  constructor(private options: RendererInstanceOptions<PluginSettings>) {
+    super();
+  }
 
   /**
    * Initialize the Renderer, kicking off the Lifecycle.
@@ -75,7 +78,7 @@ export class AppRenderer<PluginSettings extends PluginSettingsBase> implements R
    * Iterates over all currently known Registered {@link PluginInstances | `PluginInstances`} and calls `renderApp` to allow it to
    * do it's own manipulation of the DOM/Settings/etc.
    *
-   * @param plugins Currently known Registered {@link PluginInstances | `PluginInstances`}.
+   * @param plugins - Currently known Registered {@link PluginInstances | `PluginInstances`}.
    * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
    */
   private renderPluginApp(plugins: PluginInstances<PluginSettings>) {
@@ -94,7 +97,7 @@ export class AppRenderer<PluginSettings extends PluginSettingsBase> implements R
   }
 
   /**
-   * Build the Local `ElementMap` this {@link RendererInstance | `RendererInstance`} needs to access.
+   * Build the Local `ElementMap` this {@link types/Renderers.RendererInstance | `RendererInstance`} needs to access.
    */
   private buildElementMap() {
     const body = globalThis.document.body;

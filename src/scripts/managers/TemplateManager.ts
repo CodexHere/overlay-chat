@@ -4,6 +4,7 @@
  * @module
  */
 
+import { PluginRegistrarAccessor } from '../types/Plugin.js';
 import { BuildTemplateMap, TemplateMap } from '../utils/Templating.js';
 import coreTemplate from './coreTemplates.html?raw';
 
@@ -33,15 +34,13 @@ export class TemplateManager {
 
   /**
    * Register a Template HTML file with the sytem.
-   *
-   * @param templateUrl - URL of the Template HTML file to Register.
    */
-  registerTemplates = (templateUrl?: URL) => {
-    if (!templateUrl) {
+  registerTemplates: PluginRegistrarAccessor<{}> = async (_plugin, registration) => {
+    if (!registration || !registration.templates) {
       return;
     }
 
-    this.templateUrls.push(templateUrl);
+    this.templateUrls.push(registration.templates);
   };
 
   /**

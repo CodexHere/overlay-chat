@@ -5,14 +5,14 @@
  */
 
 import { BusManagerContext_Init, BusManagerEmitter, BusManagerEvents } from '../types/Managers.js';
-import { PluginEventMap, PluginInstance, PluginMiddlewareMap, PluginSettingsBase } from '../types/Plugin.js';
+import { PluginInstance, PluginRegistrarAccessor, PluginSettingsBase } from '../types/Plugin.js';
 import { EnhancedEventEmitter } from '../utils/EnhancedEventEmitter.js';
 import { MiddlewareChain, MiddlewareLink } from '../utils/Middleware.js';
 
 /**
  * Type Guard for determining if an object is truly a `SilentlyFailChainError`
  *
- * @param err An Error of unknown type.
+ * @param err - An Error of unknown type.
  */
 function isSilentlyFailChainError(err: unknown): err is SilentlyFailChainError {
   if (!err || false === err instanceof Error) {
@@ -29,7 +29,7 @@ function isSilentlyFailChainError(err: unknown): err is SilentlyFailChainError {
 /**
  * An `Error` type for enforcing a silent failure of an entire chain.
  *
- * `throw` this error, or return an instance of it to a {@link Next | `Next`} function to
+ * `throw` this error, or return an instance of it to a {@link utils/Middleware.Next | `Next`} function to
  * programattically bypass the current and remaining {@link MiddlewareLink | `MiddlewareLink`} in a {@link MiddlewareChain | `MiddlewareChain`}.
  *
  * If you're reading this documentation and are using vanilla JS, or don't need/want to import
@@ -79,8 +79,8 @@ export class SilentlyFailChainError extends Error {
 /**
  * Manages {@link MiddlewareChain | `MiddlewareChain`} and Event Buses.
  *
- * Protects {@link MiddlewareChain | `MiddlewareChain`} Execution by limiting it to the {@link PluginInstance | `PluginInstance`} that *first* Registered with the System.
- * > If you're writing a Plugin and need to be higher in the Chain, set your {@link PluginInstance.priority | Priority} to a lower value to load earlier (but be reasonable!).
+ * Protects {@link MiddlewareChain | `MiddlewareChain`} Execution by limiting it to the {@link types/Plugin.PluginInstance | `PluginInstance`} that *first* Registered with the System.
+ * > If you're writing a Plugin and need to be higher in the Chain, set your {@link PluginInstance.priority | `Priority`} to a lower value to load earlier (but be reasonable!).
  *
  * This class is also part of the {@link types/Plugin.PluginRegistrar | `PluginRegistrar`},
  * providing various Registration points.
@@ -96,13 +96,6 @@ export class BusManager<PluginSettings extends PluginSettingsBase> {
   private _emitter: BusManagerEmitter;
 
   /**
-   * Get a `Readonly` instance of the {@link BusManagerEmitter | `BusManagerEmitter`}.
-   */
-  get emitter(): Readonly<BusManagerEmitter> {
-    return this._emitter;
-  }
-
-  /**
    * Create a new {@link BusManager | `BusManager`}.
    *
    * Also instantiates an `EventEmitter`.
@@ -116,10 +109,17 @@ export class BusManager<PluginSettings extends PluginSettingsBase> {
   /**
    * Initialize `BusManager` for executing {@link MiddlewareChain | `MiddlewareChain`}s.
    */
-  init() {
+  async init() {
     // Register "Middleware Execute" event to execute Chain
-    this.emitter.on(BusManagerEvents.MIDDLEWARE_EXECUTE, this.startMiddlewareChainByName);
+    this._emitter.on(BusManagerEvents.MIDDLEWARE_EXECUTE, this.startMiddlewareChainByName);
   }
+
+  /**
+   * Get a `Readonly` instance of the {@link BusManagerEmitter | `BusManagerEmitter`}.
+   */
+  getEmitter = (): Readonly<BusManagerEmitter> => {
+    return this._emitter;
+  };
 
   /**
    * Mark the `EventEmitter` as not allowing anymore `Listeners` to be added.
@@ -147,12 +147,12 @@ export class BusManager<PluginSettings extends PluginSettingsBase> {
    * @param plugin - Instance of the Plugin to register against.
    * @param queriedMiddleware - Middleware Chain Mapping to register with the Plugin instance.
    */
-  registerMiddleware = (plugin: PluginInstance<PluginSettings>, queriedMiddleware: PluginMiddlewareMap | undefined) => {
-    if (!queriedMiddleware) {
+  registerMiddleware: PluginRegistrarAccessor<PluginSettings> = async (plugin, registration) => {
+    if (!registration || !registration.middlewares) {
       return;
     }
 
-    for (const [middlewareName, middlewareLinks] of Object.entries(queriedMiddleware)) {
+    for (const [middlewareName, middlewareLinks] of Object.entries(registration.middlewares)) {
       let chosenChain = this.chains.get(middlewareName);
 
       // This is the first registration for the Chain
@@ -178,18 +178,15 @@ export class BusManager<PluginSettings extends PluginSettingsBase> {
 
   /**
    * Register Events with the system.
-   *
-   * @param plugin - Instance of the Plugin to register against.
-   * @param eventMap - {@link PluginEventMap | `PluginEventMap`} for the currently Registering Plugin.
    */
-  registerEvents = (plugin: PluginInstance<PluginSettings>, eventMap?: PluginEventMap) => {
-    if (!eventMap) {
+  registerEvents: PluginRegistrarAccessor<PluginSettings> = async (plugin, registration) => {
+    if (!registration || !registration.events || !registration.events.recieves) {
       return;
     }
 
-    for (const [eventName, eventFunction] of Object.entries(eventMap)) {
+    for (const [eventName, eventFunction] of Object.entries(registration.events.recieves)) {
       // AddListener on behalf of the plugin, and force-bind the function to the PluginInstance
-      this.emitter.addListener(eventName, eventFunction.bind(plugin));
+      this._emitter.addListener(eventName, eventFunction.bind(plugin));
     }
   };
 
@@ -198,7 +195,7 @@ export class BusManager<PluginSettings extends PluginSettingsBase> {
    * as well as ensure the Plugin causing the Trigger is the very same that first Registered the
    * {@link MiddlewareChain | `MiddlewareChain`} attempting to be Executed.
    *
-   * @param ctx Initiating Context Object, housing the initial state of the Chain Context, as well as Plugin reference.
+   * @param ctx - Initiating Context Object, housing the initial state of the Chain Context, as well as Plugin reference.
    */
   private startMiddlewareChainByName = async (ctx: BusManagerContext_Init<{}>) => {
     const links = this.chains.get(ctx.chainName);

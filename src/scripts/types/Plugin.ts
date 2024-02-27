@@ -5,11 +5,11 @@
  */
 
 import { Listener } from 'events';
-import { FormValidatorResults } from '../utils/Forms.js';
+import { FormValidatorResults } from '../utils/Forms/types.js';
 import { MiddlewareLink } from '../utils/Middleware.js';
 import { TemplateMap } from '../utils/Templating.js';
 import { DefaultQueryString } from '../utils/URI.js';
-import { BusManagerEmitter, DisplayManager } from './Managers.js';
+import { BusManagerEmitter, DisplayAccessor } from './Managers.js';
 
 /**
  * A collection of {@link PluginInstance | `PluginInstance`} objects, which are expected to be fully Registered.
@@ -50,6 +50,18 @@ export type PluginImportResults<PluginSettings extends PluginSettingsBase> = {
 export type PluginMiddlewareMap = Record<string, MiddlewareLink<{}>[]>;
 
 /**
+ * Accessor Function for a PluginRegistrar to provide for runtime Manager access.
+ *
+ * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
+ */
+export type PluginRegistrarAccessor<PluginSettings extends PluginSettingsBase> = (
+  /** Instance of the Plugin to register against. */
+  plugin: PluginInstance<PluginSettings>,
+  /** Values returned by the Plugin to use for Registering with the System. */
+  registration?: PluginRegistration
+) => Promise<void>;
+
+/**
  * Accessors that are injected into Plugins for Registering various functionalities of a Plugin.
  *
  * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
@@ -58,42 +70,37 @@ export type PluginRegistrar<PluginSettings extends PluginSettingsBase> = {
   /**
    * Register Middleware with the system.
    *
-   * @param plugin - Instance of the Plugin to register against.
-   * @param queriedMiddleware - Middleware Chain Mapping to register with the Plugin instance.
+   * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
    */
-  registerMiddleware(plugin: PluginInstance<PluginSettings>, queriedMiddleware: PluginMiddlewareMap | undefined): void;
+  registerMiddleware: PluginRegistrarAccessor<PluginSettings>;
 
   /**
    * Register Events with the system.
    *
-   * @param plugin - Instance of the Plugin to register against.
-   * @param eventMap - Event Mapping to register with the Plugin instance.
    * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
    */
-  registerEvents(plugin: PluginInstance<PluginSettings>, eventMap?: PluginEventMap): void;
+  registerEvents: PluginRegistrarAccessor<PluginSettings>;
 
   /**
    * Register a Settings Schema with the system.
    *
-   * @param plugin - Instance of the Plugin to register against.
-   * @param registration - The Plugin Instance's Registration Options.
    * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
    */
-  registerSettings(plugin: PluginInstance<PluginSettings>, registration?: PluginRegistrationOptions): Promise<void>;
+  registerSettings: PluginRegistrarAccessor<PluginSettings>;
 
   /**
    * Register a Template HTML file with the sytem.
    *
-   * @param templateUrl - URL of the Template HTML file to Register.
+   * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
    */
-  registerTemplates(templateUrl?: URL): void;
+  registerTemplates: PluginRegistrarAccessor<PluginSettings>;
 
   /**
    * Register a Stylesheet file with the sytem.
    *
-   * @param href - URL of the Template HTML file to Register.
+   * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
    */
-  registerStylesheet: (href: URL) => void;
+  registerStylesheet: PluginRegistrarAccessor<PluginSettings>;
 };
 
 /**
@@ -126,14 +133,18 @@ export type PluginEventRegistration = {
 };
 
 /**
- * TODO: Refactor away from this concept some.. See `README.md`.
- * @deprecated
+ * Different parts of a Plugin to Register with the System.
  */
-export type PluginRegistrationOptions = {
+export type PluginRegistration = {
+  /** MiddlewareChain Mapping for the Plugin. */
   middlewares?: PluginMiddlewareMap;
+  /** Event Mapping for the Plugin. */
   events?: PluginEventRegistration;
+  /** Settings Schema for the Plugin. */
   settings?: URL;
+  /** Template HTML File URL for the Plugin. */
   templates?: URL;
+  /** CSS File URL for the Plugin. */
   stylesheet?: URL;
 };
 
@@ -146,17 +157,14 @@ export type PluginOptions<PluginSettings extends PluginSettingsBase> = {
   /** Accessor Function for Settings */
   getSettings: () => PluginSettings;
   /** Accessor Function for Event Emitter */
-  // TODO: Change to actual Accessor Function to match other items
-  emitter: Readonly<BusManagerEmitter>;
+  getEmitter: () => Readonly<BusManagerEmitter>;
   /**
    * Accessor Function for Templates
    * @typeParam TemplateIDs - Union Type of accepted `TemplateIDs`.
    */
   getTemplates: <TemplateIDs extends string>() => TemplateMap<TemplateIDs>;
-  /** Accessor Function for Display Manager */
-  // TODO: Change to actual Accessor Function to match other items
-  // TODO: Rename away from `errorDisplay`
-  errorDisplay: DisplayManager;
+  /** Accessor for Display Manager */
+  display: DisplayAccessor;
 };
 
 /**
@@ -180,11 +188,15 @@ export type PluginInstance<PluginSettings extends PluginSettingsBase> = {
   ref: Symbol;
   /** A number representing the Priority of the Plugin. Lower Priority values load/operate sooner than Higher Priority values. If not specified, Priority is after all *specified* Priority Plugins, in the order they were given to Load. */
   priority?: number;
+  /** Author Metadata for the Plugin. Can be a Handle, X/Discord/Github Profile, etc. */
+  author?: string;
+  /** Support/Marketing Homepage. Can be a Discord/Github Repository, etc. */
+  homepage?: string;
 
   /**
-   * Optionally define this method to intake {@link PluginRegistrationOptions | `PluginRegistrationOptions`} and Register various aspects of a Plugin.
+   * Optionally define this method to intake {@link PluginRegistration | `PluginRegistration`} and Register various aspects of a Plugin.
    */
-  registerPlugin?(): PluginRegistrationOptions | Promise<PluginRegistrationOptions>;
+  registerPlugin?(): PluginRegistration | Promise<PluginRegistration>;
 
   /**
    * Optionally define this method to perform various unregistration actions when a Plugin is being unloaded.

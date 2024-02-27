@@ -2,33 +2,42 @@
 
 ## TODO
 
-******
-* Documenting BusManager!!!
-******
-
-* Look at Plugins' `#updateSettingsUI` and do UX behaviors on Form input event!
-* Heavily Document everything
-  * Left `Forms` undocumented, because we're considering a rewrite.
-* Core Plugin needs to require Twitch-Chat
-  * Need to make sure we have `Twitch - Chat` enabled
 * Refactor:
-  * SettingsRenderer - Pull some stuff out into helper classes, particularly the Settings Options stuff. 
-  * Forms - should use clases to generate output, consider design patterns (Builder, Visitor)
-  * PluginOptions - rename to PluginServices
-  * PluginContext - PluginRegistrar, and PluginServices
-    * Needs rendererType: 'app' | 'settings'
-  * PluginConstructor - needs to take in PluginContext
+  * PluginManager - Still consider refactoring to an injections process
+    * event from AppBootstrapper indicating Renderer mode?
   * Bootstrapper
+    * -- New train of thought for all this, Core Plugin injects what is now the Core Schema, and THAT has defaults set in it!
+    * Change schema to be just an arraylist with columns:
+      * Enabled
+      * Plugin Name or URL
     * should take in a list of Built-In plugins
     * take in a list of required plugins (built-in, or remote)
+      * if matches in the supplied list, needs to be enabled rather than added
+    * Consider a way to just combine built-in and remote plugins
+  * Consider moving Plugin Reloading (ie `pluginLoader`) to the Bootstrapper
+    * Use Event for `PLUGINS_CHANGED` to reload
   * Consider adding `debug` and replace `console.log`
     * https://bundlephobia.com/package/debug@4.3.4
     * If we don't add it, remove `console.log`
+  * Consider creating a new bg style, or various themes:
+    * https://www.joshwcomeau.com/gradient-generator/
+* Core Plugin needs to require Twitch-Chat
+  * Need to make sure we have `Twitch - Chat` enabled
+  * Maybe this is unnecessary if the process enforces enabling as mentioned in `Refactor > Bootstrapper`
+* Work on Forms Validator Input types, make sure regexes are REALLY good!
 * Add About/FAQ/ETC links on Settings Page
   * How to use it, etc.
+  * or should it be a github wiki?
 * Create some cool examples:
-  * renderSettings, listen to click of button, show error
-    * This should replace the timeout errors
+  * renderSettings
+    * Hello plugin should re-enable button if text is not `"Hello from the Plugin!"`
+    * listen to click of button, show error
+      * ?? This could replace the timeout errors
+    * Inject a Settings Option:
+      * Color Element
+      * Changes the `--pico-card-background-color` value to modify settings css!
+  * Gamut Settings should be loaded with a plugin?
+    * If we refactor Registering to injecting rather than retrieving from a function call, we can possibly even find a way to break the lifecycle from being so rigid? Seemingly should be possible to start and stop plugins at-will. Right now, it's whole-sale/scorched-earth destroy and rebuild.
 	* Generally where I come up with ideas and flesh them out before moving into final plugin
 		* Just don't delete stuff!!!
 	* Custom Chains
@@ -40,10 +49,8 @@
 		* Sound on msg
 		* confetti on follow?
 		* TTS on eventsub redeem
-* Enhance Range UX
-  * Should be it's own handler that's not debounced so it updates faster
-  * Value should be a number input
-    * If value changed via input, Range should be set
+* Consider making `compressed` the default URL format instead of `uri`.
+  * More plugins might expose how large this URL can really get
 * Librarify:
   * https://vitejs.dev/guide/build#library-mode
   * Overlay Architecture
@@ -55,8 +62,12 @@
 * Common Plugin Deploy
   * Twitch - Chat / PubSub, etc
   * OBS WS Proxy
+* Write Guides:
+  * Application Lifecycle
+  * How to Build an Application with COAP
+  * How to Build a Plugin for COAP
 * Convert to use `hh-util`
-  * `hh-util` needs proper publishing
+  * `hh-util` needs *proper* publishing
   * `hh-util` needs proper lifecycle support
     * Named Volumes for triggers, etc
   * Docker Support

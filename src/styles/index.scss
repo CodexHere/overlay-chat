@@ -50,30 +50,30 @@ dialog {
 }
 
 code {
-  border: 1px solid var(--card-border-color);
+  border: 1px solid var(--pico-card-border-color);
 }
 
 @media (min-width: 576px) {
   :root {
-    --font-size: 13px;
+    --pico-font-size: 13px;
   }
 }
 
 @media (min-width: 768px) {
   :root {
-    --font-size: 14px;
+    --pico-font-size: 14px;
   }
 }
 
 @media (min-width: 992px) {
   :root {
-    --font-size: 15px;
+    --pico-font-size: 15px;
   }
 }
 
 @media (min-width: 1200px) {
   :root {
-    --font-size: 16px;
+    --pico-font-size: 16px;
   }
 }
 

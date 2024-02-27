@@ -7,14 +7,14 @@
  *
  * @typedef {import('../../../src/scripts/Plugin_Core.js').MiddewareContext_Chat} ConcreteContext
  * @typedef {Partial<ConcreteContext>} Context
- * @typedef {import('../../../src/scripts/utils/Forms.js').FormEntryGrouping} FormEntryFieldGroup
- * @typedef {import('../../../src/scripts/utils/Forms.js').FormValidatorResults<PluginSettings>} SettingsValidatorResults
+ * @typedef {import('../../../src/scripts/utils/Forms/types.js').FormSchemaGrouping} FormSchemaGrouping
+ * @typedef {import('../../../src/scripts/utils/Forms/types.js').FormValidatorResults<PluginSettings>} FormValidatorResults
  * @typedef {import('../../../src/scripts/types/Managers.js').BusManagerContext_Init<{}>} BusManagerContext_Init
  * @typedef {import('../../../src/scripts/types/Plugin.js').PluginMiddlewareMap} PluginMiddlewareMap
  * @typedef {import('../../../src/scripts/types/Plugin.js').PluginEventRegistration} PluginEventMap
  * @typedef {import('../../../src/scripts/types/Plugin.js').PluginOptions<PluginSettings>} PluginInjectables
  * @typedef {import('../../../src/scripts/types/Plugin.js').PluginInstance<PluginSettings>} PluginInstance
- * @typedef {import('../../../src/scripts/types/Plugin.js').PluginRegistrationOptions} PluginRegistrationOptions
+ * @typedef {import('../../../src/scripts/types/Plugin.js').PluginRegistration} PluginRegistration
  * @typedef {import('../../../src/scripts/utils/Middleware.js').Next<Context>} Next
  */
 
@@ -35,18 +35,16 @@ export default class Plugin_Twitch_EmoteSwap {
   priority = 20;
 
   /**
-   * @returns {true | SettingsValidatorResults}
+   * @returns {true | FormValidatorResults}
    */
   isConfigured() {
     const { 'twitchEmoteSwap--clientId': clientId, refreshTokenBot, refreshTokenStreamer } = this.options.getSettings();
-
-    this.#updateSettingsUI();
 
     if (!!clientId) {
       return true;
     }
 
-    /** @type {SettingsValidatorResults} */
+    /** @type {FormValidatorResults} */
     let retMap = {};
 
     if (false === !!clientId) {
@@ -70,7 +68,7 @@ export default class Plugin_Twitch_EmoteSwap {
   }
 
   /**
-   * @returns {PluginRegistrationOptions}
+   * @returns {PluginRegistration}
    */
   registerPlugin = () => ({
     settings: new URL(`${BaseUrl()}/settings.json`),
@@ -84,6 +82,16 @@ export default class Plugin_Twitch_EmoteSwap {
    */
   async renderSettings(forceSyncSettings) {
     this.forceSyncSettings = forceSyncSettings;
+
+    // Update state of UI on changes
+    // prettier-ignore
+    globalThis
+      .document
+      .body
+      .querySelector('form#settings')
+      ?.addEventListener('change', this.#updateSettingsUI);
+
+    this.#updateSettingsUI();
   }
 
   #updateSettingsUI = () => {
@@ -120,7 +128,7 @@ export default class Plugin_Twitch_EmoteSwap {
 
     const { refreshTokenBot, refreshTokenStreamer } = this.options.getSettings();
 
-    const container = event.target.closest('[data-input-type="arraygroup"]');
+    const container = event.target.closest('[data-input-type="grouparray"]');
     /** @type {NodeListOf<HTMLInputElement> | undefined} */
     const inputs = container?.querySelectorAll('.password-wrapper input');
 

@@ -11,14 +11,14 @@
  *
  * @typedef {import('../../../src/scripts/Plugin_Core.js').MiddewareContext_Chat} ConcreteContext
  * @typedef {Partial<ConcreteContext>} Context
- * @typedef {import('../../../src/scripts/utils/Forms.js').FormEntryGrouping} FormEntryFieldGroup
- * @typedef {import('../../../src/scripts/utils/Forms.js').FormValidatorResults<PluginSettings>} SettingsValidatorResults
+ * @typedef {import('../../../src/scripts/utils/Forms/types.js').FormSchemaGrouping} FormSchemaGrouping
+ * @typedef {import('../../../src/scripts/utils/Forms/types.js').FormValidatorResults<PluginSettings>} FormValidatorResults
  * @typedef {import('../../../src/scripts/types/Managers.js').BusManagerContext_Init<{}>} BusManagerContext_Init
  * @typedef {import('../../../src/scripts/types/Plugin.js').PluginMiddlewareMap} PluginMiddlewareMap
  * @typedef {import('../../../src/scripts/types/Plugin.js').PluginEventRegistration} PluginEventMap
  * @typedef {import('../../../src/scripts/types/Plugin.js').PluginOptions<PluginSettings>} PluginInjectables
  * @typedef {import('../../../src/scripts/types/Plugin.js').PluginInstance<PluginSettings>} PluginInstance
- * @typedef {import('../../../src/scripts/types/Plugin.js').PluginRegistrationOptions} PluginRegistrationOptions
+ * @typedef {import('../../../src/scripts/types/Plugin.js').PluginRegistration} PluginRegistration
  * @typedef {import('../../../src/scripts/utils/Middleware.js').Next<Context>} Next
  */
 
@@ -43,7 +43,7 @@ export default class Plugin_Example {
   }
 
   /**
-   * @returns {PluginRegistrationOptions}
+   * @returns {PluginRegistration}
    */
   registerPlugin = () => ({
     settings: new URL(`${BaseUrl()}/settings.json`),
@@ -247,17 +247,19 @@ export default class Plugin_Example {
   };
 
   renderSettings() {
+    const emitter = this.options.getEmitter();
+
     console.log(`[${this.name}] [renderSettings]`);
 
-    this.options.emitter.emit('test-event', ['Some Test Value'], { foo: true, bar: false });
-    const val = this.options.emitter.call('test-event', ['Some Test Value'], { foo: true, bar: false });
+    emitter.emit('test-event', ['Some Test Value'], { foo: true, bar: false });
+    const val = emitter.call('test-event', ['Some Test Value'], { foo: true, bar: false });
     console.log(`[${this.name}] Event Output:`, val);
 
     const btn = document.querySelector('[name="example--btnExample"]');
     btn?.addEventListener('click', event => {
       event.stopImmediatePropagation();
       event.preventDefault();
-      const txt = btn.closest('[data-input-type="arraygroup"]')?.querySelector('[name="example--txtExample"]');
+      const txt = btn.closest('[data-input-type="grouparray"]')?.querySelector('[name="example--txtExample"]');
       /** @type {HTMLInputElement} */
       (btn).disabled = true;
       if (txt instanceof HTMLInputElement) {
@@ -278,12 +280,12 @@ export default class Plugin_Example {
 
       // Fails because we didn't initially register this middleware chain
       console.warn(`[${this.name}] About to execute a middleware that this plugin did not register. Expect an error!`);
-      this.options.emitter.emit('middleware-execute', ctx);
+      emitter.emit('middleware-execute', ctx);
 
       // Fails because the emitter is locked down after plugins are registered
       console.warn(`[${this.name}] Attempting to register a new event on the eventbus, this should fail with an error`);
       try {
-        this.options.emitter.addListener('thisShouldFail', () => {});
+        emitter.addListener('thisShouldFail', () => {});
       } catch (err) {
         console.warn('Swallowing error, but showing, for example only!');
         console.error(err);
@@ -292,6 +294,8 @@ export default class Plugin_Example {
   }
 
   renderApp() {
+    const emitter = this.options.getEmitter();
+
     console.log(`[${this.name}] [renderApp]`);
 
     setTimeout(() => {
@@ -300,13 +304,13 @@ export default class Plugin_Example {
       if (true === settings['example--showErrorAtRuntime']) {
         // Shows an error to the user as an example
         console.warn(`[${this.name}] Show an error to the user`);
-        this.options.errorDisplay.showError(new Error('This error should be shown to the user!'));
+        this.options.display.showError(new Error('This error should be shown to the user!'));
       }
 
       if (true === settings['example--showInfoAtRuntime']) {
         // Shows an error to the user as an example
         console.warn(`[${this.name}] Show an error to the user`);
-        this.options.errorDisplay.showInfo(
+        this.options.display.showInfo(
           `Your Message: ${settings['example--showInfoAtRuntime-message']}`,
           'Custom Info Alert Coming At Ya!'
         );
@@ -315,28 +319,25 @@ export default class Plugin_Example {
       if (settings['example--sendMessageAtRuntime']) {
         try {
           console.log('Sending Messages to Chat');
-          this.options.emitter.emit(
+          emitter.emit(
             'chat:twitch:sendMessage',
             '[from Bot if available] ' + settings['example--sendMessageAtRuntime-message']
           );
-          this.options.emitter.emit(
+          emitter.emit(
             'chat:twitch:sendMessage',
             '[from Streamer if available] ' + settings['example--sendMessageAtRuntime-message'],
             'streamer'
           );
         } catch (err) {
           const errInst = /** @type {Error} */ (/** @type {unknown} */ err);
-          this.options.errorDisplay.showError(errInst);
+          this.options.display.showError(errInst);
         }
       }
 
-      const hasAuth = this.options.emitter.call('chat:twitch:hasAuth').slice(-1)[0];
+      const hasAuth = emitter.call('chat:twitch:hasAuth').slice(-1)[0];
       console.log('Checking Auth Values', hasAuth);
       if (hasAuth) {
-        this.options.errorDisplay.showInfo(
-          `* Streamer: ${hasAuth.streamer}<br/>* Bot: ${hasAuth.bot}`,
-          'Do we have auth?'
-        );
+        this.options.display.showInfo(`* Streamer: ${hasAuth.streamer}<br/>* Bot: ${hasAuth.bot}`, 'Do we have auth?');
       }
     }, 3000);
   }

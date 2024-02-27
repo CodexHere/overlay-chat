@@ -1,7 +1,8 @@
 details {
-  margin-bottom: var(--spacing);
+  margin-bottom: var(--pico-spacing);
   padding-bottom: 0;
   border-bottom: none;
+  border: 1px solid var(--pico-card-border-color);
 
   &:has(input:invalid) {
     border: 1px solid red;
@@ -9,12 +10,12 @@ details {
   }
 
   & .content:has(input:invalid) {
-    background: color-mix(in srgb, red 10%, var(--card-background-color));
+    background: color-mix(in srgb, red 10%, var(--pico-card-background-color));
   }
 
   // The Rotating Marker
   summary {
-    --size: 1.5rem;
+    --_size: 1.5rem;
     position: relative;
     border: 4px solid transparent;
     display: block;
@@ -22,8 +23,8 @@ details {
     color: white;
     padding-left: 1.5rem;
     cursor: pointer;
-    font-size: var(--size);
-    line-height: var(--size);
+    font-size: var(--_size);
+    line-height: var(--_size);
 
     &::-webkit-details-marker {
       display: none;
@@ -75,7 +76,7 @@ details {
   }
 
   .content > details {
-    margin-top: var(--spacing);
+    margin-top: var(--pico-spacing);
 
     &[open] summary::before {
       top: 0.75rem;

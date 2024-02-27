@@ -1,7 +1,6 @@
 import { resolve } from 'path';
 import { splitVendorChunkPlugin } from 'vite';
 import dts from 'vite-plugin-dts';
-import version from 'vite-plugin-package-version';
 
 const PROJECT_DIR = resolve(__dirname);
 const SRC_DIR = resolve(PROJECT_DIR, 'src');
@@ -13,10 +12,13 @@ const isProd = 'production' === process.env.NODE_ENV;
 export default {
   publicDir: STATIC_DIR,
 
+  define: {
+    // Inject `package.json`::`version` into `import.meta.env.PACKAGE_VERSION`
+    'import.meta.env.PACKAGE_VERSION': JSON.stringify(process.env.npm_package_version)
+  },
+
   plugins: [
     splitVendorChunkPlugin(),
-    // Inject `package.json`::`version` into `import.meta.env.PACKAGE_VERSION`
-    version(),
 
     // Generate type declarations
     dts({

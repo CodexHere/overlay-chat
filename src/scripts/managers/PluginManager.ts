@@ -15,7 +15,7 @@ import {
   PluginLoaders,
   PluginSettingsBase
 } from '../types/Plugin.js';
-import { FormValidatorResults } from '../utils/Forms.js';
+import { FormValidatorResults } from '../utils/Forms/types.js';
 import * as URI from '../utils/URI.js';
 import { IsValidValue } from '../utils/misc.js';
 
@@ -188,7 +188,7 @@ export class PluginManager<PluginSettings extends PluginSettingsBase>
    *
    * > Will also first clean up from how the Settings are [De]Serialized.
    *
-   * @param customPlugins - Depending on Settings, could be a single `string`, or an `Array` of them.
+   * @param plugins - Depending on Settings, could be a single `string`, or an `Array` of them.
    */
   private getPluginsSettings(plugins?: string | string[]) {
     return (
@@ -356,9 +356,9 @@ export class PluginManager<PluginSettings extends PluginSettingsBase>
   }
 
   /**
-   * Utilize the {@link types/Plugins.PluginRegistrar | `PluginRegistrar`} to Register various parts of a Plugin.
+   * Utilize the {@link types/Plugin.PluginRegistrar | `PluginRegistrar`} to Register various parts of a Plugin.
    *
-   * @param importResults Result mapping after attempted Imports of Plugins.
+   * @param importResults - Result mapping after attempted Imports of Plugins.
    */
   private async registerImportedPlugins(importResults: PluginImportResults<PluginSettings>) {
     const { pluginRegistrar } = this.options;
@@ -385,28 +385,28 @@ export class PluginManager<PluginSettings extends PluginSettingsBase>
 
       // Register Middleware Chains from Plugins
       try {
-        pluginRegistrar.registerMiddleware(plugin, registration.middlewares);
+        pluginRegistrar.registerMiddleware(plugin, registration);
       } catch (err) {
         importResults.bad.push(new Error(`Could not Register Middleware for Plugin: ${plugin.name}`));
       }
 
       // Register Events from Plugins
       try {
-        pluginRegistrar.registerEvents(plugin, registration.events?.recieves);
+        pluginRegistrar.registerEvents(plugin, registration);
       } catch (err) {
         importResults.bad.push(new Error(`Could not Register Events for Plugin: ${plugin.name}`));
       }
 
       // Register Templates from Plugins
       try {
-        pluginRegistrar.registerTemplates(registration.templates);
+        pluginRegistrar.registerTemplates(plugin, registration);
       } catch (err) {
         importResults.bad.push(new Error(`Could not Register Templates for Plugin: ${plugin.name}`));
       }
 
       // Load Styles from Plugins
       if (registration.stylesheet) {
-        pluginRegistrar.registerStylesheet(registration.stylesheet);
+        pluginRegistrar.registerStylesheet(plugin, registration);
       }
     }
   }

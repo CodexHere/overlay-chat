@@ -13,11 +13,11 @@ import {
   PluginInstance,
   PluginMiddlewareMap,
   PluginOptions,
-  PluginRegistrationOptions,
+  PluginRegistration,
   PluginSettingsBase
 } from './types/Plugin.js';
 import { IsInViewPort } from './utils/DOM.js';
-import { FormValidatorResult, FormValidatorResults } from './utils/Forms.js';
+import { FormValidatorResults } from './utils/Forms/types.js';
 import { MiddlewareLink } from './utils/Middleware.js';
 import { RenderTemplate } from './utils/Templating.js';
 import { BaseUrl } from './utils/URI.js';
@@ -42,7 +42,7 @@ export type MiddewareContext_Chat = {
   isSelf: boolean;
   /** The Message sent in the Chat. */
   message: string;
-  /** Userstate from {@link tmiJs.CommonUserstate | `TMIjs`}. */
+  /** Userstate from {@link https://github.com/DefinitelyTyped/DefinitelyTyped/blob/0.1.450/types/tmi.js/index.d.ts#L135 | `TMIjs`}. */
   userState: tmiJs.CommonUserstate;
   /** The type of the Client Handling the Chat Event */
   clientType: 'bot' | 'streamer';
@@ -83,7 +83,7 @@ export default class Plugin_Core<PluginSettings extends AppSettings_Chat> implem
   /**
    * Register this Plugin with the System.
    */
-  registerPlugin = (): PluginRegistrationOptions => ({
+  registerPlugin = (): PluginRegistration => ({
     middlewares: this._getMiddleware(),
     events: this._getEvents(),
     templates: new URL(`${BaseUrl()}/templates/twitch-chat.html`)
@@ -102,7 +102,7 @@ export default class Plugin_Core<PluginSettings extends AppSettings_Chat> implem
       return true;
     }
 
-    let retMap: FormValidatorResult<PluginSettings> = {};
+    let retMap: FormValidatorResults<PluginSettings> = {};
 
     if (false === hasAnyPlugins) {
       retMap['plugins'] = 'Needs at least one Built-In or Custom Plugin';
@@ -163,7 +163,7 @@ export default class Plugin_Core<PluginSettings extends AppSettings_Chat> implem
       initiatingPlugin: this
     };
 
-    return this.options.emitter.emit(BusManagerEvents.MIDDLEWARE_EXECUTE, initCtx);
+    return this.options.getEmitter().emit(BusManagerEvents.MIDDLEWARE_EXECUTE, initCtx);
   };
 
   /**

@@ -1,0 +1,97 @@
+form#settings {
+  &.focus-mode.x-ray {
+    details {
+      &:not([open]) {
+        background: rgb(38, 2, 2);
+
+        &:hover {
+          background: red;
+        }
+      }
+
+      &[open] {
+        &:not(:focus) {
+          background: yellow;
+        }
+
+        &:hover,
+        &:focus-within {
+          background: green;
+        }
+
+        &:hover {
+          & > .content > details {
+            &:not([open]) {
+              background: yellow;
+
+              &:hover {
+                background: green;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  &.focus-mode {
+    details {
+      transition:
+        filter 1s,
+        opacity 1s;
+
+      // Details Closed
+      // Completely out of focus
+      &:not([open]) {
+        filter: blur(var(--base-effect-inactive-blur));
+        opacity: var(--base-effect-inactive-opacity);
+
+        // Hovered, Mostly out of focus
+        &:hover {
+          filter: blur(0.05rem);
+          opacity: 0.8;
+        }
+      }
+
+      // Details Open
+      &[open] {
+        transition:
+          filter 750ms,
+          opacity 750ms;
+
+        // Not In Focus, but can see info
+        &:not(:focus) {
+          filter: blur(0.07rem);
+          opacity: 0.8;
+        }
+
+        // Completely visible open and focused
+        &:hover,
+        &:focus-within {
+          transition:
+            filter 200ms,
+            opacity 200ms;
+
+          filter: blur(0);
+          opacity: 1;
+        }
+
+        &:hover {
+          & > .content > details {
+            // Immediate Enclosed Closed Details are mostly visible
+            &:not([open]) {
+              filter: blur(0.07rem);
+              opacity: 0.8;
+
+              // Completely visible open
+              &:hover {
+                filter: blur(0);
+                opacity: 1;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -9,7 +9,7 @@
   <div id="container" class="settings">
     <header>
       <h1 class="container-title">Settings</h1>
-      <label>
+      <label id="plugin-jumper-wrapper">
         Jump to:
         <select id="plugin-jumper"></select>
       </label>
@@ -22,29 +22,45 @@
         <div class="textarea-wrapper">
           <textarea class="url" rows="4"></textarea>
           <div class="results-reveal">
-            <h2>Hover to Reveal</h2>
+            <h2>Hover 2s to Reveal</h2>
             <h5>Click to Copy</h5>
           </div>
         </div>
 
         <div class="settings-options">
-          <label for="settings-options-format">
-            Format:
-            <select id="settings-options-format" name="format" class="settings-option">
-              <option>uri</option>
-              <option>compressed</option>
-            </select>
-          </label>
+          <div class="left">
+            <label title="Options Format - URI plain text, or Compressed data">
+              Format:
+              <select name="format" class="settings-option">
+                <option>uri</option>
+                <option>compressed</option>
+              </select>
+            </label>
+          </div>
 
           <div class="spacer"></div>
+
+          <div class="middle"></div>
+
+          <div class="spacer"></div>
+
+          <div class="right">
+            <label title="Enable Focus Mode for the Settings">
+              <input type="checkbox" name="focus-mode" class="settings-option" />
+              Focus Mode
+            </label>
+          </div>
         </div>
       </div>
 
       <div class="right-column">
         <div class="options-load-app">
-          <button class="button-load-app" disabled>Load App</button>
-          <label><input type="checkbox" class="settings-option" name="new-window" /> New Window?</label>
-          <button class="button-settings-reset secondary">Reset Settings</button>
+          <button class="settings-option button-load-app" disabled>Load App</button>
+          <label title="Should the Application be opened in a New Window?">
+            <input type="checkbox" class="settings-option" name="new-window" />
+            New Window
+          </label>
+          <button class="secondary settings-option button-settings-reset" title="Start Over!">Reset Settings</button>
         </div>
       </div>
     </form>

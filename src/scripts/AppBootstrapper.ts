@@ -5,16 +5,16 @@
  */
 
 import { BusManager } from './managers/BusManager.js';
+import { DisplayManager } from './managers/DisplayManager.js';
 import { PluginManager } from './managers/PluginManager.js';
 import { SettingsManager } from './managers/SettingsManager.js';
-import { TemplateIDsBase, TemplateManager } from './managers/TemplateManager.js';
+import { TemplateManager } from './managers/TemplateManager.js';
 import { AppRenderer } from './renderers/AppRenderer.js';
 import { SettingsRenderer } from './renderers/SettingsRenderer.js';
-import { AppBootstrapperOptions, DisplayManager, PluginManagerEmitter, PluginManagerEvents } from './types/Managers.js';
+import { AppBootstrapperOptions, PluginManagerEmitter, PluginManagerEvents } from './types/Managers.js';
 import { PluginImportResults, PluginSettingsBase } from './types/Plugin.js';
-import { RendererConstructor, RendererInstance } from './types/Renderers.js';
+import { RendererConstructor, RendererInstance, RendererInstanceEvents } from './types/Renderers.js';
 import { AddStylesheet } from './utils/DOM.js';
-import { RenderTemplate } from './utils/Templating.js';
 
 /**
  * Initiates and Maintains the Application Lifecycle.
@@ -43,8 +43,10 @@ import { RenderTemplate } from './utils/Templating.js';
  *
  * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
  */
-export class AppBootstrapper<PluginSettings extends PluginSettingsBase> implements DisplayManager {
-  /** Instance of the {@link BusManager | `BusManager`}. */
+export class AppBootstrapper<PluginSettings extends PluginSettingsBase> {
+  /** Instance of the {@link DisplayManager | `DisplayManager`}. */
+  private displayManager?: DisplayManager;
+  /** Instance of the {@link managers/BusManager.BusManager | `BusManager`}. */
   private busManager?: BusManager<PluginSettings>;
   /** Instance of the {@link SettingsManager | `SettingsManager`}. */
   private settingsManager?: SettingsManager<PluginSettings>;
@@ -52,6 +54,8 @@ export class AppBootstrapper<PluginSettings extends PluginSettingsBase> implemen
   private pluginManager?: PluginManagerEmitter<PluginSettings>;
   /** Instance of the {@link TemplateManager | `TemplateManager`}. */
   private templateManager?: TemplateManager;
+  /** Instance of the {@link RendererInstance | `RendererInstance`} chosen to present to the User. */
+  private renderer?: RendererInstance;
 
   /**
    * Create a new {@link AppBootstrapper | `AppBootstrapper`}.
@@ -71,7 +75,7 @@ export class AppBootstrapper<PluginSettings extends PluginSettingsBase> implemen
       await this.initManagers();
       await this.initRenderer();
     } catch (err) {
-      this.showError(err as Error);
+      this.displayManager?.showError(err as Error);
     }
   }
 
@@ -83,6 +87,10 @@ export class AppBootstrapper<PluginSettings extends PluginSettingsBase> implemen
     this.settingsManager = new SettingsManager<PluginSettings>(globalThis.location.href);
     this.templateManager = new TemplateManager();
 
+    this.displayManager = new DisplayManager({
+      getTemplates: this.templateManager.getTemplates
+    });
+
     this.pluginManager = new PluginManager({
       defaultPlugin: this.bootstrapOptions.defaultPlugin,
       getSettings: this.settingsManager.getSettings,
@@ -92,15 +100,18 @@ export class AppBootstrapper<PluginSettings extends PluginSettingsBase> implemen
         registerEvents: this.busManager.registerEvents,
         registerSettings: this.settingsManager.registerSettings,
         registerTemplates: this.templateManager.registerTemplates,
-        registerStylesheet: AddStylesheet
+        registerStylesheet: async (_plugin, registration) => {
+          if (registration?.stylesheet?.href) {
+            AddStylesheet(registration?.stylesheet?.href);
+          }
+        }
       },
 
       pluginOptions: {
-        emitter: this.busManager.emitter,
+        getEmitter: this.busManager.getEmitter,
         getSettings: this.settingsManager.getSettings,
         getTemplates: this.templateManager.getTemplates,
-        // TODO : Rename this
-        errorDisplay: this
+        display: this.displayManager
       }
     });
   }
@@ -109,6 +120,7 @@ export class AppBootstrapper<PluginSettings extends PluginSettingsBase> implemen
    * Initialize Managers in appropriate order.
    */
   private async initManagers() {
+    await this.displayManager!.init();
     await this.settingsManager!.init();
     await this.busManager!.init();
     await this.pluginManager!.init();
@@ -144,20 +156,25 @@ export class AppBootstrapper<PluginSettings extends PluginSettingsBase> implemen
     }
 
     // Construct the `RendererConstructor` to instantiate a `RendererInstance`!
-    const renderer: RendererInstance = new rendererClass({
+    this.renderer = new rendererClass({
       getTemplates: this.templateManager!.getTemplates,
       getSettings: this.settingsManager!.getSettings,
       setSettings: this.settingsManager!.setSettings,
       getMaskedSettings: this.settingsManager!.getMaskedSettings,
-      getParsedJsonResults: this.settingsManager!.getParsedJsonResults,
+      getProcessedSchema: this.settingsManager!.getProcessedSchema,
       getPlugins: this.pluginManager!.getPlugins,
-      pluginLoader: this.pluginManager!.registerAllPlugins,
       validateSettings: this.pluginManager!.validateSettings,
-      errorDisplay: this
+      display: this.displayManager!
+    });
+
+    // Upon Plugin List being changed, we want to reload all Plugins and restart the `RendererInstance`.
+    this.renderer?.addListener(RendererInstanceEvents.PLUGINS_STALE, async () => {
+      await this.pluginManager?.registerAllPlugins();
+      await this.renderer?.init();
     });
 
     // Init the Renderer
-    await renderer.init();
+    await this.renderer.init();
   }
 
   /**
@@ -175,10 +192,10 @@ export class AppBootstrapper<PluginSettings extends PluginSettingsBase> implemen
       (importResults: PluginImportResults<PluginSettings>) => {
         this.busManager!.init();
         this.busManager!.disableAddingListeners();
-        this.settingsManager!.updateParsedJsonResults(true);
+        this.settingsManager!.updateProcessedSchema(true);
 
         if (importResults.bad && 0 !== importResults.bad.length) {
-          this.showError(importResults.bad);
+          this.displayManager?.showError(importResults.bad);
         }
       }
     );
@@ -189,50 +206,4 @@ export class AppBootstrapper<PluginSettings extends PluginSettingsBase> implemen
       this.busManager!.reset();
     });
   }
-
-  /**
-   * Display an info message to the User.
-   *
-   * @param message - Message to display to the User.
-   * @param title - Title of modal dialogue.
-   */
-  showInfo = (message: string, title?: string | undefined): void => {
-    const body = globalThis.document.body;
-    const templates = this.templateManager?.getTemplates<TemplateIDsBase>()!;
-
-    // Render `modalMessage` Template to the `body`.
-    RenderTemplate(body, templates.modalMessage, {
-      title: title ?? 'Information',
-      message
-    });
-  };
-
-  /**
-   * Display an error message to the User.
-   *
-   * @param err - The `Error`, or collection of `Error`s to present to the User.
-   */
-  showError = (err: Error | Error[]) => {
-    const body = globalThis.document.body;
-
-    if (!err) {
-      return;
-    }
-
-    // Convert to Array
-    err = Array.isArray(err) ? err : [err];
-
-    if (0 === err.length) {
-      return;
-    }
-
-    err.forEach(console.error);
-
-    // Render `modalMessage` Template to the `body`.
-    const templates = this.templateManager?.getTemplates<TemplateIDsBase>()!;
-    RenderTemplate(body, templates.modalMessage, {
-      title: 'There was an Error',
-      message: err.map(e => e.message).join('<br> <br>')
-    });
-  };
 }

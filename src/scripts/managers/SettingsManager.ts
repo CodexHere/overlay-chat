@@ -6,8 +6,9 @@
 
 import get from 'lodash.get';
 import set from 'lodash.set';
-import { PluginInstance, PluginRegistrationOptions, PluginSettingsBase } from '../types/Plugin.js';
-import { FormEntry, FormEntryGrouping, FromJson, ParsedJsonResults } from '../utils/Forms.js';
+import { PluginInstance, PluginRegistration, PluginSettingsBase } from '../types/Plugin.js';
+import { BuildFormSchema } from '../utils/Forms/Builder.js';
+import { FormSchema, FormSchemaEntry, FormSchemaGrouping, ProcessedFormSchema } from '../utils/Forms/types.js';
 import * as URI from '../utils/URI.js';
 import SettingsSchemaDefault from './schemaSettingsCore.json';
 
@@ -23,13 +24,13 @@ import SettingsSchemaDefault from './schemaSettingsCore.json';
  */
 export class SettingsManager<PluginSettings extends PluginSettingsBase> {
   /** Cached store of the parsed JSON results from the Settings Schema. */
-  private _parsedJsonResults?: ParsedJsonResults;
+  private _processedSchema?: ProcessedFormSchema;
   /** The Settings values, as the System currently sees them. */
   private _settings: PluginSettings = {} as PluginSettings;
   /** The Settings Schema, as the System currently sees them. */
-  private _settingsSchema: FormEntry[] = [];
+  private _settingsSchema: FormSchema = [];
   /** The Default Settings Schema, when the System inits/resets. */
-  private _settingsSchemaDefault: FormEntry[] = [];
+  private _settingsSchemaDefault: FormSchema = [];
 
   /**
    * Create a new {@link SettingsManager | `SettingsManager`}.
@@ -51,7 +52,7 @@ export class SettingsManager<PluginSettings extends PluginSettingsBase> {
     this._settings = this.toggleMaskSettings(settings, false);
 
     // Load Core Settings Schema
-    this._settingsSchemaDefault = structuredClone(SettingsSchemaDefault as FormEntry[]);
+    this._settingsSchemaDefault = structuredClone(SettingsSchemaDefault as FormSchema);
     this.resetSettingsSchema();
   }
 
@@ -82,13 +83,13 @@ export class SettingsManager<PluginSettings extends PluginSettingsBase> {
       this._settings = settings;
     }
 
-    this.updateParsedJsonResults();
+    this.updateProcessedSchema();
   };
 
   /**
-   * Accessor Function to get the Parsed JSON Results of processing a {@link FormEntry | `FormEntry[]`}. */
-  getParsedJsonResults = (): ParsedJsonResults | undefined => {
-    return this._parsedJsonResults;
+   * Accessor Function to get the Parsed JSON Results of processing a {@link FormSchema | `FormSchema`}. */
+  getProcessedSchema = (): ProcessedFormSchema | undefined => {
+    return this._processedSchema;
   };
 
   /**
@@ -107,43 +108,39 @@ export class SettingsManager<PluginSettings extends PluginSettingsBase> {
    * @param registration - The Plugin Instance's Registration Options.
    * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
    */
-  registerSettings = async (
-    plugin: PluginInstance<PluginSettings>,
-    registration?: PluginRegistrationOptions
-  ) => {
+  registerSettings = async (plugin: PluginInstance<PluginSettings>, registration?: PluginRegistration) => {
     if (!registration || !registration.settings) {
       return;
     }
 
     // Load the Settings Schema file as JSON
-    const fieldGroup: FormEntryGrouping = await (await fetch(registration.settings.href)).json();
-    // Enforce a `name` for the Plugin Settings as a named FieldGroup. This is for sanity sake later.
-    fieldGroup.name = plugin.name.toLocaleLowerCase().replaceAll(' ', '_');
-    fieldGroup.values = fieldGroup.values ?? [];
+    const grouping: FormSchemaGrouping = await (await fetch(registration.settings.href)).json();
+    // Enforce a `name` for the Plugin Settings as a named GroupSubSchema. This is for sanity sake later.
+    grouping.name = plugin.name.toLocaleLowerCase().replaceAll(' ', '_');
+    // Ensure incoming Grouping is a subschema definition.
+    grouping.inputType = 'group-subschema';
+    grouping.subSchema = grouping.subSchema ?? [];
 
-    // Push a final FieldGroup into the values with Plugin Metadata
-    fieldGroup.values.push({
-      inputType: 'fieldgroup',
+    // Push a final GroupSubSchema into the values with Plugin Metadata
+    grouping.subSchema.push({
+      inputType: 'group-subschema',
       label: 'Plugin Metadata',
       name: `pluginMetadata-${plugin.name}`,
-      values: this.getPluginMetaInputs(plugin, registration)
+      subSchema: this.getPluginMetaInputs(plugin, registration)
     });
 
-    this._settingsSchema.push(fieldGroup);
+    this._settingsSchema.push(grouping);
   };
 
   /**
-   * Generate the Plugin Metadata {@link FormEntry | `FormEntry`} Settings Schema.
+   * Generate the Plugin Metadata {@link FormSchemaEntry | `FormEntry`} Settings Schema.
    *
    * > NOTE: This is mostly for displaying in Settings configurator.
    *
    * @param plugin - Instance of the Plugin to register against.
    * @param registration - Registration object to garner metadata against
    */
-  private getPluginMetaInputs(
-    plugin: PluginInstance<PluginSettings>,
-    registration: PluginRegistrationOptions
-  ): FormEntry[] {
+  private getPluginMetaInputs(plugin: PluginInstance<PluginSettings>, registration: PluginRegistration): FormSchema {
     return [
       {
         inputType: 'text',
@@ -162,6 +159,18 @@ export class SettingsManager<PluginSettings extends PluginSettingsBase> {
         name: ' ',
         label: 'Priority',
         defaultValue: plugin.priority || 'N/A'
+      },
+      {
+        inputType: 'text',
+        name: ' ',
+        label: 'Author',
+        defaultValue: plugin.author || 'N/A'
+      },
+      {
+        inputType: 'text',
+        name: ' ',
+        label: 'Homepage',
+        defaultValue: plugin.homepage || 'N/A'
       },
       {
         inputType: 'text',
@@ -185,16 +194,16 @@ export class SettingsManager<PluginSettings extends PluginSettingsBase> {
   }
 
   /**
-   * Update the cached Parsed JSON Results from parsing the Settings Schema.
+   * Update the cached {@link ProcessedFormSchema | `ProcessedFormSchema`} from parsing the Settings Schema.
    *
    * @param pluginsLoaded - Whether this was called after the Plugins were Loaded,
    * versus initial startup.
    */
-  updateParsedJsonResults = (pluginsLoaded: boolean = false) => {
-    this._parsedJsonResults = FromJson(structuredClone(this._settingsSchema), this._settings);
+  updateProcessedSchema = (pluginsLoaded: boolean = false) => {
+    this._processedSchema = BuildFormSchema(structuredClone(this._settingsSchema), this._settings);
 
-    // Plugins just loaded, and we want to now use a fully parsedJsonResult
-    // too unmask our settings correctly and completely
+    // Plugins just loaded, which means they injected new settings.
+    // We want to now use a fully parsedJsonResult to unmask our settings completely.
     if (pluginsLoaded) {
       this.toggleMaskSettings(this._settings, false);
     }
@@ -208,8 +217,8 @@ export class SettingsManager<PluginSettings extends PluginSettingsBase> {
    */
   private toggleMaskSettings(settings: PluginSettings, mask: boolean) {
     const maskableEntries = {
-      ...this._parsedJsonResults?.mapping?.password,
-      ...this._parsedJsonResults?.mapping?.hidden
+      ...this._processedSchema?.mapping?.password,
+      ...this._processedSchema?.mapping?.hidden
     };
 
     Object.keys(maskableEntries ?? {}).forEach(settingName => {

@@ -1,6 +1,6 @@
 /**
  * Types for all the `Manager` classes used throughout the Application Lifecycle
- * 
+ *
  * @module
  */
 
@@ -9,6 +9,7 @@ import { AppBootstrapper } from '../AppBootstrapper.js';
 import { BusManager } from '../managers/BusManager.js';
 import { PluginManager } from '../managers/PluginManager.js';
 import { EnhancedEventEmitter } from '../utils/EnhancedEventEmitter.js';
+import { TemplateMap } from '../utils/Templating.js';
 import { PluginConstructor, PluginInstance, PluginOptions, PluginRegistrar, PluginSettingsBase } from './Plugin.js';
 
 // Bootstrapping
@@ -106,14 +107,27 @@ export type BusManagerEmitter = EnhancedEventEmitter & {
   ): void;
 };
 
-// Display Manager
+// DisplayManager
 
 /**
- * Display Manager is responsible for showing Errors and Info messages to the User.
+ * Interface for the Display Accessor instance.
+ *
+ * This is currently implemented by {@link managers/DisplayManager.DisplayManager | `DisplayManager`}.
  */
-export type DisplayManager = {
+export type DisplayAccessor = {
   /** Shows an dismissable Error to the User. */
   showError(err: Error | Error[]): void;
   /** Shows an dismissable Message to the User. */
   showInfo(message: string, title?: string): void;
+};
+
+/**
+ * Options for initializing the {@link managers/DisplayManager.DisplayManager | `DisplayManager`}.
+ */
+export type DisplayManagerOptions = {
+  /**
+   * Accessor Function for Templates
+   * @typeParam TemplateIDs - Union Type of accepted `TemplateIDs`.
+   */
+  getTemplates: <TemplateIDs extends string>() => TemplateMap<TemplateIDs>;
 };
