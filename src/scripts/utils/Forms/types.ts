@@ -203,6 +203,23 @@ export type FormSchema = FormSchemaEntry[];
 export type InputTypeEntryMap = Partial<Record<FormSchemaEntry['inputType'], Record<string, FormSchemaEntry>>>;
 
 /**
+ * Mapping that represents the construction of a Form.
+ *
+ * The output maps the `name` -> `FormSchemaEntry` for possible evaluation later on.
+ */
+export type NameEntryMap = Partial<Record<FormSchemaEntry['name'], FormSchemaEntry>>;
+
+/**
+ * Different Mappings used for custom evaluation/processing.
+ */
+export type ProcessedFormSchemaMappings = {
+  /** Maps by InputType */
+  byType: InputTypeEntryMap;
+  /** Maps by Name */
+  byName: NameEntryMap;
+};
+
+/**
  * Results from processing a {@link FormSchemaEntry | `FormSchemaEntry`}.
  *
  * These results house the HTML necessary to populate the Elements of an `HTMLFormElement`, as well as the {@link InputTypeEntryMap | Input Type Mapping} of the processed {@link FormSchema | `FormSchema`}.
@@ -211,7 +228,7 @@ export type InputTypeEntryMap = Partial<Record<FormSchemaEntry['inputType'], Rec
  */
 export type ProcessedFormSchema = {
   html: string;
-  mapping: InputTypeEntryMap;
+  mappings: ProcessedFormSchemaMappings;
 };
 
 /**
@@ -221,4 +238,4 @@ export type ProcessedFormSchema = {
  *
  * If the Validation is completely successful, it returns `true`, otherwise it will return a mapping of `"paramName"` -> `"Error Message"`.
  */
-export type FormValidatorResults<FormData extends {}> = true | Partial<Record<keyof FormData, string>>;
+export type FormValidatorResults<FormData extends {} = {}> = true | Partial<Record<keyof FormData, string>>;

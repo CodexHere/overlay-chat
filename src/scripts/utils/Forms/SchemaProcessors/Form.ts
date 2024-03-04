@@ -6,7 +6,7 @@
 
 import merge from 'lodash.merge';
 import { BuildFormSchema } from '../Builder.js';
-import { FormSchema, FormSchemaEntryProcessor, InputTypeEntryMap, ProcessedFormSchema } from '../types.js';
+import { FormSchema, FormSchemaEntryProcessor, ProcessedFormSchema, ProcessedFormSchemaMappings } from '../types.js';
 
 /**
  * {@link FormSchema | `FormSchema`} Processor.
@@ -14,8 +14,8 @@ import { FormSchema, FormSchemaEntryProcessor, InputTypeEntryMap, ProcessedFormS
  * Outputs HTML Form and internal elements.
  */
 export class Form implements FormSchemaEntryProcessor {
-  /** Running {@link InputTypeEntryMap | `InputTypeEntryMap`} for this Processor. Recursive/Iterative calls need to properly aggregate this value. */
-  protected mapping: InputTypeEntryMap = {};
+  /** Running {@link ProcessedFormSchemaMappings | `ProcessedFormSchemaMappings`} for this Processor. Recursive/Iterative calls need to properly aggregate this value. */
+  protected mappings: ProcessedFormSchemaMappings = { byName: {}, byType: {} };
 
   /**
    * Retrieves Unique ID for this Processor.
@@ -45,7 +45,7 @@ export class Form implements FormSchemaEntryProcessor {
    */
   protected toString(): string {
     const subSchemaResults = BuildFormSchema(this.entries, this.formData);
-    this.mapping = merge({}, this.mapping, subSchemaResults.mapping);
+    merge(this.mappings, subSchemaResults.mappings);
 
     return `
       <form id="#${this.formId}">
@@ -61,7 +61,7 @@ export class Form implements FormSchemaEntryProcessor {
   process(): ProcessedFormSchema {
     return {
       html: this.toString(),
-      mapping: this.mapping
+      mappings: this.mappings
     };
   }
 }

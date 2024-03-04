@@ -14,14 +14,14 @@ import tmiJs from 'https://esm.sh/tmi.js@1.8.5';
  *
  * @typedef {import('../../../src/scripts/Plugin_Core.js').MiddewareContext_Chat} ConcreteContext
  * @typedef {Partial<ConcreteContext>} Context
+ *
  * @typedef {import('../../../src/scripts/utils/Forms/types.js').FormSchemaGrouping} FormSchemaGrouping
  * @typedef {import('../../../src/scripts/utils/Forms/types.js').FormValidatorResults<PluginSettings>} FormValidatorResults
- * @typedef {import('../../../src/scripts/types/Managers.js').BusManagerContext_Init<{}>} BusManagerContext_Init
- * @typedef {import('../../../src/scripts/types/Plugin.js').PluginMiddlewareMap} PluginMiddlewareMap
+ * @typedef {import('../../../src/scripts/types/ContextProviders.js').ContextProviders} ContextProviders
+ * @typedef {import('../../../src/scripts/types/Managers.js').BusManagerContext_Init} BusManagerContext_Init
+ * @typedef {import('../../../src/scripts/types/Plugin.js').PluginMiddlewareMap<Context>} PluginMiddlewareMap
  * @typedef {import('../../../src/scripts/types/Plugin.js').PluginEventRegistration} PluginEventMap
- * @typedef {import('../../../src/scripts/types/Plugin.js').PluginOptions<PluginSettings>} PluginInjectables
  * @typedef {import('../../../src/scripts/types/Plugin.js').PluginInstance<PluginSettings>} PluginInstance
- * @typedef {import('../../../src/scripts/types/Plugin.js').PluginRegistration} PluginRegistration
  * @typedef {import('../../../src/scripts/utils/Middleware.js').Next<Context>} Next
  */
 
@@ -52,6 +52,11 @@ export default class TwitchChat {
     streamer: undefined
   };
 
+  /**
+   * @type {ContextProviders | undefined}
+   */
+  #ctx;
+
   get hasAuthedClientStreamer() {
     return !!this.clients.streamer && false === this.clients.streamer.getUsername().startsWith('justin');
   }
@@ -60,18 +65,16 @@ export default class TwitchChat {
     return !!this.clients.bot && false === this.clients.bot.getUsername().startsWith('justin');
   }
 
-  /**
-   * @param {PluginInjectables} options
-   */
-  constructor(options) {
-    this.options = options;
+  constructor() {
+    console.log(`[${this.name}] instantiated`);
   }
 
   /**
    * @returns {true | FormValidatorResults}
    */
   isConfigured() {
-    const { nameStreamer } = this.options.getSettings();
+    /** @type {PluginSettings} */
+    const { nameStreamer } = /** @type {ContextProviders} */ (this.#ctx).settings.get();
     const hasChannelName = !!nameStreamer;
 
     if (hasChannelName) {
@@ -89,14 +92,16 @@ export default class TwitchChat {
   }
 
   /**
-   * @returns {Promise<PluginRegistration>}
+   * @param {ContextProviders} ctx
    */
-  registerPlugin = async () => ({
-    events: this._getEvents(),
-    settings: new URL(`${BaseUrl()}/settings.json`)
-  });
+  register = async ctx => {
+    await ctx.settings.register(this, new URL(`${BaseUrl()}/settings.json`));
+    ctx.bus.registerEvents(this, this._getEvents());
 
-  unregisterPlugin() {
+    this.#ctx = ctx;
+  };
+
+  unregister() {
     const body = globalThis.document.body;
     const authButtons = body.querySelectorAll('[name*="btnAuth"]');
     const refreshButtons = body.querySelectorAll('[name*="btnRefresh"]');
@@ -135,7 +140,7 @@ export default class TwitchChat {
         errors.push(new Error('Try going to Settings, and refreshing your Auth Token!'));
       }
 
-      this.options.display.showError(errors);
+      this.#ctx?.display.showError(errors);
     }
   }
 
@@ -211,7 +216,7 @@ export default class TwitchChat {
       event.target.disabled = false;
 
       const errInst = /** @type {Error} */ (/** @type {unknown} */ err);
-      this.options.display.showError(errInst);
+      this.#ctx?.display.showError(errInst);
     }
   };
 
@@ -304,8 +309,8 @@ export default class TwitchChat {
   }
 
   generateTmiOptions() {
-    const { nameStreamer, tokenStreamer, tokenBot } = this.options.getSettings();
-
+    /** @type {PluginSettings} */
+    const { nameStreamer, tokenStreamer, tokenBot } = /** @type {ContextProviders} */ (this.#ctx).settings.get();
     /** @type {tmiJs.Options | undefined} */
     let clientOptions_Bot;
     /** @type {tmiJs.Options} */
@@ -351,7 +356,8 @@ export default class TwitchChat {
   }
 
   async initChatListen() {
-    const { nameStreamer } = this.options.getSettings();
+    /** @type {PluginSettings} */
+    const { nameStreamer } = /** @type {ContextProviders} */ (this.#ctx).settings.get();
 
     if (!nameStreamer) {
       return;
@@ -398,7 +404,7 @@ export default class TwitchChat {
 
     console.log('Streamer Got: ', message);
 
-    this.options.getEmitter().emit('chat:twitch:onChat', ctx);
+    this.#ctx?.bus.emit('chat:twitch:onChat', ctx);
   };
 
   /**
@@ -419,7 +425,7 @@ export default class TwitchChat {
 
     console.log('Bot Got: ', message);
 
-    this.options.getEmitter().emit('chat:twitch:onChat', ctx);
+    this.#ctx?.bus.emit('chat:twitch:onChat', ctx);
   };
 
   /**
@@ -427,7 +433,9 @@ export default class TwitchChat {
    * @param {'bot' | 'streamer'} useClient
    */
   _onBusSendMessage = (message, useClient = 'bot') => {
-    const settings = this.options.getSettings();
+    /** @type {PluginSettings} */
+    const { nameStreamer } = /** @type {ContextProviders} */ (this.#ctx).settings.get();
+
     // Use the client specified, defaulting to `bot`
     // If `streamer` is set, try to use that, otherwise fallback to `bot` client if valid
     // lastly fallback to `null` for error handling
@@ -441,7 +449,7 @@ export default class TwitchChat {
       throw new Error('No Authenticated Twitch Client to message on');
     }
 
-    client?.say(settings.nameStreamer, message);
+    client?.say(nameStreamer, message);
   };
 
   _onBusHasAuth = () => {

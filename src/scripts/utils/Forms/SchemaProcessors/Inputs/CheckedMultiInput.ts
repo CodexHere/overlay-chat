@@ -45,7 +45,7 @@ export class CheckedMultiInput extends SimpleInput<FormSchemaCheckedMultiInput> 
 
       // Accumulate recursive/iterative results
       outString += childResults.html;
-      this.mapping = merge({}, this.mapping, childResults.mapping);
+      merge(this.mappings, childResults.mappings);
     });
 
     return `

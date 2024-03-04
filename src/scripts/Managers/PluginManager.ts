@@ -5,6 +5,7 @@
  */
 
 import { EventEmitter } from 'events';
+import { ContextProviders } from '../types/ContextProviders.js';
 import { PluginManagerEmitter, PluginManagerEvents, PluginManagerOptions } from '../types/Managers.js';
 import {
   PluginConstructor,
@@ -29,14 +30,11 @@ import { IsValidValue } from '../utils/misc.js';
  *
  * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
  */
-export class PluginManager<PluginSettings extends PluginSettingsBase>
-  extends EventEmitter
-  implements PluginManagerEmitter<PluginSettings>
-{
+export class PluginManager extends EventEmitter implements PluginManagerEmitter<{}> {
   /**
    * Currently known Registered {@link types/Plugin.PluginInstances | `PluginInstances`}.
    */
-  private _plugins: PluginInstances<PluginSettings> = [];
+  private _plugins: PluginInstances = [];
 
   /**
    * Create a new {@link PluginManager | `PluginManager`}.
@@ -44,7 +42,7 @@ export class PluginManager<PluginSettings extends PluginSettingsBase>
    * @param options - Incoming Options for the {@link PluginManager | `PluginManager`}.
    * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
    */
-  constructor(private options: PluginManagerOptions<PluginSettings>) {
+  constructor(private options: PluginManagerOptions) {
     super();
   }
 
@@ -53,7 +51,7 @@ export class PluginManager<PluginSettings extends PluginSettingsBase>
    *
    * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
    */
-  getPlugins = (): PluginInstances<PluginSettings> => {
+  get = <PluginSettings extends PluginSettingsBase>(): PluginInstances<PluginSettings> => {
     return this._plugins;
   };
 
@@ -72,26 +70,36 @@ export class PluginManager<PluginSettings extends PluginSettingsBase>
    * Iteratively Unregister ALL currently known Registered {@link PluginInstances | `PluginInstances`}.
    */
   async unregisterAllPlugins() {
-    const numPlugins = this._plugins.length;
-
-    // Unregister existing plugins, and remove from list.
-    // NOTE: We're starting from the end of the list to avoid changing index counts on removals.
-    for (let idx = numPlugins - 1; idx >= 0; idx--) {
-      const plugin = this._plugins[idx];
-      await plugin.unregisterPlugin?.();
-      this._plugins.splice(idx, 1);
+    // Unregister existing plugins...
+    for (const plugin of this._plugins) {
+      await this.unregisterPlugin(plugin);
     }
 
-    // Delete all link[data-plugin] nodes
-    const links = globalThis.document.querySelectorAll('head link[data-plugin]');
-    links.forEach(link => link.remove());
+    // Clear Plugins Collection
+    this._plugins.length = 0;
 
-    // Emit to the System that the Plugins are all Unloaded!
+    // Emit to the Application that the Plugins are all Unloaded!
     this.emit(PluginManagerEvents.UNLOADED);
   }
 
   /**
-   * Iteratively Register Plugins defined in the System Settings.
+   * Unregisters a Singular Plugin from the Application,
+   * both opportunistically, and forcibly.
+   *
+   * @param plugin - The Plugin to Unregister.
+   */
+  async unregisterPlugin(plugin: PluginInstance<{}>) {
+    await plugin.unregister?.();
+
+    // Force Unregister the Plugin, just in case...
+    this.options.managers.bus.context?.unregister(plugin);
+    this.options.managers.settings.context?.unregister(plugin);
+    this.options.managers.stylesheets.unregister(plugin);
+    this.options.managers.template.context?.unregister(plugin);
+  }
+
+  /**
+   * Iteratively Register Plugins defined in the Application Settings.
    *
    * This will Unregister ALL currently known Registered {@link PluginInstances | `PluginInstances`} first, and import/instantiate as necessary.
    */
@@ -99,27 +107,29 @@ export class PluginManager<PluginSettings extends PluginSettingsBase>
     // Unregister Plugins before loading any new ones
     await this.unregisterAllPlugins();
 
-    const { defaultPlugin } = this.options;
-
     // Load all URLs for desired plugins
-    const pluginLoaders: PluginLoaders<PluginSettings> = this.pluginBaseUrls() as PluginLoaders<PluginSettings>;
+    const pluginLoaders: PluginLoaders = this.pluginBaseUrls();
     // Add Default plugin to instantiate/import
-    pluginLoaders.add(defaultPlugin);
+    pluginLoaders.add(this.options.defaultPlugin);
+
     // Perform Imports/Intantiations
     const importResults = await this.loadAllPlugins(pluginLoaders);
 
     // Bootstrap the Plugins loaded
     await this.registerImportedPlugins(importResults);
 
-    // Emit to the System that the Plugins are all Loaded!
+    // Emit to the Application that the Plugins are all Loaded!
     this.emit(PluginManagerEvents.LOADED, importResults);
   };
 
   /**
    * Iteratively Validate Settings for ALL currently known Registered {@link PluginInstances | `PluginInstances`}.
+   *
+   * TODO: Consider moving to SettingsManager, and injecting plugins[]
+   *
    * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
    */
-  validateSettings = (): FormValidatorResults<PluginSettings> => {
+  validateSettings = (): FormValidatorResults => {
     let errorMapping = {};
 
     this._plugins.forEach(plugin => {
@@ -157,7 +167,7 @@ export class PluginManager<PluginSettings extends PluginSettingsBase>
   private pluginBaseUrls() {
     let pluginUrls: string[] = [];
 
-    const { customPlugins, plugins } = this.options.getSettings();
+    const { customPlugins, plugins } = this.options.managers.settings.get();
 
     pluginUrls.push(...this.getCustomPluginsSettings(customPlugins));
     pluginUrls.push(...this.getPluginsSettings(plugins));
@@ -236,17 +246,15 @@ export class PluginManager<PluginSettings extends PluginSettingsBase>
   }
 
   /**
-   * Attempts to load all Plugins into the System.
+   * Attempts to load all Plugins into the Application.
    *
    * Plugins that fail to load will have their `Error`s collected for return.
    *
    * @param pluginLoaders - Plugins we wish to dynamically import/instantiate.
    * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
    */
-  private async loadAllPlugins(
-    pluginLoaders: PluginLoaders<PluginSettings>
-  ): Promise<PluginImportResults<PluginSettings>> {
-    const promises: Promise<PluginInstance<PluginSettings> | undefined>[] = [];
+  private async loadAllPlugins(pluginLoaders: PluginLoaders): Promise<PluginImportResults> {
+    const promises: Promise<PluginInstance | undefined>[] = [];
     pluginLoaders.forEach(async pluginUrl => promises.push(this.createPluginInstance(pluginUrl)));
 
     const results = await Promise.allSettled(promises);
@@ -270,7 +278,7 @@ export class PluginManager<PluginSettings extends PluginSettingsBase>
           {
             good: [],
             bad: []
-          } as PluginImportResults<PluginSettings>
+          } as PluginImportResults
         )
     );
   }
@@ -280,19 +288,19 @@ export class PluginManager<PluginSettings extends PluginSettingsBase>
    *
    * @param pluginLoader - Either the URL to a Plugin to dynamically import, or a Constructor for a Plugin.
    */
-  private async createPluginInstance(pluginLoader: PluginLoader<PluginSettings>) {
-    let pluginClass: PluginConstructor<PluginSettings> | undefined;
+  private async createPluginInstance(pluginLoader: PluginLoader) {
+    let pluginClass: PluginConstructor | undefined;
 
     // Dynamically Import or assign the `PluginLoader` as the `PluginConstructor`
     if (typeof pluginLoader === 'string') {
       pluginClass = await this.importPlugin(pluginLoader as string);
     } else {
-      pluginClass = pluginLoader as PluginConstructor<PluginSettings>;
+      pluginClass = pluginLoader;
     }
 
     // Instantiate Plugin
     try {
-      return new pluginClass!(this.options.pluginOptions);
+      return new pluginClass!();
     } catch (err) {
       if (err instanceof Error) {
         throw new Error(`Plugin could not be instantiated:<br />${pluginLoader}<br /><br /><pre>${err.stack}</pre>`);
@@ -307,7 +315,7 @@ export class PluginManager<PluginSettings extends PluginSettingsBase>
    */
   private async importPlugin(pluginBaseUrl: string) {
     try {
-      let pluginClass: PluginConstructor<PluginSettings> | undefined;
+      let pluginClass: PluginConstructor | undefined;
 
       // If a Custom Theme is supplied, we'll expect it to be a full URL, otherwise we'll formulate a URL.
       // This allows us to ensure vite will not attempt to package the plugin on our behalf, and will truly
@@ -333,81 +341,50 @@ export class PluginManager<PluginSettings extends PluginSettingsBase>
   }
 
   /**
-   * Sorts Plugins by `priority`, if it has one.
-   *
-   * @param a - Plugin A
-   * @param b - Plugin B
-   */
-  private sortPlugins(a: PluginInstance<PluginSettingsBase>, b: PluginInstance<PluginSettingsBase>) {
-    if (!a.priority) {
-      return 1;
-    }
-
-    if (!b.priority) {
-      return -1;
-    }
-
-    const sortval =
-      b.priority < a.priority ? 1
-      : b.priority > a.priority ? -1
-      : 0;
-
-    return sortval;
-  }
-
-  /**
    * Utilize the {@link types/Plugin.PluginRegistrar | `PluginRegistrar`} to Register various parts of a Plugin.
    *
    * @param importResults - Result mapping after attempted Imports of Plugins.
    */
-  private async registerImportedPlugins(importResults: PluginImportResults<PluginSettings>) {
-    const { pluginRegistrar } = this.options;
-
+  private async registerImportedPlugins(importResults: PluginImportResults) {
+    // Sort Plugins by Priority with our helper
+    importResults.good.sort(sortPlugins);
     // Assign Plugins from the "Good" imports
     this._plugins.push(...importResults.good);
-    // Sort Plugins by Priority
-    this._plugins.sort(this.sortPlugins);
+
+    const contextProviders: ContextProviders = {
+      bus: this.options.managers.bus.context!,
+      display: this.options.managers.display,
+      settings: this.options.managers.settings.context!,
+      stylesheets: this.options.managers.stylesheets,
+      template: this.options.managers.template.context!
+    };
 
     // Iterate over every loaded plugin, and bootstrap in appropriate order
     for (const plugin of this._plugins) {
-      const registration = await plugin.registerPlugin?.();
-
-      if (!registration) {
-        continue;
-      }
-
-      // Load Settings Schemas from Plugins
-      try {
-        await pluginRegistrar.registerSettings(plugin, registration);
-      } catch (err) {
-        importResults.bad.push(new Error(`Could not inject Settings Schema for Plugin: ${plugin.name}`));
-      }
-
-      // Register Middleware Chains from Plugins
-      try {
-        pluginRegistrar.registerMiddleware(plugin, registration);
-      } catch (err) {
-        importResults.bad.push(new Error(`Could not Register Middleware for Plugin: ${plugin.name}`));
-      }
-
-      // Register Events from Plugins
-      try {
-        pluginRegistrar.registerEvents(plugin, registration);
-      } catch (err) {
-        importResults.bad.push(new Error(`Could not Register Events for Plugin: ${plugin.name}`));
-      }
-
-      // Register Templates from Plugins
-      try {
-        pluginRegistrar.registerTemplates(plugin, registration);
-      } catch (err) {
-        importResults.bad.push(new Error(`Could not Register Templates for Plugin: ${plugin.name}`));
-      }
-
-      // Load Styles from Plugins
-      if (registration.stylesheet) {
-        pluginRegistrar.registerStylesheet(plugin, registration);
-      }
+      await plugin.register?.(contextProviders);
     }
   }
 }
+
+/**
+ * Sorts Plugins by `priority`, if it has one.
+ *
+ * @param a - Plugin A
+ * @param b - Plugin B
+ */
+const sortPlugins = (a: PluginInstance<PluginSettingsBase>, b: PluginInstance<PluginSettingsBase>) => {
+  if (!a.priority) {
+    return 1;
+  }
+
+  if (!b.priority) {
+    return -1;
+  }
+
+  const sortval =
+    b.priority < a.priority ? 1
+    : b.priority > a.priority ? -1
+    : 0;
+
+  return sortval;
+};

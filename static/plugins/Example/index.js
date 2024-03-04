@@ -11,14 +11,14 @@
  *
  * @typedef {import('../../../src/scripts/Plugin_Core.js').MiddewareContext_Chat} ConcreteContext
  * @typedef {Partial<ConcreteContext>} Context
+ *
  * @typedef {import('../../../src/scripts/utils/Forms/types.js').FormSchemaGrouping} FormSchemaGrouping
  * @typedef {import('../../../src/scripts/utils/Forms/types.js').FormValidatorResults<PluginSettings>} FormValidatorResults
- * @typedef {import('../../../src/scripts/types/Managers.js').BusManagerContext_Init<{}>} BusManagerContext_Init
- * @typedef {import('../../../src/scripts/types/Plugin.js').PluginMiddlewareMap} PluginMiddlewareMap
+ * @typedef {import('../../../src/scripts/types/ContextProviders.js').ContextProviders} ContextProviders
+ * @typedef {import('../../../src/scripts/types/Managers.js').BusManagerContext_Init} BusManagerContext_Init
+ * @typedef {import('../../../src/scripts/types/Plugin.js').PluginMiddlewareMap<Context>} PluginMiddlewareMap
  * @typedef {import('../../../src/scripts/types/Plugin.js').PluginEventRegistration} PluginEventMap
- * @typedef {import('../../../src/scripts/types/Plugin.js').PluginOptions<PluginSettings>} PluginInjectables
  * @typedef {import('../../../src/scripts/types/Plugin.js').PluginInstance<PluginSettings>} PluginInstance
- * @typedef {import('../../../src/scripts/types/Plugin.js').PluginRegistration} PluginRegistration
  * @typedef {import('../../../src/scripts/utils/Middleware.js').Next<Context>} Next
  */
 
@@ -34,23 +34,25 @@ export default class Plugin_Example {
   priority = 20;
 
   /**
-   * @param {PluginInjectables} options
+   * @type {ContextProviders | undefined}
    */
-  constructor(options) {
-    this.options = options;
+  #ctx;
 
+  constructor() {
     console.log(`[${this.name}] instantiated`);
   }
 
   /**
-   * @returns {PluginRegistration}
+   * @param {ContextProviders} ctx
    */
-  registerPlugin = () => ({
-    settings: new URL(`${BaseUrl()}/settings.json`),
-    middlewares: this._getMiddleware(),
-    events: this._getEvents(),
-    stylesheet: new URL(`${BaseUrl()}/plugin.css`)
-  });
+  register = async ctx => {
+    await ctx.settings.register(this, new URL(`${BaseUrl()}/settings.json`));
+    ctx.bus.registerMiddleware(this, this._getMiddleware());
+    ctx.bus.registerEvents(this, this._getEvents());
+    ctx.stylesheets.register(this, new URL(`${BaseUrl()}/plugin.css`));
+
+    this.#ctx = ctx;
+  };
 
   /**
    * @returns {PluginMiddlewareMap}
@@ -69,7 +71,6 @@ export default class Plugin_Example {
     console.log(`[${this.name}] Registering ${middleware.length} Middleware!`);
 
     return {
-      // prettier-ignore
       'chat:twitch': middleware
     };
   }
@@ -88,7 +89,7 @@ export default class Plugin_Example {
     };
   }
 
-  unregisterPlugin() {
+  unregister() {
     console.log(`[${this.name}] Unregistering Plugin`);
   }
 
@@ -117,7 +118,13 @@ export default class Plugin_Example {
 
     context.message += ' [MW 1 Exec] ';
 
-    const settings = this.options.getSettings();
+    if (!this.#ctx) {
+      await next();
+      return;
+    }
+
+    /** @type {PluginSettings} */
+    const settings = this.#ctx?.settings.get();
     if (settings['example--addText']) {
       context.message += `[${settings['example--addText']}] `;
     }
@@ -142,7 +149,13 @@ export default class Plugin_Example {
 
     context.message += ' [MW 2 Exec] ';
 
-    const settings = this.options.getSettings();
+    if (!this.#ctx) {
+      await next();
+      return;
+    }
+
+    /** @type {PluginSettings} */
+    const settings = this.#ctx?.settings.get();
     if (settings['example--addText']) {
       context.message += `[${settings['example--addText']}] `;
     }
@@ -166,7 +179,13 @@ export default class Plugin_Example {
 
     context.message += ' [MW 3 Exec] ';
 
-    const settings = this.options.getSettings();
+    if (!this.#ctx) {
+      await next();
+      return;
+    }
+
+    /** @type {PluginSettings} */
+    const settings = this.#ctx.settings.get();
     if (settings['example--addText']) {
       context.message += `[${settings['example--addText']}] `;
     }
@@ -203,7 +222,13 @@ export default class Plugin_Example {
 
     context.message += ' [MW 5] ';
 
-    const settings = this.options.getSettings();
+    if (!this.#ctx) {
+      await next();
+      return;
+    }
+
+    /** @type {PluginSettings} */
+    const settings = this.#ctx.settings.get();
     if (settings['example--addText']) {
       context.message += `[${settings['example--addText']}] `;
     }
@@ -226,7 +251,13 @@ export default class Plugin_Example {
 
     context.message += ' [MW 6] ';
 
-    const settings = this.options.getSettings();
+    if (!this.#ctx) {
+      await next();
+      return;
+    }
+
+    /** @type {PluginSettings} */
+    const settings = this.#ctx.settings.get();
     if (settings['example--addText']) {
       context.message += `[${settings['example--addText']}] `;
     }
@@ -247,7 +278,11 @@ export default class Plugin_Example {
   };
 
   renderSettings() {
-    const emitter = this.options.getEmitter();
+    const emitter = this.#ctx?.bus;
+
+    if (!emitter) {
+      throw new Error('Could not renderSettings() - no emitter???');
+    }
 
     console.log(`[${this.name}] [renderSettings]`);
 
@@ -269,48 +304,57 @@ export default class Plugin_Example {
 
     //TODO: Look into this
     return;
-    // This should error, since this isn't the first plugin to register the chain
-    setTimeout(() => {
-      /** @type {BusManagerContext_Init} */
-      const ctx = {
-        chainName: 'chat:twitch',
-        initialContext: {},
-        initiatingPlugin: this
-      };
+    // // This should error, since this isn't the first plugin to register the chain
+    // setTimeout(() => {
+    //   /** @type {BusManagerContext_Init} */
+    //   const ctx = {
+    //     chainName: 'chat:twitch',
+    //     initialContext: {},
+    //     initiatingPlugin: this
+    //   };
 
-      // Fails because we didn't initially register this middleware chain
-      console.warn(`[${this.name}] About to execute a middleware that this plugin did not register. Expect an error!`);
-      emitter.emit('middleware-execute', ctx);
+    //   // Fails because we didn't initially register this middleware chain
+    //   console.warn(`[${this.name}] About to execute a middleware that this plugin did not register. Expect an error!`);
+    //   emitter.emit('middleware-execute', ctx);
 
-      // Fails because the emitter is locked down after plugins are registered
-      console.warn(`[${this.name}] Attempting to register a new event on the eventbus, this should fail with an error`);
-      try {
-        emitter.addListener('thisShouldFail', () => {});
-      } catch (err) {
-        console.warn('Swallowing error, but showing, for example only!');
-        console.error(err);
-      }
-    }, 3000);
+    //   // Fails because the emitter is locked down after plugins are registered
+    //   console.warn(`[${this.name}] Attempting to register a new event on the eventbus, this should fail with an error`);
+    //   try {
+    //     emitter.addListener('thisShouldFail', () => {});
+    //   } catch (err) {
+    //     console.warn('Swallowing error, but showing, for example only!');
+    //     console.error(err);
+    //   }
+    // }, 3000);
   }
 
   renderApp() {
-    const emitter = this.options.getEmitter();
+    const emitter = this.#ctx?.bus;
+
+    if (!emitter) {
+      throw new Error('Could not renderSettings() - no emitter???');
+    }
 
     console.log(`[${this.name}] [renderApp]`);
 
     setTimeout(() => {
-      const settings = this.options.getSettings();
+      if (!this.#ctx) {
+        return;
+      }
+
+      /** @type {PluginSettings} */
+      const settings = this.#ctx.settings.get();
 
       if (true === settings['example--showErrorAtRuntime']) {
         // Shows an error to the user as an example
         console.warn(`[${this.name}] Show an error to the user`);
-        this.options.display.showError(new Error('This error should be shown to the user!'));
+        this.#ctx.display.showError(new Error('This error should be shown to the user!'));
       }
 
       if (true === settings['example--showInfoAtRuntime']) {
         // Shows an error to the user as an example
         console.warn(`[${this.name}] Show an error to the user`);
-        this.options.display.showInfo(
+        this.#ctx.display.showInfo(
           `Your Message: ${settings['example--showInfoAtRuntime-message']}`,
           'Custom Info Alert Coming At Ya!'
         );
@@ -330,14 +374,14 @@ export default class Plugin_Example {
           );
         } catch (err) {
           const errInst = /** @type {Error} */ (/** @type {unknown} */ err);
-          this.options.display.showError(errInst);
+          this.#ctx.display.showError(errInst);
         }
       }
 
       const hasAuth = emitter.call('chat:twitch:hasAuth').slice(-1)[0];
       console.log('Checking Auth Values', hasAuth);
       if (hasAuth) {
-        this.options.display.showInfo(`* Streamer: ${hasAuth.streamer}<br/>* Bot: ${hasAuth.bot}`, 'Do we have auth?');
+        this.#ctx.display.showInfo(`* Streamer: ${hasAuth.streamer}<br/>* Bot: ${hasAuth.bot}`, 'Do we have auth?');
       }
     }, 3000);
   }

@@ -8,14 +8,14 @@
  *
  * @typedef {import('../../../src/scripts/Plugin_Core.js').MiddewareContext_Chat} ConcreteContext
  * @typedef {Partial<ConcreteContext>} Context
+ *
  * @typedef {import('../../../src/scripts/utils/Forms/types.js').FormSchemaGrouping} FormSchemaGrouping
  * @typedef {import('../../../src/scripts/utils/Forms/types.js').FormValidatorResults<PluginSettings>} FormValidatorResults
- * @typedef {import('../../../src/scripts/types/Managers.js').BusManagerContext_Init<{}>} BusManagerContext_Init
- * @typedef {import('../../../src/scripts/types/Plugin.js').PluginMiddlewareMap} PluginMiddlewareMap
+ * @typedef {import('../../../src/scripts/types/ContextProviders.js').ContextProviders} ContextProviders
+ * @typedef {import('../../../src/scripts/types/Managers.js').BusManagerContext_Init} BusManagerContext_Init
+ * @typedef {import('../../../src/scripts/types/Plugin.js').PluginMiddlewareMap<Context>} PluginMiddlewareMap
  * @typedef {import('../../../src/scripts/types/Plugin.js').PluginEventRegistration} PluginEventMap
- * @typedef {import('../../../src/scripts/types/Plugin.js').PluginOptions<PluginSettings>} PluginInjectables
  * @typedef {import('../../../src/scripts/types/Plugin.js').PluginInstance<PluginSettings>} PluginInstance
- * @typedef {import('../../../src/scripts/types/Plugin.js').PluginRegistration} PluginRegistration
  * @typedef {import('../../../src/scripts/utils/Middleware.js').Next<Context>} Next
  */
 
@@ -29,24 +29,19 @@ export default class Plugin_HangoutHereTheme {
   version = '1.0.0';
   ref = Symbol(this.name);
 
-  /**
-   * @param {PluginInjectables} options
-   */
-  constructor(options) {
-    this.options = options;
-
-    console.log(`${this.name} instantiated`);
+  constructor() {
+    console.log(`[${this.name}] instantiated`);
   }
 
   /**
-   * @returns {PluginRegistration}
+   * @param {ContextProviders} ctx
    */
-  registerPlugin = () => ({
-    middlewares: this._getMiddleware(),
-    events: this._getEvents(),
-    settings: new URL(`${BaseUrl()}/settings.json`),
-    stylesheet: new URL(`${BaseUrl()}/plugin.css`)
-  });
+  register = async ctx => {
+    await ctx.settings.register(this, new URL(`${BaseUrl()}/settings.json`));
+    ctx.bus.registerMiddleware(this, this._getMiddleware());
+    ctx.bus.registerEvents(this, this._getEvents());
+    ctx.stylesheets.register(this, new URL(`${BaseUrl()}/plugin.css`));
+  };
 
   /**
    * @returns {PluginMiddlewareMap}
@@ -68,7 +63,7 @@ export default class Plugin_HangoutHereTheme {
     };
   }
 
-  unregisterPlugin() {
+  unregister() {
     console.log(`${this.name} Unregistering`);
   }
 

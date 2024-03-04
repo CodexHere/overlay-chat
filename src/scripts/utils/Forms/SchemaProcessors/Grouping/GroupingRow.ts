@@ -15,11 +15,18 @@ import { SimpleInput } from '../Inputs/SimpleInput.js';
  * A {@link utils/Forms/types.FormSchemaGrouping | `FormSchemaGrouping`} Processing a simple {@link utils/Forms/SchemaProcessors/Grouping/GroupingRow.GroupingRow | `GroupingRow`} of associated {@link utils/Forms/types.FormSchemaEntry | `FormSchemaEntry`}s by iteratively calling {@link utils/Forms/Builder.BuildInput | `FormBuilder::BuildInput`}.
  */
 export class GroupingRow extends SimpleInput<FormSchemaGroupingRow> {
-  override toString(): string {
-    if (!this.entry.subSchema) {
+  constructor(
+    protected entry: FormSchemaGroupingRow,
+    protected formData: Record<string, any>
+  ) {
+    if (!entry.subSchema) {
       throw new Error('Missing `subSchema` in Entry!');
     }
 
+    super(entry, formData);
+  }
+
+  override toString(): string {
     const rowEntries = this.entry.subSchema;
     // If `arrayIndex` is supplied, we generate a suffix for "array access".
     // An `arrayIndex` is expected from `GroupArray` and `GroupList`, but a `Row`
@@ -37,7 +44,7 @@ export class GroupingRow extends SimpleInput<FormSchemaGroupingRow> {
       );
 
       // Accumulate iterative results
-      this.mapping = merge({}, this.mapping, childResults.mapping);
+      merge(this.mappings, childResults.mappings);
 
       return childResults.html;
     });

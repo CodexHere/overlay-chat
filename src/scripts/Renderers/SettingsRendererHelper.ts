@@ -54,7 +54,7 @@ export class SettingsRendererHelper<PluginSettings extends PluginSettingsBase> {
    * @param options - Incoming Options for this Renderer.
    * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
    */
-  constructor(private options: RendererInstanceOptions<PluginSettings>) {
+  constructor(private options: RendererInstanceOptions) {
     this.onUrlMouseEnterDebouncer = debounce(this.onUrlMousePresence, URL_REVEAL_TTY);
   }
 
@@ -85,7 +85,7 @@ export class SettingsRendererHelper<PluginSettings extends PluginSettingsBase> {
    * Custom Initialization for this Renderer that doesn't fit into other Lifecycle methods.
    */
   private subInit() {
-    const settings = this.options.getSettings();
+    const settings = this.options.settings.get<PluginSettings>();
 
     this.restoreViewState(settings);
   }
@@ -188,7 +188,7 @@ export class SettingsRendererHelper<PluginSettings extends PluginSettingsBase> {
    * This uses the Masked form of the Settings to avoid leaking `FormEntry` types marked as `password`.
    */
   private generateUrl() {
-    const settings = this.options.getMaskedSettings();
+    const settings = this.options.settings.get('encrypted');
 
     delete settings.forceShowSettings;
 
@@ -211,7 +211,7 @@ export class SettingsRendererHelper<PluginSettings extends PluginSettingsBase> {
     const btnLoadApp = this.elements['form-options'].querySelector('.button-load-app') as HTMLButtonElement;
 
     linkResultsOutput.value = url;
-    btnLoadApp.disabled = true !== this.options.validateSettings();
+    btnLoadApp.disabled = true !== this.options.plugin.validateSettings();
 
     linkResultsOutput.parentElement?.setAttribute('data-char-count', linkResultsOutput.value.length.toString());
   }
@@ -336,13 +336,13 @@ export class SettingsRendererHelper<PluginSettings extends PluginSettingsBase> {
   ///////////////////////////////////////////////////////////////
 
   /**
-   * Loads the app in a new window, or current window based on Settings Options.
+   * Loads the Application in a new window, or current window based on Settings Options.
    */
   private loadApp() {
     const form = this.elements['form-options'];
     const newWindowCheck = form.querySelector('[name="new-window"]') as HTMLInputElement;
 
-    const settings = this.options.getMaskedSettings();
+    const settings = this.options.settings.get('encrypted');
     delete settings['forceShowSettings'];
     const url = this.generateUrl();
 

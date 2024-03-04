@@ -21,7 +21,7 @@ export type Next<Context extends {}> = (error?: Error) => Promise<MiddlewareLink
  * @param next - `Next` function to call in order to progress Chain.
  * @param error - If supplied, the entire Chain is in Error.
  */
-export type MiddlewareLink<Context extends {}> = (
+export type MiddlewareLink<Context extends {} = {}> = (
   context: Context,
   next: Next<Context>,
   error?: Error
@@ -36,7 +36,7 @@ export type MiddlewareLink<Context extends {}> = (
  *
  * @typeParam Context - Contextual State passed from Link to Link.
  */
-export class MiddlewareChain<Context extends {}> {
+export class MiddlewareChain<Context extends {} = {}> {
   /**
    * @param stack - A list of Links to add to the Chain on instantiation.
    */
@@ -49,6 +49,24 @@ export class MiddlewareChain<Context extends {}> {
    */
   use(...links: MiddlewareLink<Context>[]) {
     this.stack.push(...links);
+  }
+
+  /**
+   * Removes a Middleware Link from the Chain.
+   *
+   * @param link - A Link reference to remove. This should be the same reference when set to `use`!
+   * @returns - Whether the Link was found and removed.
+   */
+  unuse(link: MiddlewareLink<Context>) {
+    const idx = this.stack.indexOf(link);
+
+    if (-1 === idx) {
+      return false;
+    }
+
+    this.stack.splice(idx, 1);
+
+    return true;
   }
 
   /**
@@ -88,5 +106,55 @@ export class MiddlewareChain<Context extends {}> {
     const nextNext = async (error?: Error) => await this.executeChain(context, nextMiddlewares, error);
 
     return await slice(context, nextNext, error);
+  }
+}
+
+/**
+ * An `Error` type for enforcing a silent failure of an entire chain.
+ *
+ * `throw` this error, or return an instance of it to a {@link utils/Middleware.Next | `Next`} function to
+ * programattically bypass the current and remaining {@link MiddlewareLink | `MiddlewareLink`} in a {@link MiddlewareChain | `MiddlewareChain`}.
+ *
+ * If you're reading this documentation and are using vanilla JS, or don't need/want to import
+ * this lib, you can implement the error like so:
+ *
+ * ```js
+ * // Instantiate the error with a `cause.silentlyFailChain = true` to pass the runtime type test.
+ * const err = new Error(
+ *    'Some valid reason we want to just bail the Chain',
+ *    {
+ *      cause: {
+ *          silentlyFailChain: true
+ *      }
+ *    }
+ * );
+ *
+ * // Can call `next` with the `Error` instance (`err`)
+ * next(err);
+ *
+ * // or, throw the `Error`
+ * throw err;
+ * ```
+ */
+export class SilentlyFailChainError extends Error {
+  /**
+   * Cause is predefined for instances
+   */
+  cause = {
+    /**
+     * The existence of this key on the `cause` object is how we test if the error type
+     * is truly a `SilentlyFailChainError`
+     */
+    silentlyFailChain: true
+  };
+
+  /**
+   * Create a new {@link SilentlyFailChainError | `SilentlyFailChainError`}.
+   *
+   * @param message - Justification for why the {@link MiddlewareChain | `MiddlewareChain`} is silently failing.
+   */
+  constructor(message: string) {
+    super(message);
+    (Error as any).captureStackTrace(this, SilentlyFailChainError);
   }
 }

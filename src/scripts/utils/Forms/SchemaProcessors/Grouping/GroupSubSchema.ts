@@ -15,17 +15,24 @@ import { BaseFormSchemaProcessor } from '../BaseFormSchemaProcessor.js';
  * A {@link utils/Forms/types.FormSchemaGrouping | `FormSchemaGrouping`} Processing a {@link utils/Forms/types.FormSchema | `FormSchema`} by recursively calling {@link utils/Forms/Builder.BuildInput | `FormBuilder::BuildInput`} as necessary.
  */
 export class GroupSubSchema extends BaseFormSchemaProcessor<FormSchemaGrouping> {
-  protected override toString(): string {
-    if (!this.entry.subSchema) {
+  constructor(
+    protected entry: FormSchemaGrouping,
+    protected formData: Record<string, any>
+  ) {
+    if (!entry.subSchema) {
       throw new Error('Missing `subSchema` in Entry!');
     }
 
+    super(entry, formData);
+  }
+
+  protected override toString(): string {
     const { nameOrLabelId, tooltip, chosenLabel } = this.getCleanedEntryValues();
     const description =
       this.entry.description ? `<blockquote class="description">${this.entry.description}</blockquote>` : '';
     const subSchemaResults = BuildFormSchema(this.entry.subSchema, this.formData);
 
-    this.mapping = merge({}, this.mapping, subSchemaResults.mapping);
+    merge(this.mappings, subSchemaResults.mappings);
 
     return `
       <details

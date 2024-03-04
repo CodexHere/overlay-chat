@@ -165,10 +165,7 @@ export const BuildFormSchema = <FormData extends {}>(
   entries: Readonly<FormSchema>,
   formData: FormData
 ): ProcessedFormSchema => {
-  let results: ProcessedFormSchema = {
-    html: '',
-    mapping: {}
-  } as ProcessedFormSchema;
+  let results: ProcessedFormSchema = { html: '', mappings: { byName: {}, byType: {} } };
 
   // Build every `entry` in `entries`
   for (let entryIdx = 0; entryIdx < entries.length; entryIdx++) {
@@ -176,12 +173,8 @@ export const BuildFormSchema = <FormData extends {}>(
     const newInput = BuildInput(entry, formData);
 
     // Accumulate iterative results
-    results = merge({}, results, {
-      html: results.html + newInput.html,
-      mapping: {
-        ...results.mapping,
-        ...newInput.mapping
-      }
+    results = merge({}, results, newInput, {
+      html: results.html + newInput.html
     });
   }
 

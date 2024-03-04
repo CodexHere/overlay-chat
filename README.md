@@ -2,9 +2,104 @@
 
 ## TODO
 
+### Default Settings
+
+* Need `RendererInstanceEvents.SETTINGS_STALE` to re-init settings
+  * Necessary for when a Plugin/etc changes settings/schema
+  * Should this trigger an entire re-`init` of the `SettingsRenderer` or can we get away with re-Deserializing the Form Data?
+* All Inputs
+  * Needs REQUIRED set
+  * Needs READONLY set
+* Single Inputs
+  * Default Value - Should be working
+* Multi Inputs
+  * Needs per-value constraints 
+    * Default Value - I don't think exists
+    * Readonly
+    * Do we maybe take either strings (current implementation) AND we can take `FormSchemaCheckedInput` for `FormSchemaCheckedMultiInput` and `FormSchemaSimpleInput` with `inputType=text` for `FormSchemaSelect`.
+      * This could help encapsulate logic for default/readonly
+      * Also useful for things like Font Family where the label may be "Comic Sans", but the value should be "comic-sans:400".
+* Groupings
+  * Default Value - Is this remotely possible????
+* Validation Checks
+  * Validator Inputs
+    * Make sure patterns are right!
+  * Required
+  * Individual Column in ArrayGroup/List
+  * Entire Row for ArrayGroup/List
+
+### General TODO
+
+#### Lifecycle Events:
+  * Do they all have common namespace? I.E., `Core::EventName`
+
+| Event Name                       | Note                                                                                                                                                                                                                                                                                                                                                                                                      |
+| -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PluginManager::PluginsLoaded`   | Called after all plugins are loaded, should re-mask settings<br />* But *why* do we want to re-mask settings *THEN*?                                                                                                                                                                                                                                                                                      |
+| `PluginManager::PluginsUnloaded` | Called after all plugins are unloaded, which resets the environment (mostly Bus).                                                                                                                                                                                                                                                                                                                         |
+| `Renderer::PluginsChanged`       | Called when Configuring, when the settings have changed to add/remove Plugins. Ideally, should never occur at app/run-time.<br />* Replaces the `RendererInstanceEvents.PLUGINS_STALE` event.                                                                                                                                                                                                             |
+| `Renderer::SyncCache`            | Called when the state of the Form is out of sync with the `ProcessedFormSchema` cache and needs to be re-processed against the current Form Settings. Generally, this is called when a `FormSchemaGroupingList` adds a new Entry through user interaction.<br />* I think this might need to be re-broadcasted on the Renderer for the `LifecycleManager` to listen to and then reprocess plugin schemas. |
+| `AppBootstrapper::RendererStart` | `'app' \| 'configure'` - The Renderer has started in some <mode>. Plugins should listen to this and do their kick offs. Currently, we're explicitly calling a `render*` functions.                                                                                                                                                                                                                        |
+| `Plugin::SyncSettings`           | Called when something (generally a plugin, but could be `Form::Interactions`) updates the state of the Form/Settings/Schema and needs everything to come into sync.                                                                                                                                                                                                                                       |
+
 * Refactor:
-  * PluginManager - Still consider refactoring to an injections process
-    * event from AppBootstrapper indicating Renderer mode?
+  * REVIEW ALL DOCUMENTATION NOW!!!!
+  * Forms:
+    * For multi-select items, need separation between value/label
+    * See info above
+    * Default/Required/Readonly Values for both single/multi/group Entries
+    * Form schema processors should have validation for required properties, just because
+  * Thought Experiment: Accessor Function `setSetting('settingName', someValue)`
+    * Used to set individual setting
+    * Possibly consider `mergeSettings({ settingName1: 'someValue', settingName2: 'some checked value' })` to merge an entire tree of values at once
+      * Quite likely can iteratively call `setSetting`?
+    * Would use the Schema to derive how to inject/select setting
+      * i.e., `FormSchemaCheckedMultiInput` would iterate through values and build the expected `selectedIndex:value` setting.
+      * i.e., Groupings will probably need some recursion to this?
+    * Interface for `RendererInstanceOptions` is getting a bit fat for almost no reason... Another reason to inject Context objects? This already pretty much IS that, but we can group functionality by access (ie, settings vs plugins vs stylesheets, etc).
+  * Thought Experiement: Refactor to Contexts:
+    * Most Managers need to wrap a `ContextProvider`
+      * A `ContextProvider` implements a specific `Context`, such as `SettingsContext`, which houses the primary accessor functionality
+      * Accessors will likely need massive renaming.
+      * This means make new types for `SettingsContext`, `TemplateContext` etc, make the associative Managers implement them, and build an interface to inject these into the Plugins as a `PluginContext`.
+    * On top of all that, we need to probably separate the `Manager` from `Context`. This means `Manager` does App Lifecycle like `init` and such, but `Context` handles Plugin integration points (ie, `ctx.template.register(...)`)
+      * All `Context`s should extend EventEmitter but most probably wont emit
+      * `TemplateManager`
+        * Remove array of URLs and load/build new sub template map, and `merge()` into cache.
+        * Context: Need Accessor for individual template!
+      * `SettingsManager`
+        * Not much of a change. on `init` instantiate a Context and inject the parsed URI params as settings and let it go to town. All existing interface likely just moves over to context.
+        * Needs to emit `SETTINGS_STALE` (mentioned elsewhere) on settings changes
+          * Maybe another `SCHEMA_STALE` for schema changes?
+        * Current Registering of settings injects meta, but assumes meta derives from a registration object that returns a mapping of Middleware Chains and Events, making it easy to dump this stuff as metadata... This may not be as plain and simple if plugins do self-registration.
+          * Need to think how to properly list/get middleware chain names and event names
+        * I believe ProcessedSchema stays a thing of the SettingsManager, but still needs accessor for `SettingsRenderer` to render the form data, etc.
+        * Consider making `getSettings` take in an `encrypt: boolean` and getting rid of `getMaskedSettings`
+      * `DisplayManager`: Rename `DisplayAccessor` to `DisplayContext` for the type
+      * `PluginManager`: No Changes - Not Context material, just a Manager.
+      * `BusManager`
+        * Thinking through how resetting the Context would work, as it needs to be NOT possible in a Plugin.
+        * ChainMap(s) and Emitter instances live in Manager, injected into Context constructor
+          * Could still inject Accessor Functions for safety? ie, currently `reset()` rewrites the instance which would break any existing injected data  references.
+        * `reset` needs to `map.clear()` instead of create new instances
+      * `StyleContext` type and implementation needed to inject and remove stylesheets.
+        * Absorb stylesheet removal from `PluginManager::unregisterAllPlugins()`
+          * This should be called in lifecycle event handler for `PLUGIN_UNLOAD`
+      * Consider building `LifecycleManager` which then houses the event handlers for various manager events. Keeps it tidy and isolated.
+    * Ensure registration functions are blocked during runtime!
+      * `busManager.disableAddingListeners` should be renamed to just `toggle(enable?:boolean)`
+  * Plugins store Context on `register`, but should be actually done on event starting.
+  * Context Finalizing:
+    * Make sure Contexts don't expose anything they shouldn't!
+      * Double check during JS-runtime we can't access private members/methods!
+    * SettingsManager - does it make sense to have some of this logic moved to the Context Provider? Specifically the caching/store/toggleMask/etc?
+    * Make sure all Contexts use an API to access Managers, even for adding/removing data.
+      * I know this isn't true atm, and needs work.
+    * Make sure all Contexts block Registering after registration phase
+      * This ensures plugin lifecycle is linear and in-tandem with App Lifecycle
+      * This will put a final nail in the coffin about run-time plugin registration, so consider wisely!!!!
+        * Do we NEED run-time plugin registration? Currently, NO. But, it could be widely useful in other projects? THINK THINK THINK!
+      * If we end up going this route of blocking registration, maybe consider instead injecting a completely different context for runtime versus config time? Will this actually satisfy our needs? Does this then also require splitting implementation, or can we be clever somehow? Ideally the interface isn't the gatekeeper, but the underlying implementation. Someone might be using raw JS and no types, and has no clue that they shouldn't call `register` at runtime, if it's available in the debugger!
   * Bootstrapper
     * -- New train of thought for all this, Core Plugin injects what is now the Core Schema, and THAT has defaults set in it!
     * Change schema to be just an arraylist with columns:
@@ -14,16 +109,28 @@
     * take in a list of required plugins (built-in, or remote)
       * if matches in the supplied list, needs to be enabled rather than added
     * Consider a way to just combine built-in and remote plugins
-  * Consider moving Plugin Reloading (ie `pluginLoader`) to the Bootstrapper
-    * Use Event for `PLUGINS_CHANGED` to reload
+  * Settings:
+    * Really need to consider how we handle settings atm.
+      * Should assuming raw settings are MASKED!
+      * This means settings values should be MASKED on SET
+        * But not wholesale sets, just set-by-name and merging.
+        * Of course, should have ability to disable masking on "set" value.
+      * Will likely need a refactor of `SettingsRenderer` integration with `SettingsManager` and associative `Context`.
   * Consider adding `debug` and replace `console.log`
     * https://bundlephobia.com/package/debug@4.3.4
     * If we don't add it, remove `console.log`
   * Consider creating a new bg style, or various themes:
     * https://www.joshwcomeau.com/gradient-generator/
+  * Events should be evaluated:
+    * Lifecycle events should be either cleanly separated, or aggregated into a single group:
+        * PluginManagerEvents.LOADED
+        * BusManagerEvents.MIDDLEWARE_EXECUTE
+        * etc
+        * Make sure they have clean/nice/unique string values, and not jus "middleware-execute" as a lame value!
 * Core Plugin needs to require Twitch-Chat
   * Need to make sure we have `Twitch - Chat` enabled
   * Maybe this is unnecessary if the process enforces enabling as mentioned in `Refactor > Bootstrapper`
+* All Plugins' settings names need prefixes to avoid collissions, as well as updates within their code! This *could* spread to other plugins for a name, so consider a string search before replacing. IE, EmoteSwap checking for Chat options.
 * Work on Forms Validator Input types, make sure regexes are REALLY good!
 * Add About/FAQ/ETC links on Settings Page
   * How to use it, etc.
@@ -178,4 +285,32 @@ ACTIONS_RUNTIME_TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbiI6dHJ1ZSwic
 AUTH_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbiI6dHJ1ZSwic2NwIjoiQWN0aW9ucy5FeGFtcGxlU2NvcGUgQWN0aW9ucy5SZXN1bHRzOmFhYTpiYmIifQ.Byr9QP7Pg1c_P2grEkyHDrG2XdPspFCPvSThK9egAqw
 
 # JWT Generation: https://jwt.io/#debugger-io?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbiI6dHJ1ZSwic2NwIjoiQWN0aW9ucy5FeGFtcGxlU2NvcGUgQWN0aW9ucy5SZXN1bHRzOmFhYTpiYmIifQ.Byr9QP7Pg1c_P2grEkyHDrG2XdPspFCPvSThK9egAqw
+```
+
+
+### Get All Fonts on `fonts.bunny.net`
+Go to: https://fonts.bunny.net/
+
+Load a ton of fonts on the page.
+
+Run the script:
+
+```js
+/// Match/Find all Link Font Values:
+const fontValues = document.querySelectorAll('link[rel="stylesheet"]').values().toArray().map(l => l.href.match(/family=(.*)(&|,)/)).splice(4).map(match => match[1]);
+
+// Match/Find all Font Family Names:
+const fontNames = document.querySelector('.container:nth-child(2n)').querySelectorAll('.card-main').values().toArray().map(e => e.style.getPropertyValue('font-family').replace(', AdobeBlank', ''));
+
+const selectValues = fontValues.map((value, idx) => ({
+  label: fontNames[idx],
+  value
+}));
+
+const selectValuesJson = JSON.stringify(selectValues);
+const blob = new Blob([selectValuesJson], { type: 'application/json' });
+const downloadLink = document.createElement('a');
+downloadLink.href = URL.createObjectURL(blob);
+downloadLink.download = 'data.json';
+downloadLink.click();
 ```

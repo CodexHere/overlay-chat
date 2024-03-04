@@ -4,17 +4,17 @@
  * @module
  */
 
-import { BusManager } from './managers/BusManager.js';
-import { DisplayManager } from './managers/DisplayManager.js';
-import { PluginManager } from './managers/PluginManager.js';
-import { SettingsManager } from './managers/SettingsManager.js';
-import { TemplateManager } from './managers/TemplateManager.js';
-import { AppRenderer } from './renderers/AppRenderer.js';
-import { SettingsRenderer } from './renderers/SettingsRenderer.js';
+import { DisplayContextProvider } from './ContextProviders/DisplayContextProvider.js';
+import { StylesheetsContextProvider } from './ContextProviders/StylesheetsContextProvider.js';
+import { BusManager } from './Managers/BusManager.js';
+import { PluginManager } from './Managers/PluginManager.js';
+import { SettingsManager } from './Managers/SettingsManager.js';
+import { TemplateManager } from './Managers/TemplateManager.js';
+import { AppRenderer } from './Renderers/AppRenderer.js';
+import { SettingsRenderer } from './Renderers/SettingsRenderer.js';
 import { AppBootstrapperOptions, PluginManagerEmitter, PluginManagerEvents } from './types/Managers.js';
 import { PluginImportResults, PluginSettingsBase } from './types/Plugin.js';
 import { RendererConstructor, RendererInstance, RendererInstanceEvents } from './types/Renderers.js';
-import { AddStylesheet } from './utils/DOM.js';
 
 /**
  * Initiates and Maintains the Application Lifecycle.
@@ -29,7 +29,7 @@ import { AddStylesheet } from './utils/DOM.js';
  * import { AppBootstrapper } from './AppBootstrapper.js';
  * import Plugin_Core, { AppSettings_Chat } from './Plugin_Core.js';
  *
- * // Start the App once DOM has loaded
+ * // Start the Application once DOM has loaded
  * document.addEventListener('DOMContentLoaded', () => {
  *   const bootstrapper = new AppBootstrapper<AppSettings_Chat>({
  *     needsAppRenderer: true,
@@ -44,16 +44,18 @@ import { AddStylesheet } from './utils/DOM.js';
  * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
  */
 export class AppBootstrapper<PluginSettings extends PluginSettingsBase> {
-  /** Instance of the {@link DisplayManager | `DisplayManager`}. */
-  private displayManager?: DisplayManager;
-  /** Instance of the {@link managers/BusManager.BusManager | `BusManager`}. */
-  private busManager?: BusManager<PluginSettings>;
+  /** Instance of the {@link Managers/BusManager.BusManager | `BusManager`}. */
+  private busManager?: BusManager;
   /** Instance of the {@link SettingsManager | `SettingsManager`}. */
-  private settingsManager?: SettingsManager<PluginSettings>;
-  /** Instance of the {@link PluginManager | `PluginManager`} (as a {@link PluginManagerEmitter | `PluginManagerEmitter`}). */
+  private settingsManager?: SettingsManager;
+  /** Instance of the {@link PluginManager | `PluginManager`} (as a {@link types/Managers.PluginManagerEmitter | `PluginManagerEmitter`}). */
   private pluginManager?: PluginManagerEmitter<PluginSettings>;
   /** Instance of the {@link TemplateManager | `TemplateManager`}. */
   private templateManager?: TemplateManager;
+  /** Instance of the {@link DisplayContextProvider | `DisplayContextProvider`} acting as a `DisplayManager`. */
+  private displayContext?: DisplayContextProvider;
+  /** Instance of the {@link StylesheetsContextProvider | `StylesheetsContextProvider`} acting as a `StyleManager` */
+  private stylesheetContext?: StylesheetsContextProvider;
   /** Instance of the {@link RendererInstance | `RendererInstance`} chosen to present to the User. */
   private renderer?: RendererInstance;
 
@@ -63,7 +65,7 @@ export class AppBootstrapper<PluginSettings extends PluginSettingsBase> {
    * @param bootstrapOptions - Incoming Options for the {@link AppBootstrapper | `AppBootstrapper`}.
    * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
    */
-  constructor(public bootstrapOptions: AppBootstrapperOptions<PluginSettings>) {}
+  constructor(public bootstrapOptions: AppBootstrapperOptions) {}
 
   /**
    * Kickoff the entire Application's Lifecycle!
@@ -71,47 +73,36 @@ export class AppBootstrapper<PluginSettings extends PluginSettingsBase> {
   async init() {
     try {
       this.buildManagers();
-      this.bindManagerEvents();
       await this.initManagers();
       await this.initRenderer();
+      this.bindManagerEvents();
+      this.bindRendererEvents();
     } catch (err) {
-      this.displayManager?.showError(err as Error);
+      this.displayContext?.showError(err as Error);
     }
   }
 
   /**
-   * Build Manager Instances
+   * Build Manager Instances.
+   *
+   * Also builds any *Global* {@link types/ContextProviders | `ContextProviders`}.
    */
   private async buildManagers() {
     this.busManager = new BusManager();
-    this.settingsManager = new SettingsManager<PluginSettings>(globalThis.location.href);
     this.templateManager = new TemplateManager();
-
-    this.displayManager = new DisplayManager({
-      getTemplates: this.templateManager.getTemplates
-    });
+    this.stylesheetContext = new StylesheetsContextProvider();
+    this.displayContext = new DisplayContextProvider(this.templateManager);
+    this.settingsManager = new SettingsManager(globalThis.location.href);
 
     this.pluginManager = new PluginManager({
       defaultPlugin: this.bootstrapOptions.defaultPlugin,
-      getSettings: this.settingsManager.getSettings,
 
-      pluginRegistrar: {
-        registerMiddleware: this.busManager.registerMiddleware,
-        registerEvents: this.busManager.registerEvents,
-        registerSettings: this.settingsManager.registerSettings,
-        registerTemplates: this.templateManager.registerTemplates,
-        registerStylesheet: async (_plugin, registration) => {
-          if (registration?.stylesheet?.href) {
-            AddStylesheet(registration?.stylesheet?.href);
-          }
-        }
-      },
-
-      pluginOptions: {
-        getEmitter: this.busManager.getEmitter,
-        getSettings: this.settingsManager.getSettings,
-        getTemplates: this.templateManager.getTemplates,
-        display: this.displayManager
+      managers: {
+        bus: this.busManager,
+        display: this.displayContext,
+        settings: this.settingsManager,
+        stylesheets: this.stylesheetContext,
+        template: this.templateManager
       }
     });
   }
@@ -120,11 +111,10 @@ export class AppBootstrapper<PluginSettings extends PluginSettingsBase> {
    * Initialize Managers in appropriate order.
    */
   private async initManagers() {
-    await this.displayManager!.init();
     await this.settingsManager!.init();
     await this.busManager!.init();
-    await this.pluginManager!.init();
     await this.templateManager!.init();
+    await this.pluginManager!.init();
   }
 
   /**
@@ -133,7 +123,7 @@ export class AppBootstrapper<PluginSettings extends PluginSettingsBase> {
    * > NOTE: Possible {@link RendererInstance | `RendererInstance`}s are: {@link AppRenderer | `AppRenderer`}, and {@link SettingsRenderer | `SettingsRenderer`}.
    */
   private async initRenderer() {
-    const settings = this.settingsManager!.getSettings();
+    const settings = this.settingsManager!.get();
     const areSettingsValid = this.pluginManager!.validateSettings();
 
     // Force NOT configured if `forceShowSettings` is in Settings, otherwise actually check validity
@@ -145,7 +135,7 @@ export class AppBootstrapper<PluginSettings extends PluginSettingsBase> {
     const shouldRenderApp = true === isConfigured && needsAppRenderer;
 
     // Select which Renderer to instantiate...
-    let rendererClass: RendererConstructor<PluginSettings> | undefined =
+    let rendererClass: RendererConstructor | undefined =
       shouldRenderSettings ? SettingsRenderer
       : shouldRenderApp ? AppRenderer
       : undefined;
@@ -155,22 +145,11 @@ export class AppBootstrapper<PluginSettings extends PluginSettingsBase> {
       return;
     }
 
-    // Construct the `RendererConstructor` to instantiate a `RendererInstance`!
     this.renderer = new rendererClass({
-      getTemplates: this.templateManager!.getTemplates,
-      getSettings: this.settingsManager!.getSettings,
-      setSettings: this.settingsManager!.setSettings,
-      getMaskedSettings: this.settingsManager!.getMaskedSettings,
-      getProcessedSchema: this.settingsManager!.getProcessedSchema,
-      getPlugins: this.pluginManager!.getPlugins,
-      validateSettings: this.pluginManager!.validateSettings,
-      display: this.displayManager!
-    });
-
-    // Upon Plugin List being changed, we want to reload all Plugins and restart the `RendererInstance`.
-    this.renderer?.addListener(RendererInstanceEvents.PLUGINS_STALE, async () => {
-      await this.pluginManager?.registerAllPlugins();
-      await this.renderer?.init();
+      template: this.templateManager!,
+      settings: this.settingsManager!,
+      plugin: this.pluginManager!,
+      display: this.displayContext!
     });
 
     // Init the Renderer
@@ -187,23 +166,37 @@ export class AppBootstrapper<PluginSettings extends PluginSettingsBase> {
     // Upon Plugins being Loaded, we want to re-init the `BusManager`,
     // and re-cache the Parsed JSON Results.
     // Show Errors if there were any failed imports of Plugins.
-    this.pluginManager!.addListener(
-      PluginManagerEvents.LOADED,
-      (importResults: PluginImportResults<PluginSettings>) => {
-        this.busManager!.init();
-        this.busManager!.disableAddingListeners();
-        this.settingsManager!.updateProcessedSchema(true);
+    this.pluginManager!.addListener(PluginManagerEvents.LOADED, (importResults: PluginImportResults) => {
+      this.busManager!.init();
+      this.busManager!.disableAddingListeners();
+      this.settingsManager!.updateProcessedSchema(importResults.good);
 
-        if (importResults.bad && 0 !== importResults.bad.length) {
-          this.displayManager?.showError(importResults.bad);
-        }
+      if (importResults.bad && 0 !== importResults.bad.length) {
+        this.displayContext?.showError(importResults.bad);
       }
-    );
+    });
 
     // Upon Plugins being Unloaded, reset the `BusManager`, and the Settings Schema.
     this.pluginManager!.addListener(PluginManagerEvents.UNLOADED, () => {
-      this.settingsManager!.resetSettingsSchema();
       this.busManager!.reset();
+    });
+  }
+
+  /**
+   * Bind Events that are sent from the active {@link RendererInstance | `RendererInstance`}.
+   *
+   * > These are an IoC approach to managing the Lifecycle without requiring
+   * a lot of injected dependencies.
+   */
+  private bindRendererEvents() {
+    // Upon Plugin List being changed, we want to reload all Plugins
+    // and restart the `RendererInstance`.
+    this.renderer?.addListener(RendererInstanceEvents.PLUGINS_STALE, async () => {
+      // Reloads all plugins (first unloads)
+      await this.pluginManager?.registerAllPlugins();
+      // Re-init the active `RendererInstance`, which should effectively
+      // restart the portion of the Application the User is presented.
+      await this.renderer?.init();
     });
   }
 }

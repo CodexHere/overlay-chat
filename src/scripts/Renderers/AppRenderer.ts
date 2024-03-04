@@ -1,5 +1,5 @@
 /**
- * Renderer for App portion of the Application
+ * Renderer for Application portion of the Application
  *
  * @module
  */
@@ -31,7 +31,7 @@ export class AppRenderer<PluginSettings extends PluginSettingsBase> extends Even
    * @param options - Incoming Options for this Renderer.
    * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
    */
-  constructor(private options: RendererInstanceOptions<PluginSettings>) {
+  constructor(private options: RendererInstanceOptions) {
     super();
   }
 
@@ -39,7 +39,7 @@ export class AppRenderer<PluginSettings extends PluginSettingsBase> extends Even
    * Initialize the Renderer, kicking off the Lifecycle.
    */
   async init() {
-    const plugins = this.options.getPlugins();
+    const plugins = this.options.plugin.get<PluginSettings>();
 
     // this.unbindEvents();
     this.renderApp();
@@ -63,9 +63,9 @@ export class AppRenderer<PluginSettings extends PluginSettingsBase> extends Even
    */
   private renderApp() {
     const rootContainer = globalThis.document.body.querySelector('#root') as HTMLElement;
-    const { app: appTemplate } = this.options.getTemplates();
+    const appTemplate = this.options.template.context?.getId('app');
 
-    if (!rootContainer) {
+    if (!rootContainer || !appTemplate) {
       return;
     }
 
@@ -82,7 +82,7 @@ export class AppRenderer<PluginSettings extends PluginSettingsBase> extends Even
    * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
    */
   private renderPluginApp(plugins: PluginInstances<PluginSettings>) {
-    // Iterate over every loaded plugin, and call `renderApp` to manipulate the App view
+    // Iterate over every loaded plugin, and call `renderApp` to manipulate the Application view
     plugins.forEach(plugin => {
       try {
         plugin.renderApp?.();
@@ -122,7 +122,7 @@ export class AppRenderer<PluginSettings extends PluginSettingsBase> extends Even
    */
   private injectSettingsIntoCSS() {
     const style = globalThis.document.documentElement.style;
-    const settings = this.options.getMaskedSettings();
+    const settings = this.options.settings.get<PluginSettings>('encrypted');
 
     Object.keys(settings).forEach(key => {
       style.setProperty(`--${key}`, settings[key as keyof PluginSettings] as string);

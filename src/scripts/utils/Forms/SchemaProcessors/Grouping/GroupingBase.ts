@@ -35,11 +35,18 @@ export class GroupingBase extends BaseFormSchemaProcessor<FormSchemaGrouping> {
     }, 0);
   }
 
-  protected override toString(): string {
-    if (!this.entry.subSchema) {
+  constructor(
+    protected entry: FormSchemaGrouping,
+    protected formData: Record<string, any>
+  ) {
+    if (!entry.subSchema) {
       throw new Error('Missing `subSchema` in Entry!');
     }
 
+    super(entry, formData);
+  }
+
+  protected override toString(): string {
     const entry = this.entry;
     const isList = 'grouplist' === entry.inputType;
     const numValues = this.getNumValues();
@@ -61,7 +68,7 @@ export class GroupingBase extends BaseFormSchemaProcessor<FormSchemaGrouping> {
         );
 
         const childResults = childInput.process();
-        this.mapping = merge({}, this.mapping, childResults.mapping);
+        merge(this.mappings, childResults.mappings);
         return childResults.html;
       });
 

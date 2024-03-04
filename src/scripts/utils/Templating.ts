@@ -1,17 +1,25 @@
 /**
  * Helpers for parsing, mapping, and processing Templates and injecting into DOM
- * 
+ *
  * @module
  */
 
 import Handlebars from 'handlebars';
 
 /**
+ * Base Template IDs available to an Application.
+ */
+export type TemplateIDsBase = 'modalMessage' | 'app' | 'settings';
+
+/**
  * Mapping of a `templateId` -> `HandlebarsTemplateDelegate` Function.
  *
  * @typeParam TemplateIDs - Union Type of accepted `TemplateIDs`.
  */
-export type TemplateMap<TemplateIDs extends string> = Record<TemplateIDs, HandlebarsTemplateDelegate<any>>;
+export type TemplateMap<TemplateIDs extends string | number | symbol> = Record<
+  TemplateIDs | TemplateIDsBase,
+  HandlebarsTemplateDelegate<any>
+>;
 
 /**
  * Generate a {@link TemplateMap | `TemplateMap`} from a string of HTML Template Tags.
@@ -19,7 +27,7 @@ export type TemplateMap<TemplateIDs extends string> = Record<TemplateIDs, Handle
  * @param templateData - HTML as a string, containing `<template>` tags to build a {@link TemplateMap | `TemplateMap`}.
  * @typeParam TemplateIDs - Union Type of accepted `TemplateIDs`.
  */
-export const BuildTemplateMap = async <TemplateIDs extends string>(templateData: string) => {
+export const BuildTemplateMap = <TemplateIDs extends string>(templateData: string) => {
   const DomParser = new DOMParser();
   const newDocument = DomParser.parseFromString(templateData, 'text/html');
   const templates = [...newDocument.querySelectorAll('template')];

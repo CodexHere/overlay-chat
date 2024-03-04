@@ -13,6 +13,17 @@ import { SimpleInput } from './SimpleInput.js';
  * Outputs HTML Select Tag with capability of including the `multiple` attribute.
  */
 export class SelectInput extends SimpleInput<FormSchemaSelect> {
+  constructor(
+    protected entry: FormSchemaSelect,
+    protected formData: Record<string, any>
+  ) {
+    if (!entry.values) {
+      throw new Error('Missing `values` in Entry!');
+    }
+
+    super(entry, formData);
+  }
+
   override toString(): string {
     const entry = this.entry;
     const { defaultData, required } = this.getCleanedEntryValues();

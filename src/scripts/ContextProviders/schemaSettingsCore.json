@@ -1,0 +1,84 @@
+{
+  "name": "globalSettings",
+  "inputType": "group-subschema",
+  "label": "Global Settings",
+  "tooltip": "These are settings that generally apply to the entire App.",
+  "subSchema": [
+    {
+      "name": "globalFontSettings",
+      "inputType": "group-subschema",
+      "label": "Base Font Settings",
+      "subSchema": [
+        {
+          "name": "fontSettings",
+          "inputType": "grouparray",
+          "label": "Base Font Settings",
+          "subSchema": [
+            {
+              "name": "fontSize",
+              "label": "Font Size",
+              "inputType": "number",
+              "defaultValue": 16,
+              "isRequired": true
+            },
+            {
+              "name": "fontFamily",
+              "label": "Font Family",
+              "inputType": "select",
+              "isRequired": true,
+              "values": ["Font 1", "Font 2", "Font 3", "Font 4", "Font 5"]
+            },
+            {
+              "name": "colorText",
+              "label": "Text Color",
+              "inputType": "color",
+              "defaultValue": "#EEEEEE"
+            },
+            {
+              "name": "colorBackground",
+              "label": "Background Color",
+              "inputType": "color",
+              "defaultValue": "#222222"
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "name": "pluginLoadSettings",
+      "label": "Plugins",
+      "inputType": "group-subschema",
+      "description": "Select the Plugins you'd like to load at the startup of the App! These may perform operations on data, the way the Application renders, or supply additional Settings! You can use built-in Plugins, or supply your own!",
+      "subSchema": [
+        {
+          "name": "pluginSettings",
+          "label": "Built-In Plugins",
+          "inputType": "group-subschema",
+          "description": "Select a set of Built-In Plugins to load at startup! Warning: Certain Plugins can override functionality and cause conflicts or errors, so be sure they're compatible!",
+          "subSchema": [
+            {
+              "name": "plugins",
+              "label": "",
+              "inputType": "switch-multiple",
+              "values": ["Example", "Twitch - Chat", "Twitch - EmoteSwap", "HangoutHere"]
+            }
+          ]
+        },
+        {
+          "name": "customPlugins",
+          "inputType": "grouplist",
+          "label": "Custom Plugins",
+          "description": "Enter a direct URL to a Plugin JS file, or a folder to autoload <code>index.js</code>.<br />Example: https://mywebsite.com/pluginFolder/myPlugin.js",
+          "subSchema": [
+            {
+              "name": "customPlugins",
+              "label": "Plugin Name",
+              "inputType": "text"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

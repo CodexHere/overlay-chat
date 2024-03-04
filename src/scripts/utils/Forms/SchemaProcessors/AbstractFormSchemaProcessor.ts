@@ -5,7 +5,13 @@
  */
 
 import merge from 'lodash.merge';
-import { FormSchemaEntryBase, FormSchemaEntryProcessor, InputTypeEntryMap, ProcessedFormSchema } from '../types.js';
+import { ToId } from '../../misc.js';
+import {
+  FormSchemaEntryBase,
+  FormSchemaEntryProcessor,
+  ProcessedFormSchema,
+  ProcessedFormSchemaMappings
+} from '../types.js';
 
 /**
  * Abstract FormSchema Processor Definition.
@@ -20,8 +26,8 @@ export class AbstractFormSchemaProcessor<SchemaEntryType extends FormSchemaEntry
 
   /** Instance tracking of unique label ID. */
   protected labelId: number;
-  /** Running {@link InputTypeEntryMap | `InputTypeEntryMap`} for this Processor. Recursive/Iterative calls need to properly aggregate this value. */
-  protected mapping: InputTypeEntryMap = {};
+  /** Running {@link ProcessedFormSchemaMappings | `ProcessedFormSchemaMappings`} for this Processor. Recursive/Iterative calls need to properly aggregate this value. */
+  protected mappings: ProcessedFormSchemaMappings = { byName: {}, byType: {} };
 
   /**
    * Retrieves Unique ID for this Processor.
@@ -48,8 +54,14 @@ export class AbstractFormSchemaProcessor<SchemaEntryType extends FormSchemaEntry
     this.labelId = AbstractFormSchemaProcessor.labelId++;
 
     // Initiate the Mapping with ourself and the associative entries.
-    this.mapping = merge({}, this.mapping, {
-      [entry.inputType!]: {
+    merge(this.mappings, {
+      byType: {
+        [entry.inputType!]: {
+          [entry.name]: entry
+        }
+      },
+
+      byName: {
         [entry.name]: entry
       }
     });
@@ -62,7 +74,7 @@ export class AbstractFormSchemaProcessor<SchemaEntryType extends FormSchemaEntry
    */
   protected getCleanedEntryValues() {
     const chosenLabel = this.entry.label ?? this.entry.name;
-    const nameOrLabelId = (this.entry.name ?? this.entry.label)?.toLocaleLowerCase().replaceAll(' ', '_');
+    const nameOrLabelId = ToId(this.entry.name ?? this.entry.label);
 
     return { chosenLabel, nameOrLabelId };
   }
@@ -74,7 +86,7 @@ export class AbstractFormSchemaProcessor<SchemaEntryType extends FormSchemaEntry
   process(): ProcessedFormSchema {
     return {
       html: this.toString(),
-      mapping: this.mapping
+      mappings: this.mappings
     };
   }
 

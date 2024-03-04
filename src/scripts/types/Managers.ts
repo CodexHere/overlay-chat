@@ -6,45 +6,45 @@
 
 import { Listener } from 'events';
 import { AppBootstrapper } from '../AppBootstrapper.js';
-import { BusManager } from '../managers/BusManager.js';
-import { PluginManager } from '../managers/PluginManager.js';
+import { DisplayContextProvider } from '../ContextProviders/DisplayContextProvider.js';
+import { StylesheetsContextProvider } from '../ContextProviders/StylesheetsContextProvider.js';
+import { BusManager } from '../Managers/BusManager.js';
+import { PluginManager } from '../Managers/PluginManager.js';
+import { SettingsManager } from '../Managers/SettingsManager.js';
+import { TemplateManager } from '../Managers/TemplateManager.js';
 import { EnhancedEventEmitter } from '../utils/EnhancedEventEmitter.js';
-import { TemplateMap } from '../utils/Templating.js';
-import { PluginConstructor, PluginInstance, PluginOptions, PluginRegistrar, PluginSettingsBase } from './Plugin.js';
-
-// Bootstrapping
+import { PluginConstructor, PluginInstance, PluginSettingsBase } from './Plugin.js';
 
 /**
  * Options for initializing the {@link AppBootstrapper | `AppBootstrapper`}.
- *
- * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
  */
-export type AppBootstrapperOptions<PluginSettings extends PluginSettingsBase> = {
+export type AppBootstrapperOptions = {
   /** Initial and Default Plugin to load upon initialization. */
-  defaultPlugin: PluginConstructor<PluginSettings>;
-
+  defaultPlugin: PluginConstructor;
   /** Tells the bootstrapper whether the Application needs a Settings Renderer */
   needsSettingsRenderer?: true;
-  /** Tells the bootstrapper whether the Application needs an App Renderer */
+  /** Tells the bootstrapper whether the Application needs an Application Renderer */
   needsAppRenderer?: true;
 };
 
-// PluginManager
-
 /**
  * Options for initializing the {@link PluginManager | `PluginManager`}.
- *
- * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
  */
-export type PluginManagerOptions<PluginSettings extends PluginSettingsBase> = {
+export type PluginManagerOptions = {
   /** Initial and Default Plugin to load upon initialization. */
-  defaultPlugin: PluginConstructor<PluginSettings>;
-  /** Accessor Function for Settings */
-  getSettings: () => PluginSettings;
-  /** Available Accessor Functions for Registering a Plugin */
-  pluginRegistrar: PluginRegistrar<PluginSettings>;
-  /** Available Accessor Functions for a Plugin's Lifecycle */
-  pluginOptions: PluginOptions<PluginSettings>;
+  defaultPlugin: PluginConstructor;
+
+  /**
+   * Managers to access various parts of the Application,
+   * and to inject Contexts into Plugins.
+   */
+  managers: {
+    bus: BusManager;
+    template: TemplateManager;
+    settings: SettingsManager;
+    display: DisplayContextProvider;
+    stylesheets: StylesheetsContextProvider;
+  };
 };
 
 /**
@@ -62,7 +62,7 @@ export enum PluginManagerEvents {
  *
  * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
  */
-export type PluginManagerEmitter<PluginSettings extends PluginSettingsBase> = PluginManager<PluginSettings> & {
+export type PluginManagerEmitter<PluginSettings extends PluginSettingsBase> = PluginManager & {
   emit(eventType: PluginManagerEvents.LOADED): boolean;
   addListener(eventType: PluginManagerEvents.LOADED, listener: Listener): PluginManagerEmitter<PluginSettings>;
   on(eventType: PluginManagerEvents.LOADED, listener: Listener): PluginManagerEmitter<PluginSettings>;
@@ -72,8 +72,6 @@ export type PluginManagerEmitter<PluginSettings extends PluginSettingsBase> = Pl
   on(eventType: PluginManagerEvents.UNLOADED, listener: Listener): PluginManagerEmitter<PluginSettings>;
 };
 
-// BusManager
-
 /**
  * When a MiddlewareChain is executed, this special Context is used to initiate the hain, by
  * targeting the name of the Chain. This structure also defines the initial context value, and
@@ -81,7 +79,7 @@ export type PluginManagerEmitter<PluginSettings extends PluginSettingsBase> = Pl
  *
  * @typeParam Context - Shape of the Context State each Link recieves to mutate.
  */
-export type BusManagerContext_Init<Context extends {}> = {
+export type BusManagerContext_Init<Context extends {} = {}> = {
   chainName: string;
   initialContext: Context;
   initiatingPlugin: PluginInstance<PluginSettingsBase>;
@@ -105,29 +103,4 @@ export type BusManagerEmitter = EnhancedEventEmitter & {
     eventType: typeof BusManagerEvents.MIDDLEWARE_EXECUTE,
     ctx: (ctx: BusManagerContext_Init<Context>) => void
   ): void;
-};
-
-// DisplayManager
-
-/**
- * Interface for the Display Accessor instance.
- *
- * This is currently implemented by {@link managers/DisplayManager.DisplayManager | `DisplayManager`}.
- */
-export type DisplayAccessor = {
-  /** Shows an dismissable Error to the User. */
-  showError(err: Error | Error[]): void;
-  /** Shows an dismissable Message to the User. */
-  showInfo(message: string, title?: string): void;
-};
-
-/**
- * Options for initializing the {@link managers/DisplayManager.DisplayManager | `DisplayManager`}.
- */
-export type DisplayManagerOptions = {
-  /**
-   * Accessor Function for Templates
-   * @typeParam TemplateIDs - Union Type of accepted `TemplateIDs`.
-   */
-  getTemplates: <TemplateIDs extends string>() => TemplateMap<TemplateIDs>;
 };

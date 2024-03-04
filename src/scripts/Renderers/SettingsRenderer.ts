@@ -11,7 +11,7 @@ import { BindInteractionEvents, UnbindInteractionEvents, UpdateFormValidators } 
 import { Deserialize, Serialize } from '../utils/Forms/Serializer.js';
 import { GetLocalStorageItem, SetLocalStorageItem } from '../utils/LocalStorage.js';
 import { RenderTemplate } from '../utils/Templating.js';
-import { debounce } from '../utils/misc.js';
+import { ToId, debounce } from '../utils/misc.js';
 import { SettingsRendererHelper } from './SettingsRendererHelper.js';
 
 /**
@@ -56,7 +56,7 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase>
    * @param options - Incoming Options for this Renderer.
    * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
    */
-  constructor(private options: RendererInstanceOptions<PluginSettings>) {
+  constructor(private options: RendererInstanceOptions) {
     super();
 
     this._onSettingsChanged = debounce(this.onSettingsChanged, 750).handler;
@@ -67,7 +67,7 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase>
    * Initialize the Renderer, kicking off the Lifecycle.
    */
   async init() {
-    const plugins = this.options.getPlugins();
+    const plugins = this.options.plugin.get<PluginSettings>();
 
     this.unbindEvents();
     this.renderApp();
@@ -82,7 +82,7 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase>
    * Custom Initialization for this Renderer that doesn't fit into other Lifecycle methods.
    */
   private async subInit() {
-    const settings = this.options.getSettings();
+    const settings = this.options.settings.get();
 
     await this.createPluginJumper();
 
@@ -94,7 +94,7 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase>
     // Update Form Validity state data only if we're starting with settings
     // > 1, because a 'format' is enforced on the settings object
     if (Object.keys(settings).length > 1) {
-      const validations = this.options.validateSettings();
+      const validations = this.options.plugin.validateSettings();
       UpdateFormValidators(this.elements.form, validations);
       this.helper?.saveSettingsOptions();
       this.helper?.updateUrlState();
@@ -107,17 +107,23 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase>
    */
   private renderApp() {
     const rootContainer = globalThis.document.body.querySelector('#root') as HTMLElement;
-    const { settings } = this.options.getTemplates();
+    const settings = this.options.template.context?.getId('settings');
 
-    if (!rootContainer) {
+    if (!rootContainer || !settings) {
       return;
     }
 
     // Ensure no elements in the Root so we can display settings
     rootContainer.innerHTML = '';
 
+    const processed = this.options.settings.context?.getProcessedSchema();
+
+    if (!processed) {
+      return;
+    }
+
     RenderTemplate(rootContainer, settings, {
-      formElements: this.options.getProcessedSchema?.()?.html
+      formElements: processed.html
     });
   }
 
@@ -210,8 +216,8 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase>
     if (settingShouldRestartPluginManager.includes(targetName)) {
       try {
         // Set the settings
-        this.options.setSettings(formData, true);
-        // Event to the System that the Plugin List has changed
+        this.options.settings.set(formData, true);
+        // Event to the Application that the Plugin List has changed
         this.emit(RendererInstanceEvents.PLUGINS_STALE);
       } catch (err) {
         this.options.display.showError(err as Error);
@@ -229,13 +235,13 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase>
    * a Change Event.
    */
   private _forceSyncSettings = () => {
-    // Get the current Settings Form data, and set it as the current System Settings
+    // Get the current Settings Form data, and set it as the current Application Settings
     const form = this.elements.form;
     const formData = Serialize<PluginSettings>(form);
-    this.options.setSettings(formData);
+    this.options.settings.set(formData);
 
     // Validate Settings through all Plugins
-    const validations = this.options.validateSettings();
+    const validations = this.options.plugin.validateSettings();
 
     // Update the Settings Form Validation states
     UpdateFormValidators(this.elements.form, validations);
@@ -329,20 +335,20 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase>
    * Creates the PluginJumper Component, adding the Plugin Name as Options.
    */
   private async createPluginJumper() {
-    const plugins = this.options.getPlugins();
+    const plugins = this.options.plugin.get();
     const pluginJumper = this.elements['plugin-jumper'];
     let addedPlugins = false;
 
     // Add the plugin name to the Plugin Jumper
     for (const plugin of plugins) {
-      const registration = await plugin.registerPlugin?.();
+      const hasSettings = this.options.settings.context?.getFor(plugin);
 
-      if (!registration || !registration.settings) {
+      if (!hasSettings) {
         continue;
       }
 
       const newOpt = globalThis.document.createElement('option');
-      const nameAsValue = plugin.name.toLocaleLowerCase().replaceAll(' ', '_');
+      const nameAsValue = ToId(plugin.name);
 
       newOpt.value = nameAsValue;
       newOpt.text = plugin.name;

@@ -5,10 +5,10 @@
  */
 
 import { EventEmitter } from 'events';
-import { FormValidatorResults, ProcessedFormSchema } from '../utils/Forms/types.js';
-import { TemplateMap } from '../utils/Templating.js';
-import { DisplayAccessor } from './Managers.js';
-import { PluginInstances, PluginSettingsBase } from './Plugin.js';
+import { DisplayContextProvider } from '../ContextProviders/DisplayContextProvider.js';
+import { PluginManager } from '../Managers/PluginManager.js';
+import { SettingsManager } from '../Managers/SettingsManager.js';
+import { TemplateManager } from '../Managers/TemplateManager.js';
 
 /**
  * Events that the {@link SettingsManager | `SettingsManager`} Emits.
@@ -20,34 +20,12 @@ export enum RendererInstanceEvents {
 
 /**
  * Options for initializing the {@link RendererInstance | `RendererInstance`}.
- *
- * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
  */
-export type RendererInstanceOptions<PluginSettings extends PluginSettingsBase> = {
-  /** Accessor Function to get the Parsed JSON Results of processing a {@link FormSchema | `FormSchema`}. */
-  getProcessedSchema?: () => ProcessedFormSchema | undefined;
-  /** Action Function to initiate Validating Settings for all Plugins. */
-  validateSettings: () => FormValidatorResults<PluginSettings>;
-  /** Accessor Function to retrieve the Settings masked. */
-  getMaskedSettings: () => PluginSettings;
-  /**
-   * Accessor Function for Templates
-   * @typeParam TemplateIDs - Union Type of accepted `TemplateIDs`.
-   */
-  getTemplates: <TemplateIDs extends string>() => TemplateMap<TemplateIDs>;
-  /** Accessor Function for Settings. */
-  getSettings: () => PluginSettings;
-  /**
-   * Action Function to Set Settings.
-   *
-   * @param settings - Settings to store for the System.
-   * @param forceEncode - Whether or not to force encoding appropriate values.
-   */
-  setSettings: (settings: PluginSettings, forceEncode?: boolean) => void;
-  /** Accessor Function for Registered Plugins. */
-  getPlugins: () => PluginInstances<PluginSettings>;
-  /** Accessor for Display Manager. */
-  display: DisplayAccessor;
+export type RendererInstanceOptions = {
+  template: TemplateManager;
+  settings: SettingsManager;
+  plugin: PluginManager;
+  display: DisplayContextProvider;
 };
 
 /**
@@ -61,9 +39,7 @@ export type RendererInstance = EventEmitter & {
  * Static Typing of a Renderer Class.
  *
  * > NOTE: A Renderer should have a `constructor` that matches this signature!
- *
- * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
  */
-export type RendererConstructor<PluginSettings extends PluginSettingsBase> = {
-  new (options: RendererInstanceOptions<PluginSettings>): RendererInstance;
+export type RendererConstructor = {
+  new (options: RendererInstanceOptions): RendererInstance;
 };

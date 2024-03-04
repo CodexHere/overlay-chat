@@ -99,3 +99,5 @@ export function debounce<T extends (...args: any[]) => any>(callback: T, wait: n
  */
 export const IsValidValue = (value: any) =>
   (undefined !== value && null !== value && '' !== value) || (Array.isArray(value) && 0 == value.length);
+
+export const ToId = (input: string) => input.toLocaleLowerCase().replaceAll(' ', '_').replaceAll(/\W/g, '');

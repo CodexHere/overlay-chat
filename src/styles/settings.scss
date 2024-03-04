@@ -185,8 +185,16 @@
     overflow: auto;
     margin-bottom: var(--pico-spacing);
 
+    &:last-child {
+      margin-bottom: 0;
+    }
+
     table {
       margin-bottom: 0;
+
+      tr:last-child td {
+        border: none;
+      }
     }
   }
 

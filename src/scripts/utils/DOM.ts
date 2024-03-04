@@ -1,6 +1,6 @@
 /**
  * Miscellaneous methods for interacting with the DOM
- * 
+ *
  * @module
  */
 
@@ -15,10 +15,26 @@ export const AddStylesheet = (href: string | URL) => {
   link.rel = 'stylesheet';
   link.type = 'text/css';
   link.href = href instanceof URL ? href.href : href;
-  link.setAttribute('data-plugin', 'true');
 
   head.appendChild(link);
+
+  return link;
 };
+
+/**
+ * Adds a Font Family to the DOM through a Font Provider.
+ *
+ * Font Family format examples:
+ * - "verdana"
+ * - "comic-sans"
+ * - "some-font:400"
+ * - "some-font:400,700"
+ *
+ * @param fontFamily - The Font Family string format to add.
+ * @param provider - Which font provier to use for loading fonts. Defaults to {@link fonts.bunny.net}.
+ */
+export const AddFont = (fontFamily: string, provider: 'fonts.google.com' | 'fonts.bunny.net' = 'fonts.bunny.net') =>
+  AddStylesheet(`https://${provider}/css?family=${fontFamily}`);
 
 /**
  * Evaluates whether an Element is visibile within the Container's ViewwPort.

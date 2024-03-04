@@ -6,16 +6,9 @@
 
 import Splitting from 'splitting';
 import tmiJs from 'tmi.js';
-import { TemplateIDsBase } from './managers/TemplateManager.js';
+import { ContextProviders } from './types/ContextProviders.js';
 import { BusManagerContext_Init, BusManagerEvents } from './types/Managers.js';
-import {
-  PluginEventRegistration,
-  PluginInstance,
-  PluginMiddlewareMap,
-  PluginOptions,
-  PluginRegistration,
-  PluginSettingsBase
-} from './types/Plugin.js';
+import { PluginEventRegistration, PluginInstance, PluginMiddlewareMap, PluginSettingsBase } from './types/Plugin.js';
 import { IsInViewPort } from './utils/DOM.js';
 import { FormValidatorResults } from './utils/Forms/types.js';
 import { MiddlewareLink } from './utils/Middleware.js';
@@ -61,7 +54,7 @@ type ElementMap = {
 };
 
 /** Allowable TemplateIDs for accessing the Templates service */
-type TemplateIDs = TemplateIDsBase | 'chat-message';
+type TemplateIDs = 'chat-message';
 
 /**
  * Core Plugin for this Application.
@@ -70,6 +63,9 @@ type TemplateIDs = TemplateIDsBase | 'chat-message';
  * it's loaded first, always), and Listens for the `Twitch - Chat` Plugin to fire the Chat Event.
  */
 export default class Plugin_Core<PluginSettings extends AppSettings_Chat> implements PluginInstance<PluginSettings> {
+  author?: string | undefined;
+  homepage?: string | undefined;
+
   name = 'Core Plugin';
   version = '1.0.0';
   ref = Symbol(this.name);
@@ -78,22 +74,25 @@ export default class Plugin_Core<PluginSettings extends AppSettings_Chat> implem
   /** Elements that this Plugin needs to know about. */
   private elements: ElementMap = {} as ElementMap;
 
-  constructor(public options: PluginOptions<PluginSettings>) {}
+  /** Context Providers stored for adhoc calls. */
+  private ctx?: ContextProviders;
 
   /**
-   * Register this Plugin with the System.
+   * Register this Plugin with the Application.
    */
-  registerPlugin = (): PluginRegistration => ({
-    middlewares: this._getMiddleware(),
-    events: this._getEvents(),
-    templates: new URL(`${BaseUrl()}/templates/twitch-chat.html`)
-  });
+  register = async (ctx: ContextProviders): Promise<void> => {
+    ctx.bus.registerMiddleware(this, this._getMiddleware());
+    ctx.bus.registerEvents(this, this._getEvents());
+    await ctx.template.register(this, new URL(`${BaseUrl()}/templates/twitch-chat.html`));
+
+    this.ctx = ctx;
+  };
 
   /**
    * Evaluate the current settings for whether the Plugin is "Configured" or not.
    */
   isConfigured(): true | FormValidatorResults<PluginSettings> {
-    const { customPlugins, plugins } = this.options.getSettings();
+    const { customPlugins, plugins } = this.ctx!.settings.get();
     const hasAnyPlugins = (!!customPlugins && 0 !== customPlugins.length) || (!!plugins && 0 !== plugins.length);
 
     // TODO: Need to make sure we have `Twitch - Chat` enabled
@@ -130,7 +129,7 @@ export default class Plugin_Core<PluginSettings extends AppSettings_Chat> implem
   });
 
   /**
-   * Hook into App runtime
+   * Hook into Application runtime
    */
   async renderApp(): Promise<void> {
     this.buildElementMap();
@@ -163,7 +162,7 @@ export default class Plugin_Core<PluginSettings extends AppSettings_Chat> implem
       initiatingPlugin: this
     };
 
-    return this.options.getEmitter().emit(BusManagerEvents.MIDDLEWARE_EXECUTE, initCtx);
+    return this.ctx!.bus.emit(BusManagerEvents.MIDDLEWARE_EXECUTE, initCtx);
   };
 
   /**
@@ -195,13 +194,13 @@ export default class Plugin_Core<PluginSettings extends AppSettings_Chat> implem
    *
    * @param context - Contextual ({@link MiddewareContext_Chat | `MiddewareContext_Chat`}) State passed from Link to Link.
    */
-  renderMessage(context: Context) {
-    const templates = this.options.getTemplates<TemplateIDs>();
+  private renderMessage(context: Context) {
+    const template = this.ctx!.template.getId<TemplateIDs>('chat-message');
 
     // prettier-ignore
     RenderTemplate(
       this.elements['container'],
-      templates['chat-message'],
+      template,
       context
     );
 

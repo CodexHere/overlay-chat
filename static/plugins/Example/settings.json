@@ -1,7 +1,7 @@
 {
   "inputType": "group-subschema",
   "label": "Examples for Plugins",
-  "description": "This Plugin shows examples for both App and Settings Runtimes, so be sure to check out the implementation!<br /><br />Some Chat commands exist (requires `Twitch - Chat` Plugin) to demonstrate various Error handling, Eventing, and Middleware Chain flows:<br />* skipCurrent - Skips the current Link, continues with the rest of the chain.<br />* skipChain1 - Silently fails Chain with a Custom Error type (passes to `next()`).<br />* skipChain2 - Silently fails Chain by <i>throwing</i> a Custom Erorr type.<br />* nextError - Passes a standard Error into `next()`, which fails the entire Chain.<br />* throwError - Throws a standard Error, which fails the entire Chain.",
+  "description": "This Plugin shows examples for both Application and Settings Runtimes, so be sure to check out the implementation!<br /><br />Some Chat commands exist (requires `Twitch - Chat` Plugin) to demonstrate various Error handling, Eventing, and Middleware Chain flows:<br />* skipCurrent - Skips the current Link, continues with the rest of the chain.<br />* skipChain1 - Silently fails Chain with a Custom Error type (passes to `next()`).<br />* skipChain2 - Silently fails Chain by <i>throwing</i> a Custom Erorr type.<br />* nextError - Passes a standard Error into `next()`, which fails the entire Chain.<br />* throwError - Throws a standard Error, which fails the entire Chain.",
   "subSchema": [
     {
       "name": "example--settingsonly-settingsUI",
@@ -40,13 +40,13 @@
           "name": "example--showErrorAtRuntime",
           "label": "Show Error at Runtime?",
           "inputType": "switch",
-          "tooltip": "If this checked, an error will be shown when the app is ran!"
+          "tooltip": "If this checked, an error will be shown when the Application is ran!"
         },
         {
           "name": "example--showInfoAtRuntime-group",
           "label": "Show Info at Runtime?",
           "inputType": "grouparray",
-          "tooltip": "If this checked, an info with your text will be shown when the app is ran!",
+          "tooltip": "If this checked, an info with your text will be shown when the Application is ran!",
           "subSchema": [
             {
               "name": "example--showInfoAtRuntime",
@@ -65,7 +65,7 @@
           "name": "example--sendMessageAtRuntime-group",
           "label": "Send a Twitch Chat Message at Runtime?",
           "inputType": "grouparray",
-          "tooltip": "If this checked, an info with your text will be shown when the app is ran!",
+          "tooltip": "If this checked, an info with your text will be shown when the Application is ran!",
           "description": "This requires the `Twitch - Chat` Plugin to operate",
           "subSchema": [
             {
