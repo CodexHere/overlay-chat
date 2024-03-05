@@ -11,7 +11,7 @@ import { PluginManager } from './Managers/PluginManager.js';
 import { SettingsManager } from './Managers/SettingsManager.js';
 import { TemplateManager } from './Managers/TemplateManager.js';
 import { AppRenderer } from './Renderers/AppRenderer.js';
-import { SettingsRenderer } from './Renderers/SettingsRenderer.js';
+import { ConfigurationRenderer } from './Renderers/ConfigurationRenderer.js';
 import { AppBootstrapperOptions, PluginManagerEmitter, PluginManagerEvents } from './types/Managers.js';
 import { PluginImportResults, PluginSettingsBase } from './types/Plugin.js';
 import { RendererConstructor, RendererInstance, RendererInstanceEvents } from './types/Renderers.js';
@@ -33,7 +33,7 @@ import { RendererConstructor, RendererInstance, RendererInstanceEvents } from '.
  * document.addEventListener('DOMContentLoaded', () => {
  *   const bootstrapper = new AppBootstrapper<AppSettings_Chat>({
  *     needsAppRenderer: true,
- *     needsSettingsRenderer: true,
+ *     needsConfigurationRenderer: true,
  *     defaultPlugin: Plugin_Core
  *   });
  *
@@ -120,7 +120,7 @@ export class AppBootstrapper<PluginSettings extends PluginSettingsBase> {
   /**
    * Determines and Initializes a {@link RendererInstance | `RendererInstance`} to present to the User.
    *
-   * > NOTE: Possible {@link RendererInstance | `RendererInstance`}s are: {@link AppRenderer | `AppRenderer`}, and {@link SettingsRenderer | `SettingsRenderer`}.
+   * > NOTE: Possible {@link RendererInstance | `RendererInstance`}s are: {@link AppRenderer | `AppRenderer`}, and {@link ConfigurationRenderer | `ConfigurationRenderer`}.
    */
   private async initRenderer() {
     const settings = this.settingsManager!.get();
@@ -128,15 +128,15 @@ export class AppBootstrapper<PluginSettings extends PluginSettingsBase> {
 
     // Force NOT configured if `forceShowSettings` is in Settings, otherwise actually check validity
     const isConfigured = (!settings.forceShowSettings && true === areSettingsValid) || false;
-    const { needsSettingsRenderer, needsAppRenderer } = this.bootstrapOptions;
-    // Wants a `SettingsRenderer`, and `isConfigured` is `false`
-    const shouldRenderSettings = false === isConfigured && needsSettingsRenderer;
+    const { needsConfigurationRenderer, needsAppRenderer } = this.bootstrapOptions;
+    // Wants a `ConfigurationRenderer`, and `isConfigured` is `false`
+    const shouldRenderSettings = false === isConfigured && needsConfigurationRenderer;
     // Wants an `AppRenderer`, and `isConfigured` is `true`
     const shouldRenderApp = true === isConfigured && needsAppRenderer;
 
     // Select which Renderer to instantiate...
     let rendererClass: RendererConstructor | undefined =
-      shouldRenderSettings ? SettingsRenderer
+      shouldRenderSettings ? ConfigurationRenderer
       : shouldRenderApp ? AppRenderer
       : undefined;
 

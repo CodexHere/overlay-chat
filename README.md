@@ -6,7 +6,7 @@
 
 * Need `RendererInstanceEvents.SETTINGS_STALE` to re-init settings
   * Necessary for when a Plugin/etc changes settings/schema
-  * Should this trigger an entire re-`init` of the `SettingsRenderer` or can we get away with re-Deserializing the Form Data?
+  * Should this trigger an entire re-`init` of the `ConfigurationRenderer` or can we get away with re-Deserializing the Form Data?
 * All Inputs
   * Needs REQUIRED set
   * Needs READONLY set
@@ -49,6 +49,7 @@
     * For multi-select items, need separation between value/label
     * See info above
     * Default/Required/Readonly Values for both single/multi/group Entries
+    * Needs to properly support `<datalist>` - https://developer.mozilla.org/en-US/docs/Web/HTML/Element/datalist
     * Form schema processors should have validation for required properties, just because
   * Thought Experiment: Accessor Function `setSetting('settingName', someValue)`
     * Used to set individual setting
@@ -72,7 +73,7 @@
           * Maybe another `SCHEMA_STALE` for schema changes?
         * Current Registering of settings injects meta, but assumes meta derives from a registration object that returns a mapping of Middleware Chains and Events, making it easy to dump this stuff as metadata... This may not be as plain and simple if plugins do self-registration.
           * Need to think how to properly list/get middleware chain names and event names
-        * I believe ProcessedSchema stays a thing of the SettingsManager, but still needs accessor for `SettingsRenderer` to render the form data, etc.
+        * I believe ProcessedSchema stays a thing of the SettingsManager, but still needs accessor for `ConfigurationRenderer` to render the form data, etc.
         * Consider making `getSettings` take in an `encrypt: boolean` and getting rid of `getMaskedSettings`
       * `DisplayManager`: Rename `DisplayAccessor` to `DisplayContext` for the type
       * `PluginManager`: No Changes - Not Context material, just a Manager.
@@ -114,7 +115,7 @@
       * This means settings values should be MASKED on SET
         * But not wholesale sets, just set-by-name and merging.
         * Of course, should have ability to disable masking on "set" value.
-      * Will likely need a refactor of `SettingsRenderer` integration with `SettingsManager` and associative `Context`.
+      * Will likely need a refactor of `ConfigurationRenderer` integration with `SettingsManager` and associative `Context`.
   * Consider adding `debug` and replace `console.log`
     * https://bundlephobia.com/package/debug@4.3.4
     * If we don't add it, remove `console.log`

@@ -22,7 +22,7 @@ export type AppBootstrapperOptions = {
   /** Initial and Default Plugin to load upon initialization. */
   defaultPlugin: PluginConstructor;
   /** Tells the bootstrapper whether the Application needs a Settings Renderer */
-  needsSettingsRenderer?: true;
+  needsConfigurationRenderer?: true;
   /** Tells the bootstrapper whether the Application needs an Application Renderer */
   needsAppRenderer?: true;
 };

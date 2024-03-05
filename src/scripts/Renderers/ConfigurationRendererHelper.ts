@@ -1,5 +1,5 @@
 /**
- * Helper Behaviors for better UX within the `SettingsRenderer`
+ * Helper Behaviors for better UX within the `ConfigurationRenderer`
  *
  * @module
  */
@@ -36,11 +36,11 @@ const isScrollTTYExpired = () => {
 };
 
 /**
- * Helper Behaviors for better UX within the `SettingsRenderer`.
+ * Helper Behaviors for better UX within the `ConfigurationRenderer`.
  *
  * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
  */
-export class SettingsRendererHelper<PluginSettings extends PluginSettingsBase> {
+export class ConfigurationRendererHelper<PluginSettings extends PluginSettingsBase> {
   /** Debounced Handler for when the URL Text is Moused. */
   private onUrlMouseEnterDebouncer: DebounceResult;
   /** Local `ElementMap` mapping name -> Element the {@link RendererInstance | `RendererInstance`} Helper needs to access. */
@@ -49,7 +49,7 @@ export class SettingsRendererHelper<PluginSettings extends PluginSettingsBase> {
   private settingsOptionsFormCache: PluginSettings = {} as PluginSettings;
 
   /**
-   * Create a new {@link SettingsRenderer | `SettingsRenderer`}.
+   * Create a new {@link ConfigurationRenderer | `ConfigurationRenderer`}.
    *
    * @param options - Incoming Options for this Renderer.
    * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.

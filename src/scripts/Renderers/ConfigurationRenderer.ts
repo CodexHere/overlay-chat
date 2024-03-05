@@ -12,7 +12,7 @@ import { Deserialize, Serialize } from '../utils/Forms/Serializer.js';
 import { GetLocalStorageItem, SetLocalStorageItem } from '../utils/LocalStorage.js';
 import { RenderTemplate } from '../utils/Templating.js';
 import { ToId, debounce } from '../utils/misc.js';
-import { SettingsRendererHelper } from './SettingsRendererHelper.js';
+import { ConfigurationRendererHelper } from './ConfigurationRendererHelper.js';
 
 /**
  * Elements we know about in this {@link RendererInstance | `RendererInstance`}.
@@ -37,12 +37,12 @@ const RemoveArrayIndex = (paramName: string) => paramName.replace(indexRegExp, '
  *
  * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
  */
-export class SettingsRenderer<PluginSettings extends PluginSettingsBase>
+export class ConfigurationRenderer<PluginSettings extends PluginSettingsBase>
   extends EventEmitter
   implements RendererInstance
 {
   /** Delegated UX Behaviors to a Helper Class */
-  private helper?: SettingsRendererHelper<PluginSettings>;
+  private helper?: ConfigurationRendererHelper<PluginSettings>;
   /** Debounced Handler called any of the Settings Form inputs are changed. */
   private _onSettingsChanged: (event: Event) => void;
   /** Handler for when the Settings Form is scrolled. */
@@ -51,7 +51,7 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase>
   private elements: ElementMap = {} as ElementMap;
 
   /**
-   * Create a new {@link SettingsRenderer | `SettingsRenderer`}.
+   * Create a new {@link ConfigurationRenderer | `ConfigurationRenderer`}.
    *
    * @param options - Incoming Options for this Renderer.
    * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
@@ -88,7 +88,7 @@ export class SettingsRenderer<PluginSettings extends PluginSettingsBase>
 
     Deserialize(this.elements['form'], settings);
 
-    this.helper = new SettingsRendererHelper(this.options);
+    this.helper = new ConfigurationRendererHelper(this.options);
     this.helper.init();
 
     // Update Form Validity state data only if we're starting with settings

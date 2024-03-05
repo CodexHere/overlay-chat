@@ -5,7 +5,7 @@ import Plugin_Core, { AppSettings_Chat } from './Plugin_Core.js';
 document.addEventListener('DOMContentLoaded', () => {
   const bootstrapper = new AppBootstrapper<AppSettings_Chat>({
     needsAppRenderer: true,
-    needsSettingsRenderer: true,
+    needsConfigurationRenderer: true,
     defaultPlugin: Plugin_Core
   });
 
