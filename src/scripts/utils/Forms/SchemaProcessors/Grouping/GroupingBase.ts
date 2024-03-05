@@ -4,7 +4,7 @@
  * @module
  */
 
-import merge from 'lodash.merge';
+import merge from '@fastify/deepmerge';
 import { FormSchemaGrouping } from '../../types.js';
 import { BaseFormSchemaProcessor } from '../BaseFormSchemaProcessor.js';
 import { GroupingRow } from './GroupingRow.js';
@@ -68,7 +68,7 @@ export class GroupingBase extends BaseFormSchemaProcessor<FormSchemaGrouping> {
         );
 
         const childResults = childInput.process();
-        merge(this.mappings, childResults.mappings);
+        this.mappings = merge()(this.mappings, childResults.mappings);
         return childResults.html;
       });
 

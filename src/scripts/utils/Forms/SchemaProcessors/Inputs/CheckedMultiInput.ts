@@ -4,7 +4,7 @@
  * @module
  */
 
-import merge from 'lodash.merge';
+import merge from '@fastify/deepmerge';
 import { FormSchemaCheckedMultiInput } from '../../types.js';
 import { InputWrapper } from '../InputWrapper.js';
 import { CheckedInput } from './CheckedInput.js';
@@ -45,7 +45,7 @@ export class CheckedMultiInput extends SimpleInput<FormSchemaCheckedMultiInput> 
 
       // Accumulate recursive/iterative results
       outString += childResults.html;
-      merge(this.mappings, childResults.mappings);
+      this.mappings = merge()(this.mappings, childResults.mappings);
     });
 
     return `

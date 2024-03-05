@@ -2,7 +2,7 @@
 
 ## TODO
 
-### Default Settings
+### Default Settings Thinkery
 
 * Need `RendererInstanceEvents.SETTINGS_STALE` to re-init settings
   * Necessary for when a Plugin/etc changes settings/schema
@@ -42,8 +42,9 @@
 | `AppBootstrapper::RendererStart` | `'app' \| 'configure'` - The Renderer has started in some <mode>. Plugins should listen to this and do their kick offs. Currently, we're explicitly calling a `render*` functions.                                                                                                                                                                                                                        |
 | `Plugin::SyncSettings`           | Called when something (generally a plugin, but could be `Form::Interactions`) updates the state of the Form/Settings/Schema and needs everything to come into sync.                                                                                                                                                                                                                                       |
 
+#### TODO
+
 * Refactor:
-  * REVIEW ALL DOCUMENTATION NOW!!!!
   * Forms:
     * For multi-select items, need separation between value/label
     * See info above
@@ -51,8 +52,6 @@
     * Form schema processors should have validation for required properties, just because
   * Thought Experiment: Accessor Function `setSetting('settingName', someValue)`
     * Used to set individual setting
-    * Possibly consider `mergeSettings({ settingName1: 'someValue', settingName2: 'some checked value' })` to merge an entire tree of values at once
-      * Quite likely can iteratively call `setSetting`?
     * Would use the Schema to derive how to inject/select setting
       * i.e., `FormSchemaCheckedMultiInput` would iterate through values and build the expected `selectedIndex:value` setting.
       * i.e., Groupings will probably need some recursion to this?

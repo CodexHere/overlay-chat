@@ -4,7 +4,7 @@
  * @module
  */
 
-import merge from 'lodash.merge';
+import merge from '@fastify/deepmerge';
 import { BuildFormSchema } from '../../Builder.js';
 import { FormSchemaGrouping } from '../../types.js';
 import { BaseFormSchemaProcessor } from '../BaseFormSchemaProcessor.js';
@@ -32,7 +32,7 @@ export class GroupSubSchema extends BaseFormSchemaProcessor<FormSchemaGrouping> 
       this.entry.description ? `<blockquote class="description">${this.entry.description}</blockquote>` : '';
     const subSchemaResults = BuildFormSchema(this.entry.subSchema, this.formData);
 
-    merge(this.mappings, subSchemaResults.mappings);
+    this.mappings = merge()(this.mappings, subSchemaResults.mappings);
 
     return `
       <details

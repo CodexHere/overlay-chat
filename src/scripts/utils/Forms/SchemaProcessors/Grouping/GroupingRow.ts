@@ -4,7 +4,7 @@
  * @module
  */
 
-import merge from 'lodash.merge';
+import merge from '@fastify/deepmerge';
 import { BuildInput } from '../../Builder.js';
 import { FormSchemaGroupingRow } from '../../types.js';
 import { SimpleInput } from '../Inputs/SimpleInput.js';
@@ -44,7 +44,7 @@ export class GroupingRow extends SimpleInput<FormSchemaGroupingRow> {
       );
 
       // Accumulate iterative results
-      merge(this.mappings, childResults.mappings);
+      this.mappings = merge()(this.mappings, childResults.mappings);
 
       return childResults.html;
     });

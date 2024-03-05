@@ -4,7 +4,7 @@
  * @module
  */
 
-import merge from 'lodash.merge';
+import merge from '@fastify/deepmerge';
 import { BuildFormSchema } from '../Builder.js';
 import { FormSchema, FormSchemaEntryProcessor, ProcessedFormSchema, ProcessedFormSchemaMappings } from '../types.js';
 
@@ -45,7 +45,7 @@ export class Form implements FormSchemaEntryProcessor {
    */
   protected toString(): string {
     const subSchemaResults = BuildFormSchema(this.entries, this.formData);
-    merge(this.mappings, subSchemaResults.mappings);
+    this.mappings = merge()(this.mappings, subSchemaResults.mappings);
 
     return `
       <form id="#${this.formId}">

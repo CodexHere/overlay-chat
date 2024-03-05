@@ -86,8 +86,13 @@ export class SettingsManager {
   set(setting: unknown, value: unknown): void {
     // Single Setting Name targeted with a value, we'll take it as a simple set.
     if (typeof setting === 'string') {
-      // ! FIXME : Need to encrypt based on type
+      const encryptedTypes = ['hidden', 'password'];
+      const processed = this.context?.getProcessedSchema();
+      const schemaEntry = processed?.mappings.byName[setting];
       this._settings[setting as keyof PluginSettingsBase] = value as any;
+      if (schemaEntry && encryptedTypes.includes(schemaEntry.inputType)) {
+        this.toggleSettingEncrypted(this._settings, setting, true);
+      }
     } else {
       // Entire object sent in, wholesale set!
       if (value) {
@@ -264,14 +269,30 @@ export class SettingsManager {
     };
 
     Object.keys(maskableEntries ?? {}).forEach(settingName => {
-      const val = get(settings, settingName);
-
-      if (val) {
-        const codingDir = encrypt ? btoa : atob;
-        set(settings, settingName, codingDir(val));
-      }
+      this.toggleSettingEncrypted(settings, settingName, encrypt);
     });
 
     return settings;
+  }
+
+  /**
+   * Toggle a Setting by Name to be Encrypted or Decrypted.
+   *
+   * @param settings - Settings object to act on.
+   * @param settingName - Settings Name to act on.
+   * @param encrypt - Whether to Encrypt or Decrypt to value.
+   */
+  private toggleSettingEncrypted<PluginSettings extends PluginSettingsBase>(
+    settings: PluginSettings,
+    settingName: string,
+    encrypt: boolean
+  ) {
+    const val = get(settings, settingName);
+    if (!val) {
+      return;
+    }
+
+    const codingDir = encrypt ? btoa : atob;
+    set(settings, settingName, codingDir(val));
   }
 }

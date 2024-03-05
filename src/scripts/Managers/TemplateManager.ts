@@ -4,7 +4,7 @@
  * @module
  */
 
-import merge from 'lodash.merge';
+import merge from '@fastify/deepmerge';
 import { TemplatesContextProvider } from '../ContextProviders/TemplatesContextProvider.js';
 import { BuildTemplateMap, TemplateIDsBase, TemplateMap } from '../utils/Templating.js';
 import coreTemplate from './coreTemplates.html?raw';
@@ -38,7 +38,6 @@ export class TemplateManager {
     // Load all template file url values
     const resp = await fetch(url);
     templateData = await resp.text();
-    templateData = templateData.replace('%PACKAGE_VERSION%', import.meta.env.PACKAGE_VERSION);
 
     return templateData;
   }
@@ -48,7 +47,7 @@ export class TemplateManager {
     const templateMap = BuildTemplateMap(templateData);
 
     // Merge into overall Templates Map
-    merge(this.templates, templateMap);
+    this.templates = merge()(this.templates, templateMap) as TemplateMap<TemplateIDsBase>;
 
     return templateMap;
   }

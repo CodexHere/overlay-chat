@@ -4,7 +4,7 @@
  * @module
  */
 
-import merge from 'lodash.merge';
+import merge from '@fastify/deepmerge';
 import { Form } from './SchemaProcessors/Form.js';
 import { GroupArray } from './SchemaProcessors/Grouping/GroupArray.js';
 import { GroupList } from './SchemaProcessors/Grouping/GroupList.js';
@@ -173,7 +173,7 @@ export const BuildFormSchema = <FormData extends {}>(
     const newInput = BuildInput(entry, formData);
 
     // Accumulate iterative results
-    results = merge({}, results, newInput, {
+    results = merge({ all: true })(results, newInput, {
       html: results.html + newInput.html
     });
   }

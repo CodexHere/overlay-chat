@@ -4,7 +4,7 @@
  * @module
  */
 
-import merge from 'lodash.merge';
+import merge from '@fastify/deepmerge';
 import { ToId } from '../../misc.js';
 import {
   FormSchemaEntryBase,
@@ -54,7 +54,7 @@ export class AbstractFormSchemaProcessor<SchemaEntryType extends FormSchemaEntry
     this.labelId = AbstractFormSchemaProcessor.labelId++;
 
     // Initiate the Mapping with ourself and the associative entries.
-    merge(this.mappings, {
+    this.mappings = merge()(this.mappings, {
       byType: {
         [entry.inputType!]: {
           [entry.name]: entry
@@ -64,7 +64,7 @@ export class AbstractFormSchemaProcessor<SchemaEntryType extends FormSchemaEntry
       byName: {
         [entry.name]: entry
       }
-    });
+    }) as ProcessedFormSchemaMappings;
   }
 
   /**
