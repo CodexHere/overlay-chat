@@ -1,5 +1,8 @@
 # HangoutHere Overlay: Chat
 
+* [LifeCycle Diagram](.github/docs/app_lifecycle.drawio.svg)
+* [Events](.github/docs/events.md)
+
 ## TODO
 
 ### Default Settings Thinkery
@@ -29,18 +32,6 @@
   * Entire Row for ArrayGroup/List
 
 ### General TODO
-
-#### Lifecycle Events:
-  * Do they all have common namespace? I.E., `Core::EventName`
-
-| Event Name                       | Note                                                                                                                                                                                                                                                                                                                                                                                                      |
-| -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `PluginManager::PluginsLoaded`   | Called after all plugins are loaded, should re-mask settings<br />* But *why* do we want to re-mask settings *THEN*?                                                                                                                                                                                                                                                                                      |
-| `PluginManager::PluginsUnloaded` | Called after all plugins are unloaded, which resets the environment (mostly Bus).                                                                                                                                                                                                                                                                                                                         |
-| `Renderer::PluginsChanged`       | Called when Configuring, when the settings have changed to add/remove Plugins. Ideally, should never occur at app/run-time.<br />* Replaces the `RendererInstanceEvents.PLUGINS_STALE` event.                                                                                                                                                                                                             |
-| `Renderer::SyncCache`            | Called when the state of the Form is out of sync with the `ProcessedFormSchema` cache and needs to be re-processed against the current Form Settings. Generally, this is called when a `FormSchemaGroupingList` adds a new Entry through user interaction.<br />* I think this might need to be re-broadcasted on the Renderer for the `LifecycleManager` to listen to and then reprocess plugin schemas. |
-| `AppBootstrapper::RendererStart` | `'app' \| 'configure'` - The Renderer has started in some <mode>. Plugins should listen to this and do their kick offs. Currently, we're explicitly calling a `render*` functions.                                                                                                                                                                                                                        |
-| `Plugin::SyncSettings`           | Called when something (generally a plugin, but could be `Form::Interactions`) updates the state of the Form/Settings/Schema and needs everything to come into sync.                                                                                                                                                                                                                                       |
 
 #### TODO
 
@@ -88,7 +79,6 @@
       * Consider building `LifecycleManager` which then houses the event handlers for various manager events. Keeps it tidy and isolated.
     * Ensure registration functions are blocked during runtime!
       * `busManager.disableAddingListeners` should be renamed to just `toggle(enable?:boolean)`
-  * Plugins store Context on `register`, but should be actually done on event starting.
   * Context Finalizing:
     * Make sure Contexts don't expose anything they shouldn't!
       * Double check during JS-runtime we can't access private members/methods!
@@ -121,22 +111,23 @@
     * If we don't add it, remove `console.log`
   * Consider creating a new bg style, or various themes:
     * https://www.joshwcomeau.com/gradient-generator/
-  * Events should be evaluated:
-    * Lifecycle events should be either cleanly separated, or aggregated into a single group:
-        * PluginManagerEvents.LOADED
-        * BusManagerEvents.MIDDLEWARE_EXECUTE
-        * etc
-        * Make sure they have clean/nice/unique string values, and not jus "middleware-execute" as a lame value!
+* Check Plugin Lifecycle:
+  * Errors on Import
+  * Errors on RendererStarted (from `LifecycleManager`)
 * Core Plugin needs to require Twitch-Chat
   * Need to make sure we have `Twitch - Chat` enabled
   * Maybe this is unnecessary if the process enforces enabling as mentioned in `Refactor > Bootstrapper`
 * All Plugins' settings names need prefixes to avoid collissions, as well as updates within their code! This *could* spread to other plugins for a name, so consider a string search before replacing. IE, EmoteSwap checking for Chat options.
+* Example Plugin:
+  * Needs to mention in description, and add advanced `isConfigured` check for `enabled` items missing a `message`.
+  * Convert `Show Error at Runtime?` to Enabled/Message like others.
+    * Can we combine them all into one `grouparray`?
 * Work on Forms Validator Input types, make sure regexes are REALLY good!
 * Add About/FAQ/ETC links on Settings Page
   * How to use it, etc.
   * or should it be a github wiki?
 * Create some cool examples:
-  * renderSettings
+  * renderConfiguration
     * Hello plugin should re-enable button if text is not `"Hello from the Plugin!"`
     * listen to click of button, show error
       * ?? This could replace the timeout errors

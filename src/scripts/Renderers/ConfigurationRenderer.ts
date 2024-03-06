@@ -5,8 +5,9 @@
  */
 
 import { EventEmitter } from 'events';
-import { PluginInstances, PluginSettingsBase } from '../types/Plugin.js';
-import { RendererInstance, RendererInstanceEvents, RendererInstanceOptions } from '../types/Renderers.js';
+import { CoreEvents, RendererInstanceEmitter } from '../types/Events.js';
+import { PluginSettingsBase } from '../types/Plugin.js';
+import { RendererInstance, RendererInstanceOptions } from '../types/Renderers.js';
 import { BindInteractionEvents, UnbindInteractionEvents, UpdateFormValidators } from '../utils/Forms/Interaction.js';
 import { Deserialize, Serialize } from '../utils/Forms/Serializer.js';
 import { GetLocalStorageItem, SetLocalStorageItem } from '../utils/LocalStorage.js';
@@ -39,7 +40,7 @@ const RemoveArrayIndex = (paramName: string) => paramName.replace(indexRegExp, '
  */
 export class ConfigurationRenderer<PluginSettings extends PluginSettingsBase>
   extends EventEmitter
-  implements RendererInstance
+  implements RendererInstance, RendererInstanceEmitter
 {
   /** Delegated UX Behaviors to a Helper Class */
   private helper?: ConfigurationRendererHelper<PluginSettings>;
@@ -67,13 +68,10 @@ export class ConfigurationRenderer<PluginSettings extends PluginSettingsBase>
    * Initialize the Renderer, kicking off the Lifecycle.
    */
   async init() {
-    const plugins = this.options.plugin.get<PluginSettings>();
-
     this.unbindEvents();
     this.renderApp();
     this.buildElementMap();
     await this.subInit();
-    this.renderPluginSettings(plugins);
 
     this.bindEvents();
   }
@@ -96,7 +94,7 @@ export class ConfigurationRenderer<PluginSettings extends PluginSettingsBase>
     if (Object.keys(settings).length > 1) {
       const validations = this.options.plugin.validateSettings();
       UpdateFormValidators(this.elements.form, validations);
-      this.helper?.saveSettingsOptions();
+      this.helper?.saveConfigurationOptions();
       this.helper?.updateUrlState();
     }
   }
@@ -128,28 +126,6 @@ export class ConfigurationRenderer<PluginSettings extends PluginSettingsBase>
   }
 
   /**
-   * Iterates over all currently known Registered {@link PluginInstances | `PluginInstances`} and calls `renderSettings` to allow it to
-   * do it's own manipulation of the DOM/Settings/etc.
-   *
-   * @param plugins - Currently known Registered {@link PluginInstances | `PluginInstances`}.
-   */
-  private renderPluginSettings(plugins: PluginInstances<PluginSettings>) {
-    // Iterate over every loaded plugin, and call `renderSettings` to manipulate the Settings view
-    plugins.forEach(plugin => {
-      try {
-        // If it exists, call `renderSettings`, and pass in our method to force a sync of Settings.
-        plugin.renderSettings?.(this._forceSyncSettings);
-      } catch (err) {
-        if (err instanceof Error) {
-          throw new Error(
-            `Failed hook into \`renderSettings\` for Plugin: ${plugin.name}<br /><br /><pre>${err.stack}</pre>`
-          );
-        }
-      }
-    });
-  }
-
-  /**
    * Build the Local `ElementMap` this {@link RendererInstance | `RendererInstance`} needs to access.
    */
   private buildElementMap() {
@@ -174,6 +150,9 @@ export class ConfigurationRenderer<PluginSettings extends PluginSettingsBase>
 
     // Delegate Common Interaction Events
     UnbindInteractionEvents(form);
+
+    // Sync Settings when Plugins trigger the Event
+    this.options.bus.emitter.removeListener(CoreEvents.SyncSettings, this._forceSyncSettings);
   }
 
   /**
@@ -190,6 +169,9 @@ export class ConfigurationRenderer<PluginSettings extends PluginSettingsBase>
 
     // Delegate Common Interaction Events
     BindInteractionEvents(form);
+
+    // Sync Settings when Plugins trigger the Event
+    this.options.bus.emitter.addListener(CoreEvents.SyncSettings, this._forceSyncSettings);
   }
 
   ///////////////////////////////////////////////////////////////
@@ -207,7 +189,7 @@ export class ConfigurationRenderer<PluginSettings extends PluginSettingsBase>
     const target = event.target! as HTMLInputElement;
     const form = target.form!;
 
-    this.helper?.saveSettingsOptions();
+    this.helper?.saveConfigurationOptions();
 
     const formData = Serialize<PluginSettings>(form);
     const targetName = RemoveArrayIndex(target.name);
@@ -215,26 +197,25 @@ export class ConfigurationRenderer<PluginSettings extends PluginSettingsBase>
     // The Settings value changed is one that should cause a programmatic Restart
     if (settingShouldRestartPluginManager.includes(targetName)) {
       try {
-        // Set the settings
+        // Set the Settings
         this.options.settings.set(formData, true);
         // Event to the Application that the Plugin List has changed
-        this.emit(RendererInstanceEvents.PLUGINS_STALE);
+        (this as RendererInstanceEmitter).emit(CoreEvents.PluginsChanged);
       } catch (err) {
         this.options.display.showError(err as Error);
       }
     } else {
       // NO restart necessary, let's sync settings from User changes.
-      this._forceSyncSettings();
+      this._forceSyncSettings(false);
     }
   };
 
   /**
    * Force the current state of the Settings Form to be accepted as Settings.
    *
-   * This is useful when a Plugin modifies the Settings Form, and doesn't correctly trigger
-   * a Change Event.
+   * @param triggerInput - Whether or not to dispatch an Input Event, to trigger a Settings update through an `input` Event Handler.
    */
-  private _forceSyncSettings = () => {
+  private _forceSyncSettings = (triggerInput: boolean = true) => {
     // Get the current Settings Form data, and set it as the current Application Settings
     const form = this.elements.form;
     const formData = Serialize<PluginSettings>(form);
@@ -246,9 +227,15 @@ export class ConfigurationRenderer<PluginSettings extends PluginSettingsBase>
     // Update the Settings Form Validation states
     UpdateFormValidators(this.elements.form, validations);
     // Update/Store the Settings Options
-    this.helper?.saveSettingsOptions();
+    this.helper?.saveConfigurationOptions();
     // Update the URL State
     this.helper?.updateUrlState();
+
+    // Trigger `input` Event so Plugins and such will be able to update form state
+    // should they need to. Ex: Enable/Disable button based on settings values.
+    if (triggerInput) {
+      form.dispatchEvent(new InputEvent('input'));
+    }
   };
 
   ///////////////////////////////////////////////////////////////
@@ -380,5 +367,7 @@ export class ConfigurationRenderer<PluginSettings extends PluginSettingsBase>
     pluginContainer?.scrollIntoView({
       behavior: 'smooth'
     });
+
+    setTimeout(() => pluginContainer?.querySelector('input')?.focus(), 300);
   };
 }

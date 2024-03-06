@@ -67,6 +67,7 @@ form#settings {
 
         // Completely visible open and focused
         &:hover,
+        &:focus,
         &:focus-within {
           transition:
             filter 200ms,

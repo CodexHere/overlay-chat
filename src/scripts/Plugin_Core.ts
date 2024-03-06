@@ -7,7 +7,8 @@
 import Splitting from 'splitting';
 import tmiJs from 'tmi.js';
 import { ContextProviders } from './types/ContextProviders.js';
-import { BusManagerContext_Init, BusManagerEvents } from './types/Managers.js';
+import { CoreEvents, RendererStartedHandlerOptions } from './types/Events.js';
+import { BusManagerContext_Init } from './types/Managers.js';
 import { PluginEventRegistration, PluginInstance, PluginMiddlewareMap, PluginSettingsBase } from './types/Plugin.js';
 import { IsInViewPort } from './utils/DOM.js';
 import { FormValidatorResults } from './utils/Forms/types.js';
@@ -18,7 +19,7 @@ import { BaseUrl } from './utils/URI.js';
 /**
  * Settings that can be applied to the entire Application across all {@link types/Plugin.PluginInstances | `PluginInstances`} and {@link types/Renderers.RendererInstance | `RendererInstance`}s.
  */
-export type AppSettings_Chat = PluginSettingsBase & {
+type AppSettings_Chat = PluginSettingsBase & {
   /** General Font Size for the Application */
   fontSize: number;
 };
@@ -81,15 +82,15 @@ export default class Plugin_Core<PluginSettings extends AppSettings_Chat> implem
    * Register this Plugin with the Application.
    */
   register = async (ctx: ContextProviders): Promise<void> => {
-    ctx.bus.registerMiddleware(this, this._getMiddleware());
-    ctx.bus.registerEvents(this, this._getEvents());
+    ctx.bus.registerMiddleware(this, this.getMiddleware());
+    ctx.bus.registerEvents(this, this.getEvents());
     await ctx.template.register(this, new URL(`${BaseUrl()}/templates/twitch-chat.html`));
 
     this.ctx = ctx;
   };
 
   /**
-   * Evaluate the current settings for whether the Plugin is "Configured" or not.
+   * Evaluate the current Settings for whether the Plugin is "Configured" or not.
    */
   isConfigured(): true | FormValidatorResults<PluginSettings> {
     const { customPlugins, plugins } = this.ctx!.settings.get();
@@ -114,24 +115,44 @@ export default class Plugin_Core<PluginSettings extends AppSettings_Chat> implem
   /**
    * Build `PluginMiddlewareMap` for this Plugin.
    */
-  private _getMiddleware = (): PluginMiddlewareMap => ({
+  private getMiddleware = (): PluginMiddlewareMap => ({
     'chat:twitch': [this.middleware_onMessage]
   });
 
   /**
    * Build `PluginEventRegistration` for this Plugin.
    */
-  private _getEvents = (): PluginEventRegistration => ({
+  private getEvents = (): PluginEventRegistration => ({
     recieves: {
-      'chat:twitch:onChat': this._onMessage
+      [CoreEvents.RendererStarted]: this.onRendererStart,
+      'chat:twitch:onChat': this.onMessage
     },
-    sends: [BusManagerEvents.MIDDLEWARE_EXECUTE]
+    sends: [CoreEvents.MiddlewareExecute]
   });
+
+  /**
+   * Handler for when Application starts the Renderer.
+   *
+   * @param options - Broadcasted Start options when a {@link RendererInstance | `RendererInstance`} has been selected and presented to the User.
+   */
+  private onRendererStart = (options: RendererStartedHandlerOptions) => {
+    const { renderMode, ctx } = options;
+    this.ctx = ctx;
+
+    if ('app' === renderMode) {
+      this.renderApp();
+    }
+
+    if ('configure' === renderMode) {
+      // Currently no Config Rendering!
+      // this.renderConfiguration();
+    }
+  };
 
   /**
    * Hook into Application runtime
    */
-  async renderApp(): Promise<void> {
+  private async renderApp(): Promise<void> {
     this.buildElementMap();
   }
 
@@ -150,7 +171,7 @@ export default class Plugin_Core<PluginSettings extends AppSettings_Chat> implem
    *
    * @param context - Contextual ({@link MiddewareContext_Chat | `MiddewareContext_Chat`}) State passed from Link to Link.
    */
-  private _onMessage = (context: MiddewareContext_Chat) => {
+  private onMessage = (context: MiddewareContext_Chat) => {
     if ('chat' !== context.userState['message-type']) {
       return;
     }
@@ -162,7 +183,7 @@ export default class Plugin_Core<PluginSettings extends AppSettings_Chat> implem
       initiatingPlugin: this
     };
 
-    return this.ctx!.bus.emit(BusManagerEvents.MIDDLEWARE_EXECUTE, initCtx);
+    return this.ctx!.bus.emit(CoreEvents.MiddlewareExecute, initCtx);
   };
 
   /**
@@ -174,7 +195,7 @@ export default class Plugin_Core<PluginSettings extends AppSettings_Chat> implem
    * @param context - Contextual ({@link MiddewareContext_Chat | `MiddewareContext_Chat`}) State passed from Link to Link.
    * @param next - Next Link Handler
    */
-  middleware_onMessage: MiddlewareLink<Context> = async (context, next) => {
+  private middleware_onMessage: MiddlewareLink<Context> = async (context, next) => {
     // Wait for Middleware chance to execute
     await next();
 
@@ -213,7 +234,7 @@ export default class Plugin_Core<PluginSettings extends AppSettings_Chat> implem
    *
    * > An Element that doesn't have any CSS `animation-name` applied will be instantly removed.
    */
-  removeOutOfBoundsMessages() {
+  private removeOutOfBoundsMessages() {
     const container = this.elements['container'];
 
     if (!container) {

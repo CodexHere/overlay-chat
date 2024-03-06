@@ -6,7 +6,8 @@
 
 import { EventEmitter } from 'events';
 import { ContextProviders } from '../types/ContextProviders.js';
-import { PluginManagerEmitter, PluginManagerEvents, PluginManagerOptions } from '../types/Managers.js';
+import { CoreEvents, PluginManagerEmitter } from '../types/Events.js';
+import { PluginManagerOptions } from '../types/Managers.js';
 import {
   PluginConstructor,
   PluginImportResults,
@@ -30,7 +31,7 @@ import { IsValidValue } from '../utils/misc.js';
  *
  * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
  */
-export class PluginManager extends EventEmitter implements PluginManagerEmitter<{}> {
+export class PluginManager extends EventEmitter implements PluginManagerEmitter {
   /**
    * Currently known Registered {@link types/Plugin.PluginInstances | `PluginInstances`}.
    */
@@ -79,7 +80,7 @@ export class PluginManager extends EventEmitter implements PluginManagerEmitter<
     this._plugins.length = 0;
 
     // Emit to the Application that the Plugins are all Unloaded!
-    this.emit(PluginManagerEvents.UNLOADED);
+    (this as PluginManagerEmitter).emit(CoreEvents.PluginsUnloaded);
   }
 
   /**
@@ -119,7 +120,7 @@ export class PluginManager extends EventEmitter implements PluginManagerEmitter<
     await this.registerImportedPlugins(importResults);
 
     // Emit to the Application that the Plugins are all Loaded!
-    this.emit(PluginManagerEvents.LOADED, importResults);
+    (this as PluginManagerEmitter).emit(CoreEvents.PluginsLoaded, importResults);
   };
 
   /**

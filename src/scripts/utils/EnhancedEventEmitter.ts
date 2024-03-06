@@ -1,6 +1,6 @@
 /**
  * A slightly hacky/modified version of the EventEmitter!
- * 
+ *
  * @module
  */
 
@@ -20,7 +20,7 @@ export class EnhancedEventEmitter extends EventEmitter {
    *
    * If set to `true`, all attempts to call `addListener` or `on` will result in an `Error`!
    */
-  disableAddingListeners = false;
+  disableAddingListeners: boolean = false;
 
   private _storeListenersMap: Record<string, [Listener, Listener][]> = {};
   private _storeValuesMap: Record<string, [Listener, any][]> = {};

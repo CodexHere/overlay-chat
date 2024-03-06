@@ -74,9 +74,9 @@ export class ConfigurationRendererHelper<PluginSettings extends PluginSettingsBa
   private buildElementMap() {
     const body = globalThis.document.body;
 
-    const formOptions = body.querySelector('form#settings-options')!;
+    const formOptions = body.querySelector('form#configuration-options')!;
     this.elements['form'] = body.querySelector('form#settings')!;
-    this.elements['form-options'] = body.querySelector('form#settings-options')!;
+    this.elements['form-options'] = body.querySelector('form#configuration-options')!;
     this.elements['link-results-area'] = formOptions.querySelector('.textarea-wrapper')!;
     this.elements['link-results-output'] = formOptions.querySelector('textarea.url')!;
   }
@@ -261,7 +261,7 @@ export class ConfigurationRendererHelper<PluginSettings extends PluginSettingsBa
   /**
    * Updates the Local Form Data cache, and saves it into Local Storage.
    */
-  public saveSettingsOptions() {
+  public saveConfigurationOptions() {
     // Serialize Form into JSON and store in LocalStorage
     this.settingsOptionsFormCache = Serialize(this.elements['form-options']);
     SetLocalStorageItem('settingsOptions', this.settingsOptionsFormCache);
@@ -277,7 +277,7 @@ export class ConfigurationRendererHelper<PluginSettings extends PluginSettingsBa
       return;
     }
 
-    if (false === event.target.classList.contains('settings-option')) {
+    if (false === event.target.classList.contains('configuration-option')) {
       return;
     }
 
@@ -319,7 +319,7 @@ export class ConfigurationRendererHelper<PluginSettings extends PluginSettingsBa
     event.stopImmediatePropagation();
     event.preventDefault();
 
-    const isSettingsOption = event.target.classList.contains('settings-option');
+    const isSettingsOption = event.target.classList.contains('configuration-option');
 
     if (!isSettingsOption) {
       return;
@@ -327,7 +327,7 @@ export class ConfigurationRendererHelper<PluginSettings extends PluginSettingsBa
 
     // Settings Option was changed
 
-    this.saveSettingsOptions();
+    this.saveConfigurationOptions();
     this.updateUrlState();
   };
 

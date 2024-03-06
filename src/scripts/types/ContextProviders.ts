@@ -4,9 +4,11 @@
  * @module
  */
 
+import { Listener } from 'events';
 import { ProcessedFormSchema } from '../utils/Forms/types.js';
 import { TemplateIDsBase, TemplateMap } from '../utils/Templating.js';
-import { BusManagerContext_Init, BusManagerEvents } from './Managers.js';
+import { CoreEvents } from './Events.js';
+import { BusManagerContext_Init } from './Managers.js';
 import { PluginEventRegistration, PluginInstance, PluginMiddlewareMap, PluginSettingsBase } from './Plugin.js';
 
 /**
@@ -16,6 +18,9 @@ export type ContextProvider_Settings = {
   /**
    * Unregister a Plugin from the Application.
    *
+   * > NOTE: This is only available during the Plugin Registration phase of the Application,
+   * > and cannot be accessed during the Runtime phase.
+   *
    * @param plugin - Instance of the Plugin to act on.
    */
   unregister(plugin: PluginInstance): void;
@@ -24,6 +29,9 @@ export type ContextProvider_Settings = {
    * Registers a {@link utils/Forms/types.FormSchemaGrouping | `FormSchemaGrouping`} File for a Plugin.
    *
    * > The file should be a single {@link utils/Forms/types.FormSchemaGrouping | `FormSchemaGrouping`} in a properly formatted JSON file.
+   *
+   * > NOTE: This is only available during the Plugin Registration phase of the Application,
+   * > and cannot be accessed during the Runtime phase.
    *
    * @param plugin - Instance of the Plugin to act on.
    * @param schemaUrl - URL of the {@link utils/Forms/types.FormSchemaGrouping | `FormSchemaGrouping`} to load as JSON.
@@ -59,6 +67,9 @@ export type ContextProvider_Settings = {
   /**
    * Set the Settings wholesale as an entire object.
    *
+   * > NOTE: This is only available during the Plugin Registration phase of the Application,
+   * > and cannot be accessed during the Runtime phase, except in `configure` Render Mode.
+   *
    * @param settings - Data to set as Settings.
    * @param encrypt - Whether to encrypt on storing Settings. //! TODO: Is this necessary? Shouldn't we just treat settings as raw, ALWAYS? then we can decrypt for access?
    * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
@@ -70,6 +81,9 @@ export type ContextProvider_Settings = {
    *
    * Will Auto Encrypt depending on `inputType` of associative {@link utils/Forms/types.FormSchemaEntryBase | `FormSchemaEntryBase`}.
    *
+   * > NOTE: This is only available during the Plugin Registration phase of the Application,
+   * > and cannot be accessed during the Runtime phase, except in `configure` Render Mode.
+   *
    * @param data - Data to set as Settings.
    * @param encrypt - Whether to encrypt on storing Settings.
    * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
@@ -78,6 +92,9 @@ export type ContextProvider_Settings = {
 
   /**
    * Merge Settings as an object.
+   *
+   * > NOTE: This is only available during the Plugin Registration phase of the Application,
+   * > and cannot be accessed during the Runtime phase, except in `configure` Render Mode.
    *
    * @param settings - Data to merge as Settings.
    * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
@@ -92,6 +109,9 @@ export type ContextProvider_Template = {
   /**
    * Unregister a Plugin from the Application.
    *
+   * > NOTE: This is only available during the Plugin Registration phase of the Application,
+   * > and cannot be accessed during the Runtime phase.
+   *
    * @param plugin - Instance of the Plugin to act on.
    */
   unregister(plugin: PluginInstance): void;
@@ -100,6 +120,9 @@ export type ContextProvider_Template = {
    * Registers a Template File for a Plugin.
    *
    * > The file should be `<template>` tags with IDs to be mapped as ID -> Template Delegate.
+   *
+   * > NOTE: This is only available during the Plugin Registration phase of the Application,
+   * > and cannot be accessed during the Runtime phase.
    *
    * @param plugin - Instance of the Plugin to act on.
    * @param styleSheetUrl - URL of the Stylesheet to load.
@@ -132,6 +155,9 @@ export type ContextProvider_Bus = {
    *
    * Removes known Registered Listeners, and the registered Links for Chains.
    *
+   * > NOTE: This is only available during the Plugin Registration phase of the Application,
+   * > and cannot be accessed during the Runtime phase.
+   *
    * @param plugin - Instance of the Plugin to act on.
    */
   unregister(plugin: PluginInstance): void;
@@ -141,6 +167,9 @@ export type ContextProvider_Bus = {
    *
    * > Events are forcibly added from the given mapping, and will bind to the {@link PluginInstance | `PluginInstance`}.
    *
+   * > NOTE: This is only available during the Plugin Registration phase of the Application,
+   * > and cannot be accessed during the Runtime phase.
+   *
    * @param plugin - Instance of the Plugin to act on.
    * @param registrationMap - Registration of the Sends/Recieves declarations for the Plugin.
    */
@@ -149,30 +178,39 @@ export type ContextProvider_Bus = {
   /**
    * Register Middleware Links for Chains with the Application.
    *
+   * > NOTE: This is only available during the Plugin Registration phase of the Application,
+   * > and cannot be accessed during the Runtime phase.
+   *
    * @param plugin - Instance of the Plugin to act on.
    * @param registrationMap - Registration of the MiddlewareMap declarations for the Plugin.
    */
   registerMiddleware(plugin: PluginInstance, registrationMap: PluginMiddlewareMap): void;
 
   /**
-   * Proxy `call` to the Application Emitter.
+   * Proxy `emit` to the Application Emitter when a Plugin wants to Execute a {@link utils/Middleware.MiddlewareChain | `MiddlewareChain`}.
    *
-   * Unlike your standard `emit`, this will attempt to capture the responses of all handlers and return them!
-   * This is pretty hacky, but could be useful.
-   *
-   * @param type - Event Type to `call`.
-   * @param args - Arguments to pass to the Event Listener.
-   * @typeParam ReturnType - Expected return type, assuming all callback returns are homogenous.
+   * @param eventType - Event Type to `emit`.
+   * @param ctx - Middleware Chain Execution Initial Context object.
+   * @typeParam Context - Shape of the Context State each Link recieves to mutate.
    */
   emit<Context extends {}>(
-    eventType: typeof BusManagerEvents.MIDDLEWARE_EXECUTE,
+    eventType: typeof CoreEvents.MiddlewareExecute,
     ctx: (ctx: BusManagerContext_Init<Context>) => void
   ): void;
 
   /**
+   * Proxy `emit` to the Application Emitter when Settings need synchronization after
+   * a Plugin updates Settings on behalf of the User.
+   *
+   * @param eventType - Event Type to `emit`.
+   * @param listener - Event Handler.
+   */
+  emit(eventType: typeof CoreEvents.SyncSettings, listener: Listener): void;
+
+  /**
    * Proxy `emit` to the Application Emitter.
    *
-   * @param type - Event Type to `call`.
+   * @param type - Event Type to `emit`.
    * @param args - Arguments to pass to the Event Listener.
    */
   emit(type: string | number, ...args: any[]): void;
@@ -199,6 +237,9 @@ export type ContextProvider_Stylesheets = {
    *
    * Removes `<link>` tag with matching *data-attribute* for the Plugin.
    *
+   * > NOTE: This is only available during the Plugin Registration phase of the Application,
+   * > and cannot be accessed during the Runtime phase.
+   *
    * @param plugin - Instance of the Plugin to act on.
    */
   unregister(plugin: PluginInstance): void;
@@ -207,6 +248,9 @@ export type ContextProvider_Stylesheets = {
    * Registers a Stylesheet for a Plugin.
    *
    * Adds a *data-attribute* to associate with this Plugin, for Unregistering later.
+   *
+   * > NOTE: This is only available during the Plugin Registration phase of the Application,
+   * > and cannot be accessed during the Runtime phase.
    *
    * @param plugin - Instance of the Plugin to act on.
    * @param styleSheetUrl - URL of the Stylesheet to load.

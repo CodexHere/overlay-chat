@@ -12,12 +12,17 @@ import { RenderTemplate } from '../utils/Templating.js';
  * Context Provider for Display.
  */
 export class DisplayContextProvider implements ContextProvider_Display {
+  /** {@link Managers/TemplateManager.TemplateManager | `TemplateManager`} instance for the {@link types/ContextProviders.ContextProvider_Display | `ContextProvider_Display`} to act on. */
+  #manager: TemplateManager;
+
   /**
    * Create a new {@link DisplayContextProvider | `DisplayContextProvider`}.
    *
    * @param manager - Instance of {@link TemplateManager | `TemplateManager`} to get Templates from.
    */
-  constructor(private manager: TemplateManager) {}
+  constructor(manager: TemplateManager) {
+    this.#manager = manager;
+  }
 
   /**
    * Display an Info message to the User.
@@ -27,7 +32,7 @@ export class DisplayContextProvider implements ContextProvider_Display {
    */
   showInfo = (message: string, title?: string | undefined): void => {
     const body = globalThis.document.body;
-    const template = this.manager.context?.getId('modalMessage');
+    const template = this.#manager.context?.getId('modalMessage');
 
     if (!template) {
       return;
@@ -62,7 +67,7 @@ export class DisplayContextProvider implements ContextProvider_Display {
     err.forEach(console.error);
 
     // Render `modalMessage` Template to the `body`.
-    const template = this.manager.context?.getId('modalMessage');
+    const template = this.#manager.context?.getId('modalMessage');
 
     if (!template) {
       return;

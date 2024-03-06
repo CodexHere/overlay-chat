@@ -280,7 +280,7 @@
       input:not([type='checkbox'], [type='radio']),
       select,
       textarea {
-        width: auto;
+        width: 100%;
         font-size: 1em;
       }
 
@@ -303,7 +303,7 @@
     }
   }
 
-  form#settings-options {
+  form#configuration-options {
     display: flex;
     gap: 1em;
     margin: 0;
@@ -373,7 +373,7 @@
       }
     }
 
-    .settings-options {
+    .configuration-options {
       --pico-font-size: 0.85em;
       font-size: var(--pico-font-size);
       display: flex;

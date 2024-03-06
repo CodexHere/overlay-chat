@@ -118,18 +118,4 @@ export type PluginInstance<PluginSettings extends PluginSettingsBase = {}> = {
    * Optionally define this method to evaluate the current settings for whether the Plugin is "Configured" or not.
    */
   isConfigured?(): FormValidatorResults<PluginSettings>;
-
-  /**
-   * @deprecated
-   * @param forceSyncSettings - A method that can be called when a Plugin manipulates Settings on behalf of the user.
-   * TODO: This might go away, as we move to injecting a RegistrationContext into the plugin
-   * TODO: Instead of injecting a function, let's event this
-   */
-  renderSettings?(forceSyncSettings: () => void): void;
-
-  /**
-   * @deprecated
-   * TODO: This might go away, as we move to injecting a RegistrationContext into the plugin
-   */
-  renderApp?(): void;
 };

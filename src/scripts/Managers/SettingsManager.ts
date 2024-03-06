@@ -7,8 +7,10 @@
 import get from 'lodash.get';
 import set from 'lodash.set';
 import { SettingsContextProvider } from '../ContextProviders/SettingsContextProvider.js';
-import { PluginInstance, PluginInstances, PluginSettingsBase } from '../types/Plugin.js';
-import { FormSchema, FormSchemaEntry, FormSchemaGrouping, ProcessedFormSchema } from '../utils/Forms/types.js';
+import { ApplicationIsLockedError } from '../ContextProviders/index.js';
+import { LockHolder, SettingsMode } from '../types/Managers.js';
+import { PluginInstance, PluginSettingsBase } from '../types/Plugin.js';
+import { FormSchema, FormSchemaEntry, FormSchemaGrouping } from '../utils/Forms/types.js';
 import { QueryStringToJson } from '../utils/URI.js';
 import { ToId } from '../utils/misc.js';
 
@@ -18,18 +20,22 @@ import { ToId } from '../utils/misc.js';
  * On `init`, Settings are parsed from the URI, and Unmasked (aka, decrypted values for certain types).
  */
 export class SettingsManager {
-  /** The Settings values, as the Application currently sees them. */
-  private _settings: PluginSettingsBase = {} as PluginSettingsBase;
-
   /** Context Provider for this Manager. */
   context?: SettingsContextProvider;
+
+  /** The Settings values, as the Application currently sees them. */
+  private _settings: PluginSettingsBase = {} as PluginSettingsBase;
 
   /**
    * Create a new {@link SettingsManager | `SettingsManager`}.
    *
+   * @param lockHolder - Instance of {@link LockHolder | `LockHolder`} to evaluate Lock Status.
    * @param locationHref - HREF URL containing possible URI Query Search Params as Settings.
    */
-  constructor(private locationHref: string) {}
+  constructor(
+    private lockHolder: LockHolder,
+    private locationHref: string
+  ) {}
 
   /**
    * Initialize the Settings Manager.
@@ -39,7 +45,7 @@ export class SettingsManager {
    * > The settings will be unmasked once deserialized.
    */
   async init() {
-    this.context = new SettingsContextProvider(this);
+    this.context = new SettingsContextProvider(this.lockHolder, this);
     const settings = QueryStringToJson(this.locationHref);
     this._settings = settings;
     this.toggleSettingsEncryption(this._settings, false);
@@ -53,9 +59,7 @@ export class SettingsManager {
    * @param masked - Whether or not to mask the settings on return
    * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
    */
-  get = <PluginSettings extends PluginSettingsBase>(
-    mode: 'raw' | 'encrypted' | 'decrypted' = 'raw'
-  ): PluginSettings => {
+  get = <PluginSettings extends PluginSettingsBase>(mode: SettingsMode = 'raw'): PluginSettings => {
     const settings = structuredClone(this._settings);
 
     if ('raw' !== mode) {
@@ -84,6 +88,10 @@ export class SettingsManager {
    */
   set<PluginSettings extends PluginSettingsBase>(settingName: keyof PluginSettings, value: any): void;
   set(setting: unknown, value: unknown): void {
+    if (this.lockHolder.isLocked && 'configure' !== this.lockHolder.renderMode) {
+      throw new ApplicationIsLockedError();
+    }
+
     // Single Setting Name targeted with a value, we'll take it as a simple set.
     if (typeof setting === 'string') {
       const encryptedTypes = ['hidden', 'password'];
@@ -111,6 +119,10 @@ export class SettingsManager {
    * @param data - Settings object to merge.
    */
   merge<PluginSettings extends PluginSettingsBase>(settings: PluginSettings): void {
+    if (this.lockHolder.isLocked && 'configure' !== this.lockHolder.renderMode) {
+      throw new ApplicationIsLockedError();
+    }
+
     Object.entries(settings as PluginSettingsBase).forEach(([settingName, settingValue]) => {
       this.set(settingName, settingValue);
     });
@@ -121,7 +133,11 @@ export class SettingsManager {
    *
    * @param settingName - Setting name to remove.
    */
-  remove(settingName: string) {
+  removeSetting(settingName: string) {
+    if (this.lockHolder.isLocked) {
+      throw new ApplicationIsLockedError();
+    }
+
     delete this._settings[settingName as keyof PluginSettingsBase];
 
     // TODO: Do we mark stale/dirty/etc?
@@ -137,6 +153,10 @@ export class SettingsManager {
    * @param schemaUrl - URL of the Schema JSON file.
    */
   loadSchemaData = async (plugin: PluginInstance, schemaUrl: string) => {
+    if (this.lockHolder.isLocked) {
+      throw new ApplicationIsLockedError();
+    }
+
     // Load the Settings Schema file as JSON
     const grouping: FormSchemaGrouping = await (await fetch(schemaUrl)).json();
     // Enforce a `name` for the Plugin Settings as a named `FormSchemaGrouping`. This is for sanity sake later.
@@ -225,26 +245,6 @@ export class SettingsManager {
       }
     ];
   }
-
-  /**
-   * ! FIXME : I don't like this process...
-   * ! It's not really updating the processed schema anymore, and it only really did it after plugins were
-   * ! loaded/updated... now that that is adhoc (again), it's just re-unmasking settings - but why??? what is the use-case? Can we clean up the lifecycle around it????? PLEASSEEEE??E?E?E?E
-   * ! ------- TEST ------ Change password settings in a list, then load a new plugin and see if the passwords still work right.
-   *
-   * Update the aggregated cached {@link ProcessedFormSchema | `ProcessedFormSchema`} from parsing the Settings Schema.
-   *
-   * This is generally called after ALL Plugins load during Bootstrapping, or
-   *
-   * @param plugins - If supplied, represents which Plugins were loaded.
-   */
-  updateProcessedSchema = (plugins?: PluginInstances) => {
-    // Plugins just loaded, which means they injected new settings.
-    // We want to now use a fully parsedJsonResult to unmask our settings completely.
-    if (plugins) {
-      // this.toggleMaskSettings(this._settings, false);
-    }
-  };
 
   /**
    * Toggle encrypting particular Settings types by encoding their values.

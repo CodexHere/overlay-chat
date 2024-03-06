@@ -20,7 +20,7 @@ export class GroupingBase extends BaseFormSchemaProcessor<FormSchemaGrouping> {
    * Evaluates the supplied FormData to determine the number of
    * Entries in our Group.
    */
-  private getNumValues(): number {
+  #getNumValues(): number {
     const rowEntries = this.entry.subSchema;
     // Get all the Entry Names of the Entries in our Row
     const groupParamNames = rowEntries.map(fe => fe.name);
@@ -49,7 +49,7 @@ export class GroupingBase extends BaseFormSchemaProcessor<FormSchemaGrouping> {
   protected override toString(): string {
     const entry = this.entry;
     const isList = 'grouplist' === entry.inputType;
-    const numValues = this.getNumValues();
+    const numValues = this.#getNumValues();
     const description = entry.description ? `<blockquote class="description">${entry.description}</blockquote>` : '';
 
     // Iterate and build entire Row of FormSchemaEntry's, `numValues`-times

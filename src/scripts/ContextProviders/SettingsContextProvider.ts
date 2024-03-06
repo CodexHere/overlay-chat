@@ -6,10 +6,12 @@
 
 import { SettingsManager } from '../Managers/SettingsManager.js';
 import { ContextProvider_Settings } from '../types/ContextProviders.js';
+import { LockHolder } from '../types/Managers.js';
 import { PluginInstance, PluginSettingsBase } from '../types/Plugin.js';
 import { BuildFormSchema } from '../utils/Forms/Builder.js';
 import { GroupSubSchema } from '../utils/Forms/SchemaProcessors/Grouping/GroupSubSchema.js';
 import { FormSchemaGrouping, ProcessedFormSchema } from '../utils/Forms/types.js';
+import { ApplicationIsLockedError } from './index.js';
 import SettingsSubSchemaDefault from './schemaSettingsCore.json';
 
 /**
@@ -55,23 +57,32 @@ export class SettingsContextProvider implements ContextProvider_Settings {
   merge: <PluginSettings extends PluginSettingsBase>(settings: PluginSettings) => void;
 
   /** Mapped cached store of the original Settings Schema per Plugin. */
-  private pluginSchemaCacheMap: Map<Symbol, FormSchemaGrouping> = new Map();
+  #pluginSchemaCacheMap: Map<Symbol, FormSchemaGrouping> = new Map();
   /** Reference Symbol representing a Plugin for the default `FormSchemaGrouping`. */
-  private ref = Symbol('built-in');
+  #ref = Symbol('built-in');
+
+  /** Instance of {@link LockHolder | `LockHolder`} to evaluate Lock Status. */
+  #lockHolder: LockHolder;
+  /** {@link SettingsManager | `SettingsManager`} instance for the {@link types/ContextProviders.ContextProvider_Settings | `ContextProvider_Settings`} to act on. */
+  #manager: SettingsManager;
 
   /**
    * Creates new {@link SettingsContextProvider | `SettingsContextProvider`}.
    *
+   * @param lockHolder - Instance of {@link LockHolder | `LockHolder`} to evaluate Lock Status.
    * @param manager - {@link SettingsManager | `SettingsManager`} instance for the {@link types/ContextProviders.ContextProvider_Settings | `ContextProvider_Settings`} to act on.
    */
-  constructor(private manager: SettingsManager) {
+  constructor(lockHolder: LockHolder, manager: SettingsManager) {
+    this.#lockHolder = lockHolder;
+    this.#manager = manager;
+
     // Proxy properties to the Manager
-    this.set = this.manager.set.bind(this.manager);
-    this.merge = this.manager.merge.bind(this.manager);
-    this.get = this.manager.get.bind(this.manager);
+    this.set = this.#manager.set.bind(this.#manager);
+    this.merge = this.#manager.merge.bind(this.#manager);
+    this.get = this.#manager.get.bind(this.#manager);
 
     // Cache the built-in `ProcessedFormSchema`
-    this.pluginSchemaCacheMap.set(this.ref, SettingsSubSchemaDefault as FormSchemaGrouping);
+    this.#pluginSchemaCacheMap.set(this.#ref, SettingsSubSchemaDefault as FormSchemaGrouping);
   }
 
   /**
@@ -87,8 +98,8 @@ export class SettingsContextProvider implements ContextProvider_Settings {
     mode: 'raw' | 'encrypted' | 'decrypted' = 'raw'
   ): PluginSettings | null {
     const settings = this.get<PluginSettings>(mode);
-    const defaultSchemaGrouping = this.pluginSchemaCacheMap.get(this.ref)!;
-    const schemaGrouping = this.pluginSchemaCacheMap.get(plugin.ref);
+    const defaultSchemaGrouping = this.#pluginSchemaCacheMap.get(this.#ref)!;
+    const schemaGrouping = this.#pluginSchemaCacheMap.get(plugin.ref);
 
     if (!schemaGrouping) {
       return null;
@@ -113,12 +124,12 @@ export class SettingsContextProvider implements ContextProvider_Settings {
    */
   getProcessedSchema(): ProcessedFormSchema | null {
     // No Plugins have registered any FormSchema's
-    if (0 === this.pluginSchemaCacheMap.size) {
+    if (0 === this.#pluginSchemaCacheMap.size) {
       return null;
     }
 
     // ! Assumes Plugins added `FormSchema`s in Priority-order
-    const schemaList = [...this.pluginSchemaCacheMap.values()];
+    const schemaList = [...this.#pluginSchemaCacheMap.values()];
     return BuildFormSchema(schemaList, this.get());
   }
 
@@ -128,8 +139,12 @@ export class SettingsContextProvider implements ContextProvider_Settings {
    * @param plugin - Instance of the Plugin to act on.
    */
   unregister(plugin: PluginInstance): void {
+    if (this.#lockHolder.isLocked) {
+      throw new ApplicationIsLockedError();
+    }
+
     // Get the cached Schema for the Plugin
-    const schemaGrouping = this.pluginSchemaCacheMap.get(plugin.ref);
+    const schemaGrouping = this.#pluginSchemaCacheMap.get(plugin.ref);
 
     if (!schemaGrouping) {
       return;
@@ -140,10 +155,10 @@ export class SettingsContextProvider implements ContextProvider_Settings {
     const pluginSettingsNames = Object.keys(processed.mappings.byName);
 
     // Have Manager `remove` from the Settings
-    pluginSettingsNames.forEach(name => this.manager.remove(name));
+    pluginSettingsNames.forEach(name => this.#manager.removeSetting(name));
 
     // Remove Plugin Schema from cache
-    this.pluginSchemaCacheMap.delete(plugin.ref);
+    this.#pluginSchemaCacheMap.delete(plugin.ref);
   }
 
   /**
@@ -155,9 +170,13 @@ export class SettingsContextProvider implements ContextProvider_Settings {
    * @param schemaUrl - URL of the `FormSchemaGrouping` to load as JSON.
    */
   async register(plugin: PluginInstance, schemaUrl: URL): Promise<void> {
-    const schemaGrouping: FormSchemaGrouping = await this.manager.loadSchemaData(plugin, schemaUrl.href);
+    if (this.#lockHolder.isLocked) {
+      throw new ApplicationIsLockedError();
+    }
+
+    const schemaGrouping: FormSchemaGrouping = await this.#manager.loadSchemaData(plugin, schemaUrl.href);
 
     // Store original Schema Data for updating process cache if ever necessary
-    this.pluginSchemaCacheMap.set(plugin.ref, schemaGrouping);
+    this.#pluginSchemaCacheMap.set(plugin.ref, schemaGrouping);
   }
 }

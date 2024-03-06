@@ -8,6 +8,7 @@
  * @typedef {import('../../../src/scripts/Plugin_Core.js').MiddewareContext_Chat} ConcreteContext
  * @typedef {Partial<ConcreteContext>} Context
  *
+ * @typedef {import('../../../src/scripts/types/Events.js').RendererStartedHandlerOptions} RendererStartHandlerOptions
  * @typedef {import('../../../src/scripts/utils/Forms/types.js').FormSchemaGrouping} FormSchemaGrouping
  * @typedef {import('../../../src/scripts/utils/Forms/types.js').FormValidatorResults<PluginSettings>} FormValidatorResults
  * @typedef {import('../../../src/scripts/types/ContextProviders.js').ContextProviders} ContextProviders
@@ -31,6 +32,8 @@ const API_BaseUrl = 'https://twitchtokengenerator.com/api';
 export default class Plugin_Twitch_EmoteSwap {
   name = 'Twitch - Emote Swap';
   version = '1.0.0';
+  author = 'CodexHere <codexhere@outlook.com>';
+  homepage = 'https://overlay-chat.surge.sh';
   ref = Symbol(this.name);
   priority = 20;
 
@@ -43,12 +46,14 @@ export default class Plugin_Twitch_EmoteSwap {
    * @returns {true | FormValidatorResults}
    */
   isConfigured() {
-    /** @type {PluginSettings} */
-    const {
-      'twitchEmoteSwap--clientId': clientId,
-      refreshTokenBot,
-      refreshTokenStreamer
-    } = /** @type {ContextProviders} */ (this.#ctx).settings.get();
+    /** @type {PluginSettings | undefined} */
+    const settings = this.#ctx?.settings.get();
+
+    if (!settings) {
+      return {};
+    }
+
+    const { 'twitchEmoteSwap--clientId': clientId, refreshTokenBot, refreshTokenStreamer } = settings;
 
     if (!!clientId) {
       return true;
@@ -78,25 +83,42 @@ export default class Plugin_Twitch_EmoteSwap {
   register = async ctx => {
     await ctx.settings.register(this, new URL(`${BaseUrl()}/settings.json`));
     ctx.bus.registerMiddleware(this, {
-      'chat:twitch': [this.middleware]
+      'chat:twitch': [this.#middleware]
     });
 
-    this.#ctx = ctx;
+    ctx.bus.registerEvents(this, {
+      recieves: {
+        'AppBootstrapper::RendererStarted': this.#onRendererStart
+      },
+      sends: ['Plugin::SyncSettings']
+    });
   };
 
   /**
-   * @param {() => void} forceSyncSettings
+   * Handler for when Application starts the Renderer.
+   *
+   * @param {RendererStartHandlerOptions} param0
    */
-  async renderSettings(forceSyncSettings) {
-    this.forceSyncSettings = forceSyncSettings;
+  #onRendererStart = ({ renderMode, ctx }) => {
+    this.#ctx = ctx;
 
+    if ('app' === renderMode) {
+      this.#renderApp();
+    }
+
+    if ('configure' === renderMode) {
+      this.#renderConfiguration();
+    }
+  };
+
+  async #renderConfiguration() {
     // Update state of UI on changes
     // prettier-ignore
     globalThis
       .document
       .body
       .querySelector('form#settings')
-      ?.addEventListener('change', this.#updateSettingsUI);
+      ?.addEventListener('input', this.#updateSettingsUI);
 
     this.#updateSettingsUI();
   }
@@ -125,6 +147,9 @@ export default class Plugin_Twitch_EmoteSwap {
    * @param {Event} event
    */
   #onClickGetClientId = async event => {
+    // ! FIXME : Refactor this based on changes to Twitch - Chat auth flow...
+    // ! We're capturing the ClientID through that...
+
     if (false === event.target instanceof HTMLButtonElement) {
       return;
     }
@@ -150,14 +175,14 @@ export default class Plugin_Twitch_EmoteSwap {
       inputs[0].value = refresh.client_id;
     }
 
-    this.forceSyncSettings?.();
+    this.#ctx?.bus.emit('Plugin::SyncSettings');
   };
 
   /**
    * @param {Context} context
    * @param {Next} next
    */
-  middleware = async (context, next) => {
+  #middleware = async (context, next) => {
     if (context.message && context.channel) {
       context.message = replaceEmotes(context.message, context.userState, context.channel);
     }
@@ -165,7 +190,7 @@ export default class Plugin_Twitch_EmoteSwap {
     await next();
   };
 
-  renderApp() {
+  #renderApp() {
     console.log(`[${this.name}] [renderApp]`);
 
     /** @type {PluginSettings} */

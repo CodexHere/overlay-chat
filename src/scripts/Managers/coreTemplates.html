@@ -11,13 +11,16 @@
       <h1 class="container-title">Settings</h1>
       <label id="plugin-jumper-wrapper">
         Jump to:
-        <select id="plugin-jumper"></select>
+        <select id="plugin-jumper">
+          <option>-- Select to Configure --</option>
+          <option value="globalsettings">Global Settings</option>
+        </select>
       </label>
     </header>
 
     <form id="settings">{{formElements}}</form>
 
-    <form id="settings-options">
+    <form id="configuration-options">
       <div class="left-column">
         <div class="textarea-wrapper">
           <textarea class="url" rows="4"></textarea>
@@ -27,11 +30,11 @@
           </div>
         </div>
 
-        <div class="settings-options">
+        <div class="configuration-options">
           <div class="left">
             <label title="Options Format - URI plain text, or Compressed data">
               Format:
-              <select name="format" class="settings-option">
+              <select name="format" class="configuration-option">
                 <option>uri</option>
                 <option>compressed</option>
               </select>
@@ -46,7 +49,7 @@
 
           <div class="right">
             <label title="Enable Focus Mode for the Settings">
-              <input type="checkbox" name="focus-mode" class="settings-option" />
+              <input type="checkbox" name="focus-mode" class="configuration-option" />
               Focus Mode
             </label>
           </div>
@@ -55,12 +58,14 @@
 
       <div class="right-column">
         <div class="options-load-app">
-          <button class="settings-option button-load-app" disabled>Load App</button>
+          <button class="configuration-option button-load-app" disabled>Load App</button>
           <label title="Should the Application be opened in a New Window?">
-            <input type="checkbox" class="settings-option" name="new-window" />
+            <input type="checkbox" class="configuration-option" name="new-window" />
             New Window
           </label>
-          <button class="secondary settings-option button-settings-reset" title="Start Over!">Reset Settings</button>
+          <button class="secondary configuration-option button-settings-reset" title="Start Over!">
+            Reset Settings
+          </button>
         </div>
       </div>
     </form>

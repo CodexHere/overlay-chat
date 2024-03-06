@@ -2,7 +2,7 @@
   "name": "globalSettings",
   "inputType": "group-subschema",
   "label": "Global Settings",
-  "tooltip": "These are settings that generally apply to the entire App.",
+  "tooltip": "These are Settings that generally apply to the entire App.",
   "subSchema": [
     {
       "name": "globalFontSettings",
