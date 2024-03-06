@@ -35,8 +35,8 @@ export enum CoreEvents {
  * Options for the RendererStarted Handlers.
  */
 export type RendererStartedHandlerOptions = {
-  ctx: ContextProviders;
-  renderer: RendererInstance;
+  renderer?: RendererInstance;
+  ctx?: ContextProviders;
   renderMode: RenderMode;
 };
 
@@ -65,6 +65,16 @@ export type BusManagerEmitter = EnhancedEventEmitter & {
   emit(eventType: CoreEvents.SyncSettings): boolean;
   addListener(eventType: CoreEvents.SyncSettings, listener: Listener): BusManagerEmitter;
   on(eventType: CoreEvents.SyncSettings, listener: Listener): BusManagerEmitter;
+
+  emit(eventType: CoreEvents.RendererStarted, options: RendererStartedHandlerOptions): boolean;
+  addListener(
+    eventType: CoreEvents.RendererStarted,
+    listener: (options: RendererStartedHandlerOptions) => void
+  ): BusManagerEmitter;
+  on(
+    eventType: CoreEvents.RendererStarted,
+    listener: (options: RendererStartedHandlerOptions) => void
+  ): BusManagerEmitter;
 };
 
 /**

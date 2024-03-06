@@ -5,6 +5,7 @@
  */
 
 import { EventEmitter } from 'events';
+import { CoreEvents, RendererStartedHandlerOptions } from '../types/Events.js';
 import { PluginSettingsBase } from '../types/Plugin.js';
 import { RendererInstance, RendererInstanceOptions } from '../types/Renderers.js';
 import { RenderTemplate } from '../utils/Templating.js';
@@ -45,6 +46,19 @@ export class AppRenderer<PluginSettings extends PluginSettingsBase> extends Even
     this.subInit();
 
     this.bindEvents();
+
+    // Announce the `CoreEvents.RendererStarted` Event for newly loaded Plugins
+    // to hook into the Application Lifecycle.
+    this.options.bus.emitter.emit(CoreEvents.RendererStarted, {
+      renderMode: 'app',
+      ctx: {
+        bus: this.options.bus.context,
+        display: this.options.display,
+        settings: this.options.settings.context,
+        stylesheets: this.options.stylesheets,
+        template: this.options.template.context
+      }
+    } as RendererStartedHandlerOptions);
   }
 
   /**

@@ -13,7 +13,12 @@ import { SettingsManager } from './Managers/SettingsManager.js';
 import { TemplateManager } from './Managers/TemplateManager.js';
 import { AppRenderer } from './Renderers/AppRenderer.js';
 import { ConfigurationRenderer } from './Renderers/ConfigurationRenderer.js';
-import { AppBootstrapperEmitter, CoreEvents, PluginManagerEmitter } from './types/Events.js';
+import {
+  AppBootstrapperEmitter,
+  CoreEvents,
+  PluginManagerEmitter,
+  RendererStartedHandlerOptions
+} from './types/Events.js';
 import { AppBootstrapperOptions, LockHolder } from './types/Managers.js';
 import { RenderMode, RendererConstructor, RendererInstance } from './types/Renderers.js';
 import { EnhancedEventEmitter } from './utils/EnhancedEventEmitter.js';
@@ -181,6 +186,7 @@ export class AppBootstrapper extends EnhancedEventEmitter implements AppBootstra
       display: this.displayContext!,
       plugin: this.pluginManager!,
       settings: this.settingsManager!,
+      stylesheets: this.stylesheetContext!,
       template: this.templateManager!
     });
 
@@ -191,14 +197,7 @@ export class AppBootstrapper extends EnhancedEventEmitter implements AppBootstra
     // This will be proxied by the `LifecycleManager`
     (this as AppBootstrapperEmitter).emit(CoreEvents.RendererStarted, {
       renderer: this.renderer,
-      renderMode: this.renderMode,
-      ctx: {
-        bus: this.busManager?.context,
-        display: this.displayContext,
-        settings: this.settingsManager?.context,
-        stylesheets: this.stylesheetContext,
-        template: this.templateManager?.context
-      }
-    });
+      renderMode: this.renderMode
+    } as RendererStartedHandlerOptions);
   }
 }

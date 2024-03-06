@@ -84,9 +84,6 @@ export class LifecycleManager {
    * @param options - Broadcasted Start options when a {@link RendererInstance | `RendererInstance`} has been selected and presented to the User.
    */
   private onRendererStarted = (options: RendererStartedHandlerOptions) => {
-    // Proxy/Announce to the Bus available to Plugins that the Renderer has started!
-    this.actors.bus.emitter.emit(CoreEvents.RendererStarted, options);
-
     // Bind Events for `configure` Render Mode.
     this.bindConfigureEvents(options);
 
@@ -101,7 +98,7 @@ export class LifecycleManager {
    */
   private bindConfigureEvents(options: RendererStartedHandlerOptions) {
     // Only do this for `configure` mode!
-    if (options.renderMode !== 'configure') {
+    if (!options.renderer || options.renderMode !== 'configure') {
       return;
     }
 
@@ -118,8 +115,8 @@ export class LifecycleManager {
    *
    * @param options - Broadcasted Start options when a {@link RendererInstance | `RendererInstance`} has been selected and presented to the User.
    */
-  private async onPluginsChanged(options: RendererStartedHandlerOptions) {
-    const { bus, plugin } = this.actors;
+  private onPluginsChanged = async (options: RendererStartedHandlerOptions) => {
+    const { plugin } = this.actors;
 
     // Unlock Application so we can Unregister Plugins.
     this.isLocked = false;
@@ -130,9 +127,5 @@ export class LifecycleManager {
     // Re-init the active `RendererInstance`, which should effectively
     // restart the portion of the Application the User is presented.
     await options.renderer?.init();
-
-    // Re-announce the `CoreEvents.RendererStarted` Event for newly loaded Plugins
-    // to hook into the Application Lifecycle.
-    bus.emitter.emit(CoreEvents.RendererStarted, options);
-  }
+  };
 }

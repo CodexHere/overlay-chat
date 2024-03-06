@@ -7,9 +7,6 @@
 
 ### Default Settings Thinkery
 
-* Need `RendererInstanceEvents.SETTINGS_STALE` to re-init settings
-  * Necessary for when a Plugin/etc changes settings/schema
-  * Should this trigger an entire re-`init` of the `ConfigurationRenderer` or can we get away with re-Deserializing the Form Data?
 * All Inputs
   * Needs REQUIRED set
   * Needs READONLY set

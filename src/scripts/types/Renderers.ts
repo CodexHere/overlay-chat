@@ -6,6 +6,7 @@
 
 import { EventEmitter } from 'events';
 import { DisplayContextProvider } from '../ContextProviders/DisplayContextProvider.js';
+import { StylesheetsContextProvider } from '../ContextProviders/StylesheetsContextProvider.js';
 import { BusManager } from '../Managers/BusManager.js';
 import { PluginManager } from '../Managers/PluginManager.js';
 import { SettingsManager } from '../Managers/SettingsManager.js';
@@ -24,6 +25,7 @@ export type RendererInstanceOptions = {
   display: DisplayContextProvider;
   plugin: PluginManager;
   settings: SettingsManager;
+  stylesheets: StylesheetsContextProvider;
   template: TemplateManager;
 };
 

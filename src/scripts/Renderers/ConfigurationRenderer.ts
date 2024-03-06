@@ -5,7 +5,7 @@
  */
 
 import { EventEmitter } from 'events';
-import { CoreEvents, RendererInstanceEmitter } from '../types/Events.js';
+import { CoreEvents, RendererInstanceEmitter, RendererStartedHandlerOptions } from '../types/Events.js';
 import { PluginSettingsBase } from '../types/Plugin.js';
 import { RendererInstance, RendererInstanceOptions } from '../types/Renderers.js';
 import { BindInteractionEvents, UnbindInteractionEvents, UpdateFormValidators } from '../utils/Forms/Interaction.js';
@@ -74,6 +74,19 @@ export class ConfigurationRenderer<PluginSettings extends PluginSettingsBase>
     await this.subInit();
 
     this.bindEvents();
+
+    // Announce the `CoreEvents.RendererStarted` Event for newly loaded Plugins
+    // to hook into the Application Lifecycle.
+    this.options.bus.emitter.emit(CoreEvents.RendererStarted, {
+      renderMode: 'configure',
+      ctx: {
+        bus: this.options.bus.context,
+        display: this.options.display,
+        settings: this.options.settings.context,
+        stylesheets: this.options.stylesheets,
+        template: this.options.template.context
+      }
+    } as RendererStartedHandlerOptions);
   }
 
   /**
