@@ -4,7 +4,7 @@
  * @module
  */
 
-import { ToId } from '../../misc.js';
+import { ToId } from '../../Primitives.js';
 import { FormSchemaEntryBase, FormSchemaEntryProcessor, ProcessedFormSchema } from '../types.js';
 
 /**

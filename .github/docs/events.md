@@ -1,6 +1,6 @@
-# LifeCycle Events:
+# Lifecycle Events:
 
-LifeCycle Events are emitted in two different contexts: Internal communication, and Plugin communication.
+Lifecycle Events are emitted in two different contexts: Internal communication, and Plugin communication.
 
 > Event Names combine the "Source" and "Event Name" into a single string with the form: `Source::EventName`.
 > Example: `"PluginManager::PluginsLoaded"`

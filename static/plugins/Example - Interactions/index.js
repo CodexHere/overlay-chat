@@ -28,7 +28,7 @@ const BaseUrl = () => import.meta.url.split('/').slice(0, -1).join('/');
 /**
  * @implements {PluginInstance}
  */
-export default class Plugin_Example {
+export default class Plugin_Example_Interactions {
   name = 'Example - Interactions';
   version = '1.0.0';
   author = 'CodexHere <codexhere@outlook.com>';

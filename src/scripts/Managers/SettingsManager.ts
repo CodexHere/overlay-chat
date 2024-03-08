@@ -5,16 +5,14 @@
  */
 
 import { EventEmitter } from 'events';
-import get from 'lodash.get';
-import set from 'lodash.set';
 import { SettingsContextProvider } from '../ContextProviders/SettingsContextProvider.js';
 import { ApplicationIsLockedError } from '../ContextProviders/index.js';
 import { SettingsManagerEmitter } from '../types/Events.js';
 import { LockHolder, SettingsMode } from '../types/Managers.js';
 import { PluginInstance, PluginSettingsBase } from '../types/Plugin.js';
 import { FormSchema, FormSchemaEntry, FormSchemaGrouping } from '../utils/Forms/types.js';
+import { IsValidValue, PathGet, PathSet, PathUnset, ToId } from '../utils/Primitives.js';
 import { QueryStringToJson } from '../utils/URI.js';
-import { IsValidValue, ToId } from '../utils/misc.js';
 
 /**
  * Manages the Application's Settings State.
@@ -138,16 +136,14 @@ export class SettingsManager extends EventEmitter implements SettingsManagerEmit
   /**
    * Remove a Setting by name.
    *
-   * @param settingName - Setting name to remove.
+   * @param settingPath - Setting name (or path if Array-access) to remove.
    */
-  removeSetting(settingName: string) {
+  removeSetting(settingPath: string) {
     if (this.lockHolder.isLocked) {
       throw new ApplicationIsLockedError();
     }
 
-    delete this._settings[settingName as keyof PluginSettingsBase];
-
-    // TODO: Do we mark stale/dirty/etc?
+    PathUnset(this._settings, settingPath);
   }
 
   /**
@@ -288,17 +284,19 @@ export class SettingsManager extends EventEmitter implements SettingsManagerEmit
    * @param settingName - Settings Name to act on.
    * @param encrypt - Whether to Encrypt or Decrypt to value.
    */
-  private toggleSettingEncrypted<PluginSettings extends PluginSettingsBase>(
-    settings: PluginSettings,
-    settingName: string,
-    encrypt: boolean
-  ) {
-    const val = get(settings, settingName);
+  private toggleSettingEncrypted<
+    PluginSettings extends PluginSettingsBase,
+    PluginSettingsValue extends PluginSettings[keyof PluginSettings]
+  >(settings: PluginSettings, settingName: string, encrypt: boolean) {
+    const codingDir = encrypt ? btoa : atob;
+    const val = PathGet<PluginSettingsValue>(settings, settingName);
+
     if (!val) {
       return;
     }
 
-    const codingDir = encrypt ? btoa : atob;
-    set(settings, settingName, codingDir(val));
+    const newVal = codingDir(val as string) as PluginSettingsValue;
+
+    PathSet(settings, settingName, newVal);
   }
 }

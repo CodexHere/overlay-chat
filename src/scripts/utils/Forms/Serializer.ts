@@ -4,8 +4,7 @@
  * @module
  */
 
-import set from 'lodash.set';
-import { IsValidValue } from '../misc.js';
+import { IsValidValue, PathSet } from '../Primitives.js';
 
 /**
  * Populates an `HTMLFormElement` with supplied Form Data.
@@ -162,11 +161,12 @@ export const Serialize = <Data extends {}>(formElement: HTMLFormElement): Data =
     } else {
       // TODO: Is this a valid use-case? If we're not an Input/Select or RadioNodeList then what are we!?!?!?
       newValues = value;
+      throw new Error('NEVER EXPECTED TO HIT THIS, CHECK SOURCE!!!');
     }
 
     // Use lodash to `set` the values in our outputJSON object.
     // This lets us cheat, and use a stringified name agnostically regardless of single item vs array of data (i.e., `myValue = "someVal"` vs `myValue[0] = "someVal"`)
-    set(outputJson, name, newValues);
+    PathSet(outputJson, name, newValues);
   }
 
   return outputJson;

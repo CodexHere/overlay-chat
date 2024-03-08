@@ -139,12 +139,14 @@ export class LifecycleManager {
    * @param options - Broadcasted Start options when a {@link RendererInstance | `RendererInstance`} has been selected and presented to the User.
    */
   private onSchemaChanged = async (options: RendererStartedHandlerOptions) => {
+    // Unlock the Application so we can add new Bus Emitter handlers in the Renderer
     this.isLocked = false;
 
     // Re-init the active `RendererInstance`, which should effectively
     // restart the portion of the Application the User is presented.
     await options.renderer?.init();
 
+    // Lock it back down!
     this.isLocked = true;
   };
 

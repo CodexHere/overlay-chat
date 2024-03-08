@@ -11,8 +11,8 @@ import { RendererInstance, RendererInstanceOptions } from '../types/Renderers.js
 import { BindInteractionEvents, UnbindInteractionEvents, UpdateFormValidators } from '../utils/Forms/Interaction.js';
 import { Deserialize, Serialize } from '../utils/Forms/Serializer.js';
 import { GetLocalStorageItem, SetLocalStorageItem } from '../utils/LocalStorage.js';
+import { ToId, debounce } from '../utils/Primitives.js';
 import { RenderTemplate } from '../utils/Templating.js';
-import { ToId, debounce } from '../utils/misc.js';
 import { ConfigurationRendererHelper } from './ConfigurationRendererHelper.js';
 
 /**

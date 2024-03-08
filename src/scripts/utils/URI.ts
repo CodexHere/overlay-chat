@@ -1,12 +1,12 @@
 /**
  * Helpers for Serializing and Deserializing JSON <-> URI String
- * 
+ *
  * @module
  */
 
-import set from 'lodash.set';
 import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from 'lz-string';
-import { BOOLEAN_FALSES, BOOLEAN_TRUES, IsValidValue } from './misc.js';
+import { IsValidValue, PathSet } from './Primitives.js';
+import { BOOLEAN_FALSES, BOOLEAN_TRUES } from './Values.js';
 
 /**
  * Default parameters that should always exist in the Query String for this Module to properly operate.
@@ -74,12 +74,14 @@ const buildParam = <CustomData, DataKey extends keyof CustomData>(
 /**
  * Converts a URLSearchParams to our desired JSON structure
  */
-const paramsToJson = <CustomData, DataKey extends keyof CustomData>(params: URLSearchParams) => {
+const paramsToJson = <CustomData extends Record<string, any>, DataKey extends keyof CustomData>(
+  params: URLSearchParams
+) => {
   const options: CustomData = {} as CustomData;
 
   params.forEach((param, paramName) => {
     const builtParam = buildParam(param as CustomData[DataKey]);
-    set(options as object, paramName, builtParam);
+    PathSet(options, paramName, builtParam);
   });
 
   return options;

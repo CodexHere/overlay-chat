@@ -16,7 +16,7 @@ import {
   NameFormSchemaEntryOverrideMap,
   ProcessedFormSchema
 } from '../utils/Forms/types.js';
-import { ToId } from '../utils/misc.js';
+import { ToId } from '../utils/Primitives.js';
 import { ApplicationIsLockedError } from './index.js';
 import SettingsSubSchemaDefault from './schemaSettingsCore.json';
 

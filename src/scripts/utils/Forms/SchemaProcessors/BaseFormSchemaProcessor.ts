@@ -4,7 +4,7 @@
  * @module
  */
 
-import { IsValidValue } from '../../misc.js';
+import { IsValidValue } from '../../Primitives.js';
 import { FormSchemaEntryBase, NameFormSchemaEntryOverrideMap } from '../types.js';
 import { AbstractFormSchemaProcessor } from './AbstractFormSchemaProcessor.js';
 

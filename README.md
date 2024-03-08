@@ -1,6 +1,6 @@
 # HangoutHere Overlay: Chat
 
-* [LifeCycle Diagram](.github/docs/app_lifecycle.drawio.svg)
+* [Lifecycle Diagram](.github/docs/app_lifecycle.drawio.svg)
 * [Events](.github/docs/events.md)
 
 ## TODO
@@ -46,7 +46,6 @@
   * Thought Experiement: Refactor to Contexts:
     * Should we refactor to be simple proxies? Feels wrong, but might be more sane from a code perspective... We're already manually proxying other elements.
     * On top of all that, we need to probably separate the `Manager` from `Context`. This means `Manager` does App Lifecycle like `init` and such, but `Context` handles Plugin integration points (ie, `ctx.template.register(...)`)
-      * All `Context`s should extend EventEmitter but most probably wont emit
       * `TemplateManager`
         * Remove array of URLs and load/build new sub template map, and `merge()` into cache.
         * Context: Need Accessor for individual template!
@@ -148,6 +147,13 @@
 		* TTS on eventsub redeem
 * Consider making `compressed` the default URL format instead of `uri`.
   * More plugins might expose how large this URL can really get
+* Document:
+  * Utils::URI
+  * Application Overview/Lifecycle
+  * Event Overview/Lifecycle
+  * Plugin Overview/Lifecycle
+  * Verify Utils::Forms docs
+  * Generally check rest of Utils
 * Librarify:
   * https://vitejs.dev/guide/build#library-mode
   * Overlay Architecture

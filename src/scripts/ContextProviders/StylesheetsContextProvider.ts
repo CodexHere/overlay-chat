@@ -8,7 +8,7 @@ import { ContextProvider_Stylesheets } from '../types/ContextProviders.js';
 import { LockHolder } from '../types/Managers.js';
 import { PluginInstance } from '../types/Plugin.js';
 import { AddStylesheet } from '../utils/DOM.js';
-import { ToId } from '../utils/misc.js';
+import { ToId } from '../utils/Primitives.js';
 import { ApplicationIsLockedError } from './index.js';
 
 /**

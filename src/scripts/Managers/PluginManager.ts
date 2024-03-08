@@ -18,8 +18,8 @@ import {
   PluginSettingsBase
 } from '../types/Plugin.js';
 import { FormValidatorResults } from '../utils/Forms/types.js';
+import { IsValidValue } from '../utils/Primitives.js';
 import * as URI from '../utils/URI.js';
-import { IsValidValue } from '../utils/misc.js';
 
 /**
  * Manages Plugin Lifecycles for the Application.

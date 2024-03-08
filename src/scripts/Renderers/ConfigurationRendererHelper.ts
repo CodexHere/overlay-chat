@@ -7,8 +7,8 @@ import { PluginSettingsBase } from '../types/Plugin.js';
 import { RendererInstanceOptions } from '../types/Renderers.js';
 import { Deserialize, Serialize } from '../utils/Forms/Serializer.js';
 import { GetLocalStorageItem, SetLocalStorageItem } from '../utils/LocalStorage.js';
+import { DebounceResult, debounce } from '../utils/Primitives.js';
 import { BaseUrl, JsonToQueryString } from '../utils/URI.js';
-import { DebounceResult, debounce } from '../utils/misc.js';
 
 /**
  * Elements we know about in this {@link RendererInstance | `RendererInstance`} Helper.

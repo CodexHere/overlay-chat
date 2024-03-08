@@ -5,7 +5,7 @@
  */
 
 import merge, { Options } from '@fastify/deepmerge';
-import { IsValidValue, ToId } from '../../misc.js';
+import { IsValidValue, ToId } from '../../Primitives.js';
 import {
   FormSchemaEntryBase,
   FormSchemaEntryProcessor,
