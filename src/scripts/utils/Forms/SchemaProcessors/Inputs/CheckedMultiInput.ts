@@ -37,10 +37,10 @@ export class CheckedMultiInput extends SimpleInput<FormSchemaCheckedMultiInput> 
       };
 
       // Create individual `CheckedInput` and Wrap it!
-      const childInput = new CheckedInput(childSchema, this.formData);
+      const childInput = new CheckedInput(childSchema, this.formData, this.schemaOverrides);
       const childResults = childInput.process();
 
-      const wrapper = new InputWrapper(childSchema, this.formData, childResults.html, childInput);
+      const wrapper = new InputWrapper(childSchema, childResults, childInput);
       childResults.html = wrapper.process().html; // Update with new wrapped result
 
       // Accumulate recursive/iterative results

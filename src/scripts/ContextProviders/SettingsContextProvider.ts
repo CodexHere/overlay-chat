@@ -4,13 +4,19 @@
  * @module
  */
 
-import { SettingsManager } from '../Managers/SettingsManager.js';
 import { ContextProvider_Settings } from '../types/ContextProviders.js';
+import { CoreEvents, SettingsManagerEmitter } from '../types/Events.js';
 import { LockHolder } from '../types/Managers.js';
 import { PluginInstance, PluginSettingsBase } from '../types/Plugin.js';
 import { BuildFormSchema } from '../utils/Forms/Builder.js';
 import { GroupSubSchema } from '../utils/Forms/SchemaProcessors/Grouping/GroupSubSchema.js';
-import { FormSchemaGrouping, ProcessedFormSchema } from '../utils/Forms/types.js';
+import {
+  FormSchemaEntry,
+  FormSchemaGrouping,
+  NameFormSchemaEntryOverrideMap,
+  ProcessedFormSchema
+} from '../utils/Forms/types.js';
+import { ToId } from '../utils/misc.js';
 import { ApplicationIsLockedError } from './index.js';
 import SettingsSubSchemaDefault from './schemaSettingsCore.json';
 
@@ -27,58 +33,36 @@ export class SettingsContextProvider implements ContextProvider_Settings {
    * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
    */
   get: <PluginSettings extends PluginSettingsBase>(mode?: 'raw' | 'encrypted' | 'decrypted') => PluginSettings;
-  set: {
-    /**
-     * Set the Settings wholesale as an entire object.
-     *
-     * @param settings - Data to set as Settings.
-     * @param encrypt - Whether to encrypt on storing Settings. //! TODO: Is this necessary? Shouldn't we just treat settings as raw, ALWAYS? then we can decrypt for access?
-     * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
-     */
-    <PluginSettings extends PluginSettingsBase>(settings: PluginSettings, encrypt: boolean): void;
-    /**
-     * Set a value for a specific Settings Name.
-     *
-     * Will Auto Encrypt depending on `inputType` of associative {@link utils/Forms/types.FormSchemaEntryBase | `FormSchemaEntryBase`}.
-     *
-     * @param data - Data to set as Settings.
-     * @param encrypt - Whether to encrypt on storing Settings.
-     * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
-     */
-    <PluginSettings extends PluginSettingsBase>(settingName: keyof PluginSettings, value: any): void;
-  };
 
-  /**
-   * Merge Settings as an object.
-   *
-   * @param settings - Data to merge as Settings.
-   * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
-   */
-  merge: <PluginSettings extends PluginSettingsBase>(settings: PluginSettings) => void;
-
-  /** Mapped cached store of the original Settings Schema per Plugin. */
-  #pluginSchemaCacheMap: Map<Symbol, FormSchemaGrouping> = new Map();
   /** Reference Symbol representing a Plugin for the default `FormSchemaGrouping`. */
   #ref = Symbol('built-in');
 
+  /** Mapped cached store of the original Settings Schema per Plugin. */
+  #pluginSchemaCacheMap: Map<Symbol, FormSchemaGrouping> = new Map();
+
+  /** Cached results from a requested {@link FormSchemaEntry | `FormSchemaEntry`} aggregate. */
+  #processedSchemaCache?: ProcessedFormSchema;
+
+  /** A {@link NameFormSchemaEntryOverrideMap | `NameFormSchemaEntryOverrideMap`} for overriding FormSchemaEntry's at Build-time. */
+  #schemaOverrides: NameFormSchemaEntryOverrideMap = {};
+
   /** Instance of {@link LockHolder | `LockHolder`} to evaluate Lock Status. */
   #lockHolder: LockHolder;
-  /** {@link SettingsManager | `SettingsManager`} instance for the {@link types/ContextProviders.ContextProvider_Settings | `ContextProvider_Settings`} to act on. */
-  #manager: SettingsManager;
+
+  /** {@link SettingsManagerEmitter | `SettingsManagerEmitter`} instance for the {@link types/ContextProviders.ContextProvider_Settings | `ContextProvider_Settings`} to act on. */
+  #manager: SettingsManagerEmitter;
 
   /**
    * Creates new {@link SettingsContextProvider | `SettingsContextProvider`}.
    *
    * @param lockHolder - Instance of {@link LockHolder | `LockHolder`} to evaluate Lock Status.
-   * @param manager - {@link SettingsManager | `SettingsManager`} instance for the {@link types/ContextProviders.ContextProvider_Settings | `ContextProvider_Settings`} to act on.
+   * @param manager - {@link SettingsManagerEmitter | `SettingsManagerEmitter`} instance for the {@link types/ContextProviders.ContextProvider_Settings | `ContextProvider_Settings`} to act on.
    */
-  constructor(lockHolder: LockHolder, manager: SettingsManager) {
+  constructor(lockHolder: LockHolder, manager: SettingsManagerEmitter) {
     this.#lockHolder = lockHolder;
     this.#manager = manager;
 
     // Proxy properties to the Manager
-    this.set = this.#manager.set.bind(this.#manager);
-    this.merge = this.#manager.merge.bind(this.#manager);
     this.get = this.#manager.get.bind(this.#manager);
 
     // Cache the built-in `ProcessedFormSchema`
@@ -106,7 +90,7 @@ export class SettingsContextProvider implements ContextProvider_Settings {
     }
 
     // Process the Plugin's Schema to get their Keys from the returned Mappings.
-    const processed = BuildFormSchema([defaultSchemaGrouping, schemaGrouping], settings);
+    const processed = BuildFormSchema([defaultSchemaGrouping, schemaGrouping], settings, this.#schemaOverrides);
     const settingsKeys = Object.keys(processed.mappings.byName);
 
     // Return a subset of the Settings of just the keys for the Plugin (and built-in).
@@ -123,6 +107,11 @@ export class SettingsContextProvider implements ContextProvider_Settings {
    * Retrieve the aggregate {@link ProcessedFormSchema | `ProcessedFormSchema`} for all Plugins.
    */
   getProcessedSchema(): ProcessedFormSchema | null {
+    // If we're already cached, then return it!
+    if (this.#processedSchemaCache) {
+      return this.#processedSchemaCache;
+    }
+
     // No Plugins have registered any FormSchema's
     if (0 === this.#pluginSchemaCacheMap.size) {
       return null;
@@ -130,7 +119,10 @@ export class SettingsContextProvider implements ContextProvider_Settings {
 
     // ! Assumes Plugins added `FormSchema`s in Priority-order
     const schemaList = [...this.#pluginSchemaCacheMap.values()];
-    return BuildFormSchema(schemaList, this.get());
+    // Process and cache...
+    this.#processedSchemaCache = BuildFormSchema(schemaList, this.get(), this.#schemaOverrides);
+
+    return this.#processedSchemaCache;
   }
 
   /**
@@ -143,6 +135,8 @@ export class SettingsContextProvider implements ContextProvider_Settings {
       throw new ApplicationIsLockedError();
     }
 
+    this.#processedSchemaCache = undefined;
+
     // Get the cached Schema for the Plugin
     const schemaGrouping = this.#pluginSchemaCacheMap.get(plugin.ref);
 
@@ -151,11 +145,16 @@ export class SettingsContextProvider implements ContextProvider_Settings {
     }
 
     // Process the Plugin's Schema to get their Keys from the returned Mappings.
-    const processed = new GroupSubSchema(schemaGrouping, this.get()).process();
+    const processed = new GroupSubSchema(schemaGrouping, this.get(), this.#schemaOverrides).process();
     const pluginSettingsNames = Object.keys(processed.mappings.byName);
 
-    // Have Manager `remove` from the Settings
-    pluginSettingsNames.forEach(name => this.#manager.removeSetting(name));
+    pluginSettingsNames.forEach(name => {
+      // Have Manager `remove` from the Settings
+      this.#manager.removeSetting(name);
+
+      // Remove local overrides for Schema Entries
+      delete this.#schemaOverrides[name];
+    });
 
     // Remove Plugin Schema from cache
     this.#pluginSchemaCacheMap.delete(plugin.ref);
@@ -176,7 +175,73 @@ export class SettingsContextProvider implements ContextProvider_Settings {
 
     const schemaGrouping: FormSchemaGrouping = await this.#manager.loadSchemaData(plugin, schemaUrl.href);
 
+    // Force the Name/Label for the Plugin's `FormSchemaGrouping`
+    // to be based on the Plugin's Name.
+    schemaGrouping.name = ToId(plugin.name);
+    schemaGrouping.label = plugin.name;
+
     // Store original Schema Data for updating process cache if ever necessary
     this.#pluginSchemaCacheMap.set(plugin.ref, schemaGrouping);
+    this.#processedSchemaCache = undefined;
+  }
+
+  /**
+   * Override a Settings {@link FormSchemaEntry | `FormSchemaEntry`} by Settings Name.
+   *
+   * This supplied  {@link FormSchemaEntry | `FormSchemaEntry`} will be merged with the
+   * original entry supplied by the Plugin when Registered.
+   *
+   * > Note: When processing the override {@link FormSchemaEntry | `FormSchemaEntry`}'s `inputType` must match the original, or the override will fail through to the original.
+   *
+   * @param settingName - Name of the Setting to supply an overridden {@link FormSchemaEntry | `FormSchemaEntry`}.
+   * @param newSchema - New {@link FormSchemaEntry | `FormSchemaEntry`} for the `settingName`.
+   */
+  overrideSettingSchema<PluginSettings extends PluginSettingsBase>(
+    settingName: keyof PluginSettings,
+    newSchema: Partial<FormSchemaEntry>
+  ): void {
+    this.#processedSchemaCache = undefined;
+
+    newSchema.name = settingName as string;
+    this.#schemaOverrides[settingName as string] = newSchema;
+
+    this.#manager.emit(CoreEvents.SchemaChanged);
+  }
+
+  /**
+   * Set the Settings wholesale as an entire object.
+   *
+   * @param settings - Data to set as Settings.
+   * @param encrypt - Whether to encrypt on storing Settings. //! TODO: Is this necessary? Shouldn't we just treat settings as raw, ALWAYS? then we can decrypt for access?
+   * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
+   */
+  set<PluginSettings extends PluginSettingsBase>(settings: PluginSettings, encrypt?: boolean): void;
+  /**
+   * Set a value for a specific Settings Name.
+   *
+   * Will Auto Encrypt depending on `inputType` of associative {@link utils/Forms/types.FormSchemaEntryBase | `FormSchemaEntryBase`}.
+   *
+   * @param settingName - Settings Name which to set/replace a value.
+   * @param value - Value to set/replace for the Settings Name.
+   * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
+   */
+  set<PluginSettings extends PluginSettingsBase>(settingName: keyof PluginSettings, value: any): void;
+  set(setting: unknown, value: unknown): void {
+    this.#processedSchemaCache = undefined;
+
+    this.#manager.set(setting as any, value);
+  }
+
+  /**
+   * Merge an object of Setting values into current Settings.
+   *
+   * Iteratively calls {@link #set | `set`}.
+   *
+   * @param settings - Settings object to merge.
+   */
+  merge<PluginSettings extends PluginSettingsBase>(settings: PluginSettings): void {
+    this.#processedSchemaCache = undefined;
+
+    this.#manager.merge(settings);
   }
 }

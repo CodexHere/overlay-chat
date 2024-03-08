@@ -29,7 +29,7 @@ const BaseUrl = () => import.meta.url.split('/').slice(0, -1).join('/');
  * @implements {PluginInstance}
  */
 export default class Plugin_Example {
-  name = 'Example Plugin';
+  name = 'Example - Interactions';
   version = '1.0.0';
   author = 'CodexHere <codexhere@outlook.com>';
   homepage = 'https://overlay-chat.surge.sh';
@@ -310,17 +310,46 @@ export default class Plugin_Example {
     const val = emitter.call('test-event', ['Some Test Value'], { foo: true, bar: false });
     console.log(`[${this.name}] Event Output:`, val);
 
-    const btn = document.querySelector('[name="example--btnExample"]');
+    /** @type {Element | null} */
+    let btn;
+
+    btn = document.querySelector('[name="example--btnReplaceText"]');
     btn?.addEventListener('click', event => {
       event.stopImmediatePropagation();
       event.preventDefault();
-      console.log('Example Button Clicked!');
-      const txt = btn.closest('[data-input-type="grouparray"]')?.querySelector('[name="example--txtExample"]');
-      /** @type {HTMLInputElement} */
-      (btn).disabled = true;
+      /** @type {any} */
+      const elem = event.target;
+      console.log('btnReplaceText Clicked!');
+      const txt = elem?.closest('[data-input-type="grouparray"]')?.querySelector('[name="example--txtReplaceText"]');
+      elem.disabled = true;
       if (txt instanceof HTMLInputElement) {
         txt.value = 'Hello from the Plugin!';
       }
+    });
+
+    btn = document.querySelector('[name="example--btnReplaceSchema"]');
+    btn?.addEventListener('click', event => {
+      event.stopImmediatePropagation();
+      event.preventDefault();
+      /** @type {any} */
+      const elem = event.target;
+      console.log('btnReplaceSchema Clicked!');
+      elem.disabled = true;
+
+      /**
+       * @type {<PluginSettings>(settingName: keyof PluginSettings, newSchema: Partial<FormSchemaGrouping>) => void}
+       */
+      (this.#ctx?.settings.overrideSettingSchema)('example--settingsonly-settingsUI', {
+        subSchema: [
+          {
+            name: 'example--txtNewSchemaItem',
+            label: 'This has been REPLACED!',
+            inputType: 'text',
+            defaultValue: 'This is a new Schema!',
+            isDisabled: true
+          }
+        ]
+      });
     });
 
     //TODO: Look into this

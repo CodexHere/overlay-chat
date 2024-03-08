@@ -83,12 +83,12 @@ export class LifecycleManager {
    *
    * @param options - Broadcasted Start options when a {@link RendererInstance | `RendererInstance`} has been selected and presented to the User.
    */
-  private onRendererStarted = (options: RendererStartedHandlerOptions) => {
+  private onRendererStarted = async (options: RendererStartedHandlerOptions) => {
     // Bind Events for `configure` Render Mode.
-    this.bindConfigureEvents(options);
+    await this.bindConfigureEvents(options);
 
-    // Lock down the system!
-    this.isLocked = true;
+    // Initialize the Run Phase
+    await this.initRunPhase(options);
   };
 
   /**
@@ -96,7 +96,7 @@ export class LifecycleManager {
    *
    * @param options - Broadcasted Start options when a {@link RendererInstance | `RendererInstance`} has been selected and presented to the User.
    */
-  private bindConfigureEvents(options: RendererStartedHandlerOptions) {
+  private async bindConfigureEvents(options: RendererStartedHandlerOptions) {
     // Only do this for `configure` mode!
     if (!options.renderer || options.renderMode !== 'configure') {
       return;
@@ -106,6 +106,10 @@ export class LifecycleManager {
     // Upon Plugin List being changed, we want to reload all Plugins and re-Event
     // the `CoreEvents.RendererStarted` event with curried `options`.
     options.renderer.addListener(CoreEvents.PluginsChanged, this.onPluginsChanged.bind(this, options));
+
+    // `configure` Lifecycle has the potential to change the Settings Schema we want to present to the User.
+    // Upon Settings Schema being changed, we want to re-render.
+    this.actors.settings.addListener(CoreEvents.SchemaChanged, this.onSchemaChanged.bind(this, options));
   }
 
   /**
@@ -124,8 +128,37 @@ export class LifecycleManager {
     // Reloads all plugins (first unloads)
     await plugin.registerAllPlugins();
 
+    await this.initRunPhase(options);
+  };
+
+  /**
+   * Event Handler for when the Settings Schema has changed, and Renderer need reloading.
+   *
+   * > This should only occur during the `configure` Render Mode!
+   *
+   * @param options - Broadcasted Start options when a {@link RendererInstance | `RendererInstance`} has been selected and presented to the User.
+   */
+  private onSchemaChanged = async (options: RendererStartedHandlerOptions) => {
+    this.isLocked = false;
+
     // Re-init the active `RendererInstance`, which should effectively
     // restart the portion of the Application the User is presented.
     await options.renderer?.init();
+
+    this.isLocked = true;
   };
+
+  /**
+   * Inits the Run Phase by starting Plugins by an Event, and then initializing the {@link RendererInstance | `RendererInstance`}.
+   */
+  private async initRunPhase(options: RendererStartedHandlerOptions) {
+    // Re-init the active `RendererInstance`, which should effectively
+    // restart the portion of the Application the User is presented.
+    await options.renderer?.init();
+
+    this.actors.bus.emitter.emit(CoreEvents.RendererStarted, options);
+
+    // Lock down the system!
+    this.isLocked = true;
+  }
 }

@@ -6,9 +6,9 @@
 
 import merge from '@fastify/deepmerge';
 import { TemplatesContextProvider } from '../ContextProviders/TemplatesContextProvider.js';
+import { LockHolder } from '../types/Managers.js';
 import { BuildTemplateMap, TemplateIDsBase, TemplateMap } from '../utils/Templating.js';
 import coreTemplate from './coreTemplates.html?raw';
-import { LockHolder } from '../types/Managers.js';
 
 /**
  * Load and Cache {@link TemplateMap | `TemplateMap`}s  from all Plugins.
@@ -50,6 +50,11 @@ export class TemplateManager {
     return templateData;
   }
 
+  /**
+   * Add Template data to the {@link TemplateMap | `TemplateMap`}.
+   *
+   * @param templateData - Template File data as a string to process.
+   */
   addTemplateData(templateData: string) {
     // Convert to a Template Delegate mapping
     const templateMap = BuildTemplateMap(templateData);

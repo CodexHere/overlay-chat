@@ -76,10 +76,14 @@ export class TemplatesContextProvider implements ContextProvider_Template {
   /**
    * Registers a Template File for a Plugin.
    *
-   * > The file should be `<template>` tags with IDs to be mapped as ID -> Template Delegate.
+   * > The file should be a collection of `<template>` tags with IDs set.
+   * > They will be processed to be mapped as ID -> Template Delegate Function.
+   *
+   * > NOTE: This is only available during the Plugin Registration phase of the Application,
+   * > and cannot be accessed during the Runtime phase.
    *
    * @param plugin - Instance of the Plugin to act on.
-   * @param styleSheetUrl - URL of the Stylesheet to load.
+   * @param templateUrl - URL of the Template HTML file to load.
    */
   async register(plugin: PluginInstance, templateUrl: URL): Promise<void> {
     if (this.#lockHolder.isLocked) {

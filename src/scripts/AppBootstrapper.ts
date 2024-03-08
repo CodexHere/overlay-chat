@@ -181,6 +181,7 @@ export class AppBootstrapper extends EnhancedEventEmitter implements AppBootstra
       return;
     }
 
+    // Instantiate our `RendererInstance`
     this.renderer = new rendererClass({
       bus: this.busManager!,
       display: this.displayContext!,
@@ -190,14 +191,20 @@ export class AppBootstrapper extends EnhancedEventEmitter implements AppBootstra
       template: this.templateManager!
     });
 
-    // Init the Renderer
-    await this.renderer.init();
-
     // Emit the `RendererStart` Event on the "Internal" Scope.
-    // This will be proxied by the `LifecycleManager`
+    // This will also:
+    // * "Lock" the Application.
+    // * Re-emit the event to the "Plugin" Scope.
     (this as AppBootstrapperEmitter).emit(CoreEvents.RendererStarted, {
       renderer: this.renderer,
-      renderMode: this.renderMode
+      renderMode: this.renderMode,
+      ctx: {
+        bus: this.busManager?.context,
+        display: this.displayContext,
+        settings: this.settingsManager?.context,
+        stylesheets: this.stylesheetContext,
+        template: this.templateManager?.context
+      }
     } as RendererStartedHandlerOptions);
   }
 }

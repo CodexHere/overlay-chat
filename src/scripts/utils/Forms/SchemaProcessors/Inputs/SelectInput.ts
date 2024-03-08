@@ -4,7 +4,7 @@
  * @module
  */
 
-import { FormSchemaSelect } from '../../types.js';
+import { FormSchemaSelect, NameFormSchemaEntryOverrideMap } from '../../types.js';
 import { SimpleInput } from './SimpleInput.js';
 
 /**
@@ -14,14 +14,15 @@ import { SimpleInput } from './SimpleInput.js';
  */
 export class SelectInput extends SimpleInput<FormSchemaSelect> {
   constructor(
-    protected entry: FormSchemaSelect,
-    protected formData: Record<string, any>
+    entry: FormSchemaSelect,
+    formData: Record<string, any>,
+    schemaOverrides?: NameFormSchemaEntryOverrideMap
   ) {
     if (!entry.values) {
       throw new Error('Missing `values` in Entry!');
     }
 
-    super(entry, formData);
+    super(entry, formData, schemaOverrides);
   }
 
   override toString(): string {

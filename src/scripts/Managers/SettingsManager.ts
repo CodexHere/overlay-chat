@@ -4,22 +4,24 @@
  * @module
  */
 
+import { EventEmitter } from 'events';
 import get from 'lodash.get';
 import set from 'lodash.set';
 import { SettingsContextProvider } from '../ContextProviders/SettingsContextProvider.js';
 import { ApplicationIsLockedError } from '../ContextProviders/index.js';
+import { SettingsManagerEmitter } from '../types/Events.js';
 import { LockHolder, SettingsMode } from '../types/Managers.js';
 import { PluginInstance, PluginSettingsBase } from '../types/Plugin.js';
 import { FormSchema, FormSchemaEntry, FormSchemaGrouping } from '../utils/Forms/types.js';
 import { QueryStringToJson } from '../utils/URI.js';
-import { ToId } from '../utils/misc.js';
+import { IsValidValue, ToId } from '../utils/misc.js';
 
 /**
  * Manages the Application's Settings State.
  *
  * On `init`, Settings are parsed from the URI, and Unmasked (aka, decrypted values for certain types).
  */
-export class SettingsManager {
+export class SettingsManager extends EventEmitter implements SettingsManagerEmitter {
   /** Context Provider for this Manager. */
   context?: SettingsContextProvider;
 
@@ -35,7 +37,9 @@ export class SettingsManager {
   constructor(
     private lockHolder: LockHolder,
     private locationHref: string
-  ) {}
+  ) {
+    super();
+  }
 
   /**
    * Initialize the Settings Manager.
@@ -47,8 +51,11 @@ export class SettingsManager {
   async init() {
     this.context = new SettingsContextProvider(this.lockHolder, this);
     const settings = QueryStringToJson(this.locationHref);
+
     this._settings = settings;
-    this.toggleSettingsEncryption(this._settings, false);
+
+    // TODO: Get rid of this
+    // this.set(settings, false);
   }
 
   /**
@@ -56,7 +63,7 @@ export class SettingsManager {
    *
    * Can also return Settings as Masked values if desired.
    *
-   * @param masked - Whether or not to mask the settings on return
+   * @param mode - Settings Mode to get data as, defaulted to `raw`. Encryption/decryption can be enforced by changing this value.
    * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
    */
   get = <PluginSettings extends PluginSettingsBase>(mode: SettingsMode = 'raw'): PluginSettings => {
@@ -76,14 +83,14 @@ export class SettingsManager {
    * @param encrypt - Whether to encrypt on storing Settings. //! TODO: Is this necessary? Shouldn't we just treat settings as raw, ALWAYS? then we can decrypt for access?
    * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
    */
-  set<PluginSettings extends PluginSettingsBase>(data: PluginSettings, encrypt?: boolean): void;
+  set<PluginSettings extends PluginSettingsBase>(settings: PluginSettings, encrypt?: boolean): void;
   /**
    * Set a value for a specific Settings Name.
    *
    * Will Auto Encrypt depending on `inputType` of associative {@link utils/Forms/types.FormSchemaEntryBase | `FormSchemaEntryBase`}.
    *
-   * @param data - Data to set as Settings.
-   * @param encrypt - Whether to encrypt on storing Settings.
+   * @param settingName - Settings Name which to set/replace a value.
+   * @param value - Value to set/replace for the Settings Name.
    * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
    */
   set<PluginSettings extends PluginSettingsBase>(settingName: keyof PluginSettings, value: any): void;
@@ -103,8 +110,8 @@ export class SettingsManager {
       }
     } else {
       // Entire object sent in, wholesale set!
-      if (value) {
-        this.toggleSettingsEncryption(value, true);
+      if (IsValidValue(value)) {
+        this.toggleSettingsEncryption(setting as any, value as boolean);
       }
 
       this._settings = setting as any;
@@ -116,7 +123,7 @@ export class SettingsManager {
    *
    * Iteratively calls {@link #set | `set`}.
    *
-   * @param data - Settings object to merge.
+   * @param settings - Settings object to merge.
    */
   merge<PluginSettings extends PluginSettingsBase>(settings: PluginSettings): void {
     if (this.lockHolder.isLocked && 'configure' !== this.lockHolder.renderMode) {
@@ -179,10 +186,9 @@ export class SettingsManager {
   /**
    * Generate the Plugin Metadata {@link FormSchemaEntry | `FormSchemaEntry`} Settings Schema.
    *
-   * > NOTE: This is mostly for displaying in Settings configurator.
+   * > NOTE: This is for displaying in Settings configurator.
    *
    * @param plugin - Instance of the Plugin to register against.
-   * @param registration - Registration object to garner metadata against
    */
   getPluginMetaInputs(plugin: PluginInstance): FormSchema {
     return [

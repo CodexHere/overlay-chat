@@ -17,6 +17,7 @@ import { BaseFormSchemaProcessor } from '../BaseFormSchemaProcessor.js';
 export class SimpleInput<SchemaEntryType extends FormSchemaEntryBase> extends BaseFormSchemaProcessor<SchemaEntryType> {
   protected override getExtraAttributes() {
     return `
+      ${super.getExtraAttributes()}
       type="${this.entry.inputType}"
     `;
   }

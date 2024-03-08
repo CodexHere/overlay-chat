@@ -214,6 +214,7 @@ const manageArrayGroupEntries = (event: MouseEvent, btn: HTMLButtonElement) => {
         arrayIndex: rowCount,
         subSchema: arrayRow
       },
+      {},
       {}
     );
 

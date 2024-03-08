@@ -5,7 +5,7 @@
  */
 
 import { Listener } from 'events';
-import { ProcessedFormSchema } from '../utils/Forms/types.js';
+import { FormSchemaEntry, ProcessedFormSchema } from '../utils/Forms/types.js';
 import { TemplateIDsBase, TemplateMap } from '../utils/Templating.js';
 import { CoreEvents } from './Events.js';
 import { BusManagerContext_Init } from './Managers.js';
@@ -74,7 +74,7 @@ export type ContextProvider_Settings = {
    * @param encrypt - Whether to encrypt on storing Settings. //! TODO: Is this necessary? Shouldn't we just treat settings as raw, ALWAYS? then we can decrypt for access?
    * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
    */
-  set<PluginSettings extends PluginSettingsBase>(data: PluginSettings, encrypt: boolean): void;
+  set<PluginSettings extends PluginSettingsBase>(settings: PluginSettings, encrypt: boolean): void;
 
   /**
    * Set a value for a specific Settings Name.
@@ -84,8 +84,8 @@ export type ContextProvider_Settings = {
    * > NOTE: This is only available during the Plugin Registration phase of the Application,
    * > and cannot be accessed during the Runtime phase, except in `configure` Render Mode.
    *
-   * @param data - Data to set as Settings.
-   * @param encrypt - Whether to encrypt on storing Settings.
+   * @param settingName - Settings Name which to set/replace a value.
+   * @param value - Value to set/replace for the Settings Name.
    * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
    */
   set<PluginSettings extends PluginSettingsBase>(settingName: keyof PluginSettings, value: any): void;
@@ -99,7 +99,17 @@ export type ContextProvider_Settings = {
    * @param settings - Data to merge as Settings.
    * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
    */
-  merge<PluginSettings extends PluginSettingsBase>(data: PluginSettings): void;
+  merge<PluginSettings extends PluginSettingsBase>(settings: PluginSettings): void;
+
+  /**
+   *
+   * @param settingName - Name of the Setting to supply an overridden {@link FormSchemaEntry | `FormSchemaEntry`}.
+   * @param newSchema - New {@link FormSchemaEntry | `FormSchemaEntry`} for the `settingName`.
+   */
+  overrideSettingSchema<PluginSettings extends PluginSettingsBase>(
+    settingName: keyof PluginSettings,
+    newSchema: Partial<FormSchemaEntry>
+  ): void;
 };
 
 /**
@@ -119,13 +129,14 @@ export type ContextProvider_Template = {
   /**
    * Registers a Template File for a Plugin.
    *
-   * > The file should be `<template>` tags with IDs to be mapped as ID -> Template Delegate.
-   *
+   * > The file should be a collection of `<template>` tags with IDs set.
+   * > They will be processed to be mapped as ID -> Template Delegate Function.
+   * 
    * > NOTE: This is only available during the Plugin Registration phase of the Application,
    * > and cannot be accessed during the Runtime phase.
    *
    * @param plugin - Instance of the Plugin to act on.
-   * @param styleSheetUrl - URL of the Stylesheet to load.
+   * @param templateUrl - URL of the Template HTML file to load.
    */
   register(plugin: PluginInstance, templateUrl: URL): Promise<void>;
 

@@ -11,10 +11,15 @@ export type FormSchemaEntryProcessorConstructor = {
   /**
    * Constructor Definition
    *
-   * @param entry - {@link FormSchemaEntry | `FormSchemaEntry`} to Process.
-   * @param formData - Associative Data for the Form being rendered.
+   * @param entry - Supply a single {@link FormSchemaEntry | `FormSchemaEntry`} as the original from the Plugin that Registered it.
+   * @param schemaOverrides - A {@link NameFormSchemaEntryOverrideMap | `NameFormSchemaEntryOverrideMap`} for overriding FormSchemaEntry's at Build-time.
+   * @param formData - Form Data to evaluate for {@link utils/Forms/types.FormSchemaGrouping | Grouping} Schema Entries.
    */
-  new (entry: FormSchemaEntryBase, formData: Record<string, any>): FormSchemaEntryProcessor;
+  new (
+    entry: FormSchemaEntryBase,
+    formData: Record<string, any>,
+    schemaOverrides?: NameFormSchemaEntryOverrideMap
+  ): FormSchemaEntryProcessor;
 };
 
 /**
@@ -48,6 +53,10 @@ export type FormSchemaEntryBase = {
   defaultValue?: string | boolean | number;
   /** Marks the Entry as Required for Form Validation. */
   isRequired?: boolean;
+  /** Marks the Entry as ReadOnly for Form Interactions. */
+  isReadOnly?: boolean;
+  /** Marks the Entry as Disabled for Form Interactions. */
+  isDisabled?: boolean;
   /** Targets the Type of Input this FormSchema represents. */
   inputType?: string;
 };
@@ -207,7 +216,16 @@ export type InputTypeEntryMap = Partial<Record<FormSchemaEntry['inputType'], Rec
  *
  * The output maps the `name` -> `FormSchemaEntry` for possible evaluation later on.
  */
-export type NameEntryMap = Partial<Record<FormSchemaEntry['name'], FormSchemaEntry>>;
+export type NameFormSchemaEntryMap = Partial<Record<FormSchemaEntry['name'], FormSchemaEntry>>;
+
+/**
+ * Mapping that represents the overrides of construction of a Form.
+ *
+ * The output maps the `name` -> `FormSchemaEntry` for possible evaluation later on.
+ *
+ * It's very similar to `NameFormSchemaEntryMap`, with the exception that the value is also a `Partial<>`
+ */
+export type NameFormSchemaEntryOverrideMap = Partial<Record<FormSchemaEntry['name'], Partial<FormSchemaEntry>>>;
 
 /**
  * Different Mappings used for custom evaluation/processing.
@@ -216,7 +234,7 @@ export type ProcessedFormSchemaMappings = {
   /** Maps by InputType */
   byType: InputTypeEntryMap;
   /** Maps by Name */
-  byName: NameEntryMap;
+  byName: NameFormSchemaEntryMap;
 };
 
 /**

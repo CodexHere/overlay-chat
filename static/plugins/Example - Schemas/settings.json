@@ -18,6 +18,18 @@
           "tooltip": "The most common Inputs for getting data from Users",
           "subSchema": [
             {
+              "name": "simpleInputs-text-disabled",
+              "inputType": "text",
+              "isDisabled": true,
+              "defaultValue": "This is Disabled"
+            },
+            {
+              "name": "simpleInputs-text-readonly",
+              "inputType": "text",
+              "isReadOnly": true,
+              "defaultValue": "This is ReadOnly"
+            },
+            {
               "name": "simpleInputs-text",
               "inputType": "text"
             },
@@ -142,6 +154,18 @@
       "tooltip": "GroupArrays are great for grouping a few Settings together",
       "subSchema": [
         {
+          "name": "grouparray-text-disabled",
+          "inputType": "text",
+          "isDisabled": true,
+          "defaultValue": "This is Disabled"
+        },
+        {
+          "name": "grouparray-text-readonly",
+          "inputType": "text",
+          "isReadOnly": true,
+          "defaultValue": "This is ReadOnly"
+        },
+        {
           "name": "grouparray-text",
           "inputType": "text"
         },
@@ -251,6 +275,18 @@
       "description": "A GroupList (<code>grouplist</code>) is structurally identicaly to a GroupArray (<code>grouparray</code>), however the User is given the opportunity to Add and Remove new rows to the Settings dynamically. Similar to the Group-SubSchema (<code>group-subschema</code>), this Grouping is in a collapsable area.",
       "tooltip": "We're testing every type of item as an Array List",
       "subSchema": [
+        {
+          "name": "grouplist-text-disabled",
+          "inputType": "text",
+          "isDisabled": true,
+          "defaultValue": "This is Disabled"
+        },
+        {
+          "name": "grouplist-text-readonly",
+          "inputType": "text",
+          "isReadOnly": true,
+          "defaultValue": "This is ReadOnly"
+        },
         {
           "name": "grouplist-text",
           "inputType": "text"

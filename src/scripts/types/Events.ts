@@ -7,6 +7,7 @@
 import { Listener } from 'events';
 import { AppBootstrapper } from '../AppBootstrapper.js';
 import { PluginManager } from '../Managers/PluginManager.js';
+import { SettingsManager } from '../Managers/SettingsManager.js';
 import { EnhancedEventEmitter } from '../utils/EnhancedEventEmitter.js';
 import { ContextProviders } from './ContextProviders.js';
 import { BusManagerContext_Init } from './Managers.js';
@@ -23,8 +24,10 @@ export enum CoreEvents {
   PluginsLoaded = 'PluginManager::PluginsLoaded',
   /** Fired when all Plugins have been Unloaded from the Application. */
   PluginsUnloaded = 'PluginManager::PluginsUnloaded',
-  /** Fired when all Plugin List has been changed during Configuration. */
+  /** Fired when the Plugin List has been changed during Configuration. */
   PluginsChanged = 'RendererInstance::PluginsChanged',
+  /** Fired when the Schema Overrides has been changed during Configuration. */
+  SchemaChanged = 'SettingsManager::SchemaChanged',
   /** Fired when a Plugin modifies the Settings after `PluginsLoaded` is Fired. Typically this is only during Configuration. */
   SyncSettings = 'Plugin::SyncSettings',
   /** Fired when a Plugin is attempting to Execute a Middleware Chain. */
@@ -53,6 +56,15 @@ export type AppBootstrapperEmitter = AppBootstrapper & {
     eventType: CoreEvents.RendererStarted,
     listener: (options: RendererStartedHandlerOptions) => void
   ): AppBootstrapperEmitter;
+};
+
+/**
+ * Events that the {@link SettingsManager | `SettingsManager`} Emits.
+ */
+export type SettingsManagerEmitter = SettingsManager & {
+  emit(eventType: CoreEvents.SchemaChanged): boolean;
+  addListener(eventType: CoreEvents.SchemaChanged, listener: Listener): SettingsManagerEmitter;
+  on(eventType: CoreEvents.SchemaChanged, listener: Listener): SettingsManagerEmitter;
 };
 
 export type BusManagerEmitter = EnhancedEventEmitter & {

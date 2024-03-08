@@ -6,7 +6,7 @@
 
 import merge from '@fastify/deepmerge';
 import { BuildInput } from '../../Builder.js';
-import { FormSchemaGroupingRow } from '../../types.js';
+import { FormSchemaGroupingRow, NameFormSchemaEntryOverrideMap } from '../../types.js';
 import { SimpleInput } from '../Inputs/SimpleInput.js';
 
 /**
@@ -16,14 +16,15 @@ import { SimpleInput } from '../Inputs/SimpleInput.js';
  */
 export class GroupingRow extends SimpleInput<FormSchemaGroupingRow> {
   constructor(
-    protected entry: FormSchemaGroupingRow,
-    protected formData: Record<string, any>
+    entry: FormSchemaGroupingRow,
+    formData: Record<string, any>,
+    schemaOverrides?: NameFormSchemaEntryOverrideMap
   ) {
     if (!entry.subSchema) {
       throw new Error('Missing `subSchema` in Entry!');
     }
 
-    super(entry, formData);
+    super(entry, formData, schemaOverrides);
   }
 
   override toString(): string {
@@ -40,7 +41,8 @@ export class GroupingRow extends SimpleInput<FormSchemaGroupingRow> {
           ...rowEntry,
           name: `${rowEntry.name}${suffix}`
         },
-        this.formData
+        this.formData,
+        this.schemaOverrides
       );
 
       // Accumulate iterative results

@@ -7,6 +7,8 @@
 import { FormSchemaCheckedInput } from '../../types.js';
 import { SimpleInput } from './SimpleInput.js';
 
+const SWITCH_TYPES = ['switch', 'switch-multiple'];
+
 /**
  * {@link FormSchemaCheckedInput | `FormSchemaCheckedInput`} Processor.
  *
@@ -17,7 +19,7 @@ export class CheckedInput extends SimpleInput<FormSchemaCheckedInput> {
   protected override getExtraAttributes() {
     const { defaultData, chosenLabel } = this.getCleanedEntryValues();
     const inputType = this.entry.inputType === 'radio-option' ? 'radio' : 'checkbox';
-    const switchRole = this.entry.inputType === 'switch' ? 'role="switch"' : '';
+    const switchRole = SWITCH_TYPES.includes(this.entry.inputType) ? 'role="switch"' : '';
 
     return `
       type="${inputType}"

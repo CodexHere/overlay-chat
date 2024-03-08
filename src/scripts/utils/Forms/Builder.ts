@@ -18,19 +18,27 @@ import { PasswordInput } from './SchemaProcessors/Inputs/PasswordInput.js';
 import { SelectInput } from './SchemaProcessors/Inputs/SelectInput.js';
 import { SimpleInput } from './SchemaProcessors/Inputs/SimpleInput.js';
 import { ValidatedInput } from './SchemaProcessors/Inputs/ValidatedInput.js';
-import { FormSchema, FormSchemaEntry, FormSchemaEntryProcessorConstructor, ProcessedFormSchema } from './types.js';
+import {
+  FormSchema,
+  FormSchemaEntry,
+  FormSchemaEntryProcessorConstructor,
+  NameFormSchemaEntryOverrideMap,
+  ProcessedFormSchema
+} from './types.js';
 
 /**
  * Builds a single Input from a single {@link FormSchemaEntry | `FormSchemaEntry`}.
  *
- * @param entry - Form Schema for the single {@link FormSchemaEntry | `FormSchemaEntry`}.
+ * @param entry - Supply a single {@link FormSchemaEntry | `FormSchemaEntry`} as the original from the Plugin that Registered it.
  * @param formData - Form Data to evaluate for {@link utils/Forms/types.FormSchemaGrouping | Grouping} Schema Entries.
+ * @param schemaOverrides - A {@link NameFormSchemaEntryOverrideMap | `NameFormSchemaEntryOverrideMap`} for overriding FormSchemaEntry's at Build-time.
+ * @typeParam FormData - Shape of the Data that can populate the Form.
  */
-export const BuildInput = <FormData extends {}>(entry: FormSchemaEntry, formData: FormData): ProcessedFormSchema => {
-  if (!entry.name) {
-    throw new Error('FormEntry does not have a `name` property! ' + JSON.stringify(entry));
-  }
-
+export const BuildInput = <FormData extends {}>(
+  entry: FormSchemaEntry,
+  formData: FormData,
+  schemaOverrides?: NameFormSchemaEntryOverrideMap
+): ProcessedFormSchema => {
   let processorCtor: FormSchemaEntryProcessorConstructor | undefined;
 
   /**
@@ -124,7 +132,7 @@ export const BuildInput = <FormData extends {}>(entry: FormSchemaEntry, formData
   }
 
   // Instantiate and Process!
-  const processor = new processorCtor!(entry, formData);
+  const processor = new processorCtor!(entry, formData, schemaOverrides);
   const processed = processor.process();
 
   /**
@@ -142,7 +150,7 @@ export const BuildInput = <FormData extends {}>(entry: FormSchemaEntry, formData
       break;
 
     default:
-      const wrapper = new InputWrapper(entry, formData, processed.html, processor);
+      const wrapper = new InputWrapper(entry, processed, processor);
       // Update the `processed` HTML results with the newly wrapped HTML
       // Note: No need to merge `mapping` as the `InputWrapper` provides zero mapping.
       processed.html = wrapper.process().html;
@@ -160,17 +168,19 @@ export const BuildInput = <FormData extends {}>(entry: FormSchemaEntry, formData
  *
  * @param entries - Collection of {@link FormSchemaEntry | `FormSchemaEntry`}s to build as an entire {@link FormSchema | `FormSchema`}.
  * @param formData - Form Data to evaluate for {@link utils/Forms/types.FormSchemaGrouping | Grouping} Schema Entries.
+ * @param schemaOverrides - A {@link NameFormSchemaEntryOverrideMap | `NameFormSchemaEntryOverrideMap`} for overriding FormSchemaEntry's at Build-time.
  */
 export const BuildFormSchema = <FormData extends {}>(
   entries: Readonly<FormSchema>,
-  formData: FormData
+  formData: FormData,
+  schemaOverrides?: NameFormSchemaEntryOverrideMap
 ): ProcessedFormSchema => {
   let results: ProcessedFormSchema = { html: '', mappings: { byName: {}, byType: {} } };
 
   // Build every `entry` in `entries`
   for (let entryIdx = 0; entryIdx < entries.length; entryIdx++) {
-    const entry = entries[entryIdx];
-    const newInput = BuildInput(entry, formData);
+    const entryOriginal = entries[entryIdx];
+    const newInput = BuildInput(entryOriginal, formData, schemaOverrides);
 
     // Accumulate iterative results
     results = merge({ all: true })(results, newInput, {
@@ -185,13 +195,15 @@ export const BuildFormSchema = <FormData extends {}>(
  * Builds an entire {@link FormSchema | `FormSchema`} of Inputs, and wraps with an `HTMLFormElement` tag (`<form>`) with associative `formId`.
  *
  * @param entries - Collection of {@link FormSchemaEntry | `FormSchemaEntry`}s to build as an entire {@link FormSchema | `FormSchema`}.
+ * @param schemaOverrides - A {@link NameFormSchemaEntryOverrideMap | `NameFormSchemaEntryOverrideMap`} for overriding FormSchemaEntry's at Build-time.
  * @param formData - Form Data to evaluate for {@link utils/Forms/types.FormSchemaGrouping | Grouping} Schema Entries.
  * @param formId - Unique ID to give the `HTMLFormElement` when Processed.
  */
 export const BuildForm = <FormData extends {}>(
   entries: Readonly<FormSchema>,
+  schemaOverrides: NameFormSchemaEntryOverrideMap,
   formData: FormData,
   formId: string
 ): Form => {
-  return new Form(entries, formData, formId);
+  return new Form(entries, formData, formId, schemaOverrides);
 };

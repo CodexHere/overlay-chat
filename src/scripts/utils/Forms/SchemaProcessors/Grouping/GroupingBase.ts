@@ -5,7 +5,7 @@
  */
 
 import merge from '@fastify/deepmerge';
-import { FormSchemaGrouping } from '../../types.js';
+import { FormSchemaGrouping, NameFormSchemaEntryOverrideMap } from '../../types.js';
 import { BaseFormSchemaProcessor } from '../BaseFormSchemaProcessor.js';
 import { GroupingRow } from './GroupingRow.js';
 
@@ -36,14 +36,22 @@ export class GroupingBase extends BaseFormSchemaProcessor<FormSchemaGrouping> {
   }
 
   constructor(
-    protected entry: FormSchemaGrouping,
-    protected formData: Record<string, any>
+    entry: FormSchemaGrouping,
+    formData: Record<string, any>,
+    schemaOverrides: NameFormSchemaEntryOverrideMap
   ) {
     if (!entry.subSchema) {
       throw new Error('Missing `subSchema` in Entry!');
     }
 
-    super(entry, formData);
+    super(entry, formData, schemaOverrides);
+  }
+
+  protected override getCleanedEntryValues() {
+    return {
+      ...super.getCleanedEntryValues(),
+      chosenLabel: this.entry.label ?? ''
+    };
   }
 
   protected override toString(): string {
@@ -64,7 +72,8 @@ export class GroupingBase extends BaseFormSchemaProcessor<FormSchemaGrouping> {
             arrayIndex: isList ? settingIdx : undefined,
             subSchema: entry.subSchema
           },
-          this.formData
+          this.formData,
+          this.schemaOverrides
         );
 
         const childResults = childInput.process();

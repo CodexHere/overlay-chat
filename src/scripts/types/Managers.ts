@@ -11,7 +11,7 @@ import { BusManager } from '../Managers/BusManager.js';
 import { PluginManager } from '../Managers/PluginManager.js';
 import { SettingsManager } from '../Managers/SettingsManager.js';
 import { TemplateManager } from '../Managers/TemplateManager.js';
-import { AppBootstrapperEmitter, PluginManagerEmitter } from './Events.js';
+import { AppBootstrapperEmitter, PluginManagerEmitter, SettingsManagerEmitter } from './Events.js';
 import { PluginConstructor, PluginInstance, PluginSettingsBase } from './Plugin.js';
 import { RenderMode } from './Renderers.js';
 
@@ -84,7 +84,7 @@ export type LifecycleManagerOptions = {
   bus: BusManager;
   display: DisplayContextProvider;
   plugin: PluginManagerEmitter;
-  settings: SettingsManager;
+  settings: SettingsManagerEmitter;
   stylesheets: StylesheetsContextProvider;
   template: TemplateManager;
 };

@@ -5,7 +5,7 @@
  */
 
 import { EventEmitter } from 'events';
-import { CoreEvents, RendererInstanceEmitter, RendererStartedHandlerOptions } from '../types/Events.js';
+import { CoreEvents, RendererInstanceEmitter } from '../types/Events.js';
 import { PluginSettingsBase } from '../types/Plugin.js';
 import { RendererInstance, RendererInstanceOptions } from '../types/Renderers.js';
 import { BindInteractionEvents, UnbindInteractionEvents, UpdateFormValidators } from '../utils/Forms/Interaction.js';
@@ -74,19 +74,6 @@ export class ConfigurationRenderer<PluginSettings extends PluginSettingsBase>
     await this.subInit();
 
     this.bindEvents();
-
-    // Announce the `CoreEvents.RendererStarted` Event for newly loaded Plugins
-    // to hook into the Application Lifecycle.
-    this.options.bus.emitter.emit(CoreEvents.RendererStarted, {
-      renderMode: 'configure',
-      ctx: {
-        bus: this.options.bus.context,
-        display: this.options.display,
-        settings: this.options.settings.context,
-        stylesheets: this.options.stylesheets,
-        template: this.options.template.context
-      }
-    } as RendererStartedHandlerOptions);
   }
 
   /**
@@ -232,13 +219,13 @@ export class ConfigurationRenderer<PluginSettings extends PluginSettingsBase>
     // Get the current Settings Form data, and set it as the current Application Settings
     const form = this.elements.form;
     const formData = Serialize<PluginSettings>(form);
-    this.options.settings.set(formData);
+    this.options.settings.context!.set(formData);
 
     // Validate Settings through all Plugins
     const validations = this.options.plugin.validateSettings();
 
     // Update the Settings Form Validation states
-    UpdateFormValidators(this.elements.form, validations);
+    UpdateFormValidators(form, validations);
     // Update/Store the Settings Options
     this.helper?.saveConfigurationOptions();
     // Update the URL State
@@ -381,6 +368,8 @@ export class ConfigurationRenderer<PluginSettings extends PluginSettingsBase>
       behavior: 'smooth'
     });
 
-    setTimeout(() => pluginContainer?.querySelector('input')?.focus(), 300);
+    setTimeout(() => {
+      (event.target as HTMLSelectElement).selectedIndex = 0;
+    }, 500);
   };
 }

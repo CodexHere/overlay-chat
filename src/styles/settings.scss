@@ -269,7 +269,7 @@
     }
 
     // Plugin Metadata
-    & > details:not(:first-child) .content > details:last-child {
+    & > details:not(:first-child) > .content > details:last-child {
       margin: 0;
       font-size: 0.7em;
 

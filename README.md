@@ -10,8 +10,6 @@
 * All Inputs
   * Needs REQUIRED set
   * Needs READONLY set
-* Single Inputs
-  * Default Value - Should be working
 * Multi Inputs
   * Needs per-value constraints 
     * Default Value - I don't think exists
@@ -36,20 +34,17 @@
   * Forms:
     * For multi-select items, need separation between value/label
     * See info above
-    * Default/Required/Readonly Values for both single/multi/group Entries
+    * Default/Required/Readonly Values for both ~~single~~/multi/group Entries
     * Needs to properly support `<datalist>` - https://developer.mozilla.org/en-US/docs/Web/HTML/Element/datalist
     * Form schema processors should have validation for required properties, just because
+    * How should we handle errors? I think atm it just bombs? Maybe we need to just skip the Entry and go to the next? Plugins might fail at that point, but it's on the plugin to check and have sane defaults if applicable.
   * Thought Experiment: Accessor Function `setSetting('settingName', someValue)`
     * Used to set individual setting
     * Would use the Schema to derive how to inject/select setting
       * i.e., `FormSchemaCheckedMultiInput` would iterate through values and build the expected `selectedIndex:value` setting.
       * i.e., Groupings will probably need some recursion to this?
-    * Interface for `RendererInstanceOptions` is getting a bit fat for almost no reason... Another reason to inject Context objects? This already pretty much IS that, but we can group functionality by access (ie, settings vs plugins vs stylesheets, etc).
   * Thought Experiement: Refactor to Contexts:
-    * Most Managers need to wrap a `ContextProvider`
-      * A `ContextProvider` implements a specific `Context`, such as `SettingsContext`, which houses the primary accessor functionality
-      * Accessors will likely need massive renaming.
-      * This means make new types for `SettingsContext`, `TemplateContext` etc, make the associative Managers implement them, and build an interface to inject these into the Plugins as a `PluginContext`.
+    * Should we refactor to be simple proxies? Feels wrong, but might be more sane from a code perspective... We're already manually proxying other elements.
     * On top of all that, we need to probably separate the `Manager` from `Context`. This means `Manager` does App Lifecycle like `init` and such, but `Context` handles Plugin integration points (ie, `ctx.template.register(...)`)
       * All `Context`s should extend EventEmitter but most probably wont emit
       * `TemplateManager`
@@ -97,6 +92,10 @@
       * if matches in the supplied list, needs to be enabled rather than added
     * Consider a way to just combine built-in and remote plugins
   * Settings:
+    * Settings as it relates to masking/encoding are all jacked up!!!!!
+      * Seems to be encoding new password List items ok, BUT...
+      * When loading a new plugin the encoding gets all jacked up and shows you the encrypted value, which double encrypts for the URL
+      * When loading an existing URL the encoding gets all jacked up and shows you the encrypted value, which double encrypts for the URL
     * Really need to consider how we handle settings atm.
       * Should assuming raw settings are MASKED!
       * This means settings values should be MASKED on SET
@@ -115,6 +114,9 @@
   * Need to make sure we have `Twitch - Chat` enabled
   * Maybe this is unnecessary if the process enforces enabling as mentioned in `Refactor > Bootstrapper`
 * All Plugins' settings names need prefixes to avoid collissions, as well as updates within their code! This *could* spread to other plugins for a name, so consider a string search before replacing. IE, EmoteSwap checking for Chat options.
+* Styles/Stylesheet/CSS Fixes/Cleanup:
+  * Invalid focused items are impossible to read
+  * Disabled items are indistinguishable
 * Example Plugin:
   * Needs to mention in description, and add advanced `isConfigured` check for `enabled` items missing a `message`.
   * Convert `Show Error at Runtime?` to Enabled/Message like others.
