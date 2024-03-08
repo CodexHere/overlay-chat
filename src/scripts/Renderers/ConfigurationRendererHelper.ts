@@ -1,5 +1,5 @@
 /**
- * Helper Behaviors for better UX within the `SettingsRenderer`
+ * Helper Behaviors for better UX within the `ConfigurationRenderer`
  *
  * @module
  */
@@ -7,8 +7,8 @@ import { PluginSettingsBase } from '../types/Plugin.js';
 import { RendererInstanceOptions } from '../types/Renderers.js';
 import { Deserialize, Serialize } from '../utils/Forms/Serializer.js';
 import { GetLocalStorageItem, SetLocalStorageItem } from '../utils/LocalStorage.js';
+import { DebounceResult, debounce } from '../utils/Primitives.js';
 import { BaseUrl, JsonToQueryString } from '../utils/URI.js';
-import { DebounceResult, debounce } from '../utils/misc.js';
 
 /**
  * Elements we know about in this {@link RendererInstance | `RendererInstance`} Helper.
@@ -36,11 +36,11 @@ const isScrollTTYExpired = () => {
 };
 
 /**
- * Helper Behaviors for better UX within the `SettingsRenderer`.
+ * Helper Behaviors for better UX within the `ConfigurationRenderer`.
  *
  * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
  */
-export class SettingsRendererHelper<PluginSettings extends PluginSettingsBase> {
+export class ConfigurationRendererHelper<PluginSettings extends PluginSettingsBase> {
   /** Debounced Handler for when the URL Text is Moused. */
   private onUrlMouseEnterDebouncer: DebounceResult;
   /** Local `ElementMap` mapping name -> Element the {@link RendererInstance | `RendererInstance`} Helper needs to access. */
@@ -49,7 +49,7 @@ export class SettingsRendererHelper<PluginSettings extends PluginSettingsBase> {
   private settingsOptionsFormCache: PluginSettings = {} as PluginSettings;
 
   /**
-   * Create a new {@link SettingsRenderer | `SettingsRenderer`}.
+   * Create a new {@link ConfigurationRenderer | `ConfigurationRenderer`}.
    *
    * @param options - Incoming Options for this Renderer.
    * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
@@ -74,9 +74,9 @@ export class SettingsRendererHelper<PluginSettings extends PluginSettingsBase> {
   private buildElementMap() {
     const body = globalThis.document.body;
 
-    const formOptions = body.querySelector('form#settings-options')!;
+    const formOptions = body.querySelector('form#configuration-options')!;
     this.elements['form'] = body.querySelector('form#settings')!;
-    this.elements['form-options'] = body.querySelector('form#settings-options')!;
+    this.elements['form-options'] = body.querySelector('form#configuration-options')!;
     this.elements['link-results-area'] = formOptions.querySelector('.textarea-wrapper')!;
     this.elements['link-results-output'] = formOptions.querySelector('textarea.url')!;
   }
@@ -261,7 +261,7 @@ export class SettingsRendererHelper<PluginSettings extends PluginSettingsBase> {
   /**
    * Updates the Local Form Data cache, and saves it into Local Storage.
    */
-  public saveSettingsOptions() {
+  public saveConfigurationOptions() {
     // Serialize Form into JSON and store in LocalStorage
     this.settingsOptionsFormCache = Serialize(this.elements['form-options']);
     SetLocalStorageItem('settingsOptions', this.settingsOptionsFormCache);
@@ -277,7 +277,7 @@ export class SettingsRendererHelper<PluginSettings extends PluginSettingsBase> {
       return;
     }
 
-    if (false === event.target.classList.contains('settings-option')) {
+    if (false === event.target.classList.contains('configuration-option')) {
       return;
     }
 
@@ -319,7 +319,7 @@ export class SettingsRendererHelper<PluginSettings extends PluginSettingsBase> {
     event.stopImmediatePropagation();
     event.preventDefault();
 
-    const isSettingsOption = event.target.classList.contains('settings-option');
+    const isSettingsOption = event.target.classList.contains('configuration-option');
 
     if (!isSettingsOption) {
       return;
@@ -327,7 +327,7 @@ export class SettingsRendererHelper<PluginSettings extends PluginSettingsBase> {
 
     // Settings Option was changed
 
-    this.saveSettingsOptions();
+    this.saveConfigurationOptions();
     this.updateUrlState();
   };
 

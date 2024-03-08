@@ -1,9 +1,12 @@
 /**
  * @typedef {import('../../../src/scripts/types/Plugin.js').PluginSettingsBase} PluginSettingsBase
  * @typedef {Object} PluginSettings_Extra
- * @property {string} colorLeading
- * @property {string} colorMod
- * @property {string} colorVip
+ * @property {string} example--addText
+ * @property {boolean} example--showErrorAtRuntime
+ * @property {boolean} example--showInfoAtRuntime
+ * @property {string} example--showInfoAtRuntime-message
+ * @property {boolean} example--sendMessageAtRuntime
+ * @property {string} example--sendMessageAtRuntime-message
  * @typedef {PluginSettings_Extra & PluginSettingsBase} PluginSettings
  *
  * @typedef {import('../../../src/scripts/Plugin_Core.js').MiddewareContext_Chat} ConcreteContext
@@ -25,12 +28,13 @@ const BaseUrl = () => import.meta.url.split('/').slice(0, -1).join('/');
 /**
  * @implements {PluginInstance}
  */
-export default class Plugin_HangoutHereTheme {
-  name = 'HangoutHere Theme';
+export default class Plugin_Example_Schemas {
+  name = 'Example - Schemas';
   version = '1.0.0';
   author = 'CodexHere <codexhere@outlook.com>';
   homepage = 'https://overlay-chat.surge.sh';
   ref = Symbol(this.name);
+  priority = 20;
 
   /**
    * @type {ContextProviders | undefined}
@@ -46,17 +50,12 @@ export default class Plugin_HangoutHereTheme {
    */
   register = async ctx => {
     await ctx.settings.register(this, new URL(`${BaseUrl()}/settings.json`));
-    ctx.bus.registerMiddleware(this, this.#getMiddleware());
     ctx.bus.registerEvents(this, this.#getEvents());
-    ctx.stylesheets.register(this, new URL(`${BaseUrl()}/plugin.css`));
   };
 
-  /**
-   * @returns {PluginMiddlewareMap}
-   */
-  #getMiddleware = () => ({
-    'chat:twitch': [this.#middleware]
-  });
+  unregister() {
+    console.log(`[${this.name}] Unregistering Plugin`);
+  }
 
   /**
    * @returns {PluginEventMap}
@@ -66,14 +65,9 @@ export default class Plugin_HangoutHereTheme {
 
     return {
       recieves: {
-        'AppBootstrapper::RendererStarted': this.#onRendererStart,
-        'test-event': this.#testEventHandler
+        'AppBootstrapper::RendererStarted': this.#onRendererStart
       }
     };
-  }
-
-  unregister() {
-    console.log(`${this.name} Unregistering`);
   }
 
   /**
@@ -94,31 +88,22 @@ export default class Plugin_HangoutHereTheme {
   };
 
   #renderConfiguration() {
-    console.log(`${this.name} [renderConfiguration]`);
+    const emitter = this.#ctx?.bus;
 
-    // Just to shut up the unused `this.#ctx`
-    this.#ctx?.bus.emit('bogus-event');
+    if (!emitter) {
+      throw new Error('Could not renderConfiguration() - no emitter???');
+    }
+
+    console.log(`[${this.name}] [renderConfiguration]`);
   }
 
   #renderApp() {
-    console.log(`${this.name} [renderApp]`);
+    const emitter = this.#ctx?.bus;
+
+    if (!emitter) {
+      throw new Error('Could not renderConfiguration() - no emitter???');
+    }
+
+    console.log(`[${this.name}] [renderApp]`);
   }
-
-  /**
-   * @param {string[]} param1
-   * @param {object} param2
-s   */
-  #testEventHandler = (param1, param2) => {
-    return `${this.name} TEST return call successfully (${param1.join(', ')}, ${JSON.stringify(param2)})`;
-  };
-
-  /**
-   * @param {Context} context
-   * @param {Next} next
-   */
-  #middleware = async (context, next) => {
-    context.message += ` [HangoutHere] `;
-
-    await next();
-  };
 }

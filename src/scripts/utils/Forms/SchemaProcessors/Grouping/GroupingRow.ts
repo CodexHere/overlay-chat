@@ -4,26 +4,27 @@
  * @module
  */
 
-import merge from 'lodash.merge';
-import { BuildInput } from '../../Builder.js';
-import { FormSchemaGroupingRow } from '../../types.js';
-import { SimpleInput } from '../Inputs/SimpleInput.js';
+import merge from '@fastify/deepmerge';
+import { BuildFormSchemaEntry } from '../../Builder.js';
+import { FormSchemaGroupingRow, NameFormSchemaEntryOverrideMap } from '../../types.js';
+import { BaseFormSchemaProcessor } from '../BaseFormSchemaProcessor.js';
 
 /**
  * {@link utils/Forms/types.FormSchemaGrouping | `FormSchemaGrouping`} Row Processor Definition.
  *
  * A {@link utils/Forms/types.FormSchemaGrouping | `FormSchemaGrouping`} Processing a simple {@link utils/Forms/SchemaProcessors/Grouping/GroupingRow.GroupingRow | `GroupingRow`} of associated {@link utils/Forms/types.FormSchemaEntry | `FormSchemaEntry`}s by iteratively calling {@link utils/Forms/Builder.BuildInput | `FormBuilder::BuildInput`}.
  */
-export class GroupingRow extends SimpleInput<FormSchemaGroupingRow> {
+export class GroupingRow extends BaseFormSchemaProcessor<FormSchemaGroupingRow> {
   constructor(
-    protected entry: FormSchemaGroupingRow,
-    protected formData: Record<string, any>
+    entry: FormSchemaGroupingRow,
+    formData: Record<string, any>,
+    schemaOverrides?: NameFormSchemaEntryOverrideMap
   ) {
     if (!entry.subSchema) {
       throw new Error('Missing `subSchema` in Entry!');
     }
 
-    super(entry, formData);
+    super(entry, formData, schemaOverrides);
   }
 
   override toString(): string {
@@ -35,16 +36,17 @@ export class GroupingRow extends SimpleInput<FormSchemaGroupingRow> {
 
     // For each rowEntry, Build an Input, setting the name to a potential suffix'd value.
     const rowResults = rowEntries.map(rowEntry => {
-      const childResults = BuildInput(
+      const childResults = BuildFormSchemaEntry(
         {
           ...rowEntry,
           name: `${rowEntry.name}${suffix}`
         },
-        this.formData
+        this.formData,
+        this.schemaOverrides
       );
 
       // Accumulate iterative results
-      merge(this.mappings, childResults.mappings);
+      this.mappings = merge()(this.mappings, childResults.mappings);
 
       return childResults.html;
     });

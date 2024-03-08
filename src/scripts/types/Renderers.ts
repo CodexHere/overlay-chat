@@ -6,26 +6,27 @@
 
 import { EventEmitter } from 'events';
 import { DisplayContextProvider } from '../ContextProviders/DisplayContextProvider.js';
+import { StylesheetsContextProvider } from '../ContextProviders/StylesheetsContextProvider.js';
+import { BusManager } from '../Managers/BusManager.js';
 import { PluginManager } from '../Managers/PluginManager.js';
 import { SettingsManager } from '../Managers/SettingsManager.js';
 import { TemplateManager } from '../Managers/TemplateManager.js';
 
 /**
- * Events that the {@link SettingsManager | `SettingsManager`} Emits.
+ * Current Render Mode for the Application.
  */
-export enum RendererInstanceEvents {
-  /** Fired when Plugin List has been modified */
-  PLUGINS_STALE = 'rendererinstance::plugins-stale'
-}
+export type RenderMode = 'app' | 'configure';
 
 /**
  * Options for initializing the {@link RendererInstance | `RendererInstance`}.
  */
 export type RendererInstanceOptions = {
-  template: TemplateManager;
-  settings: SettingsManager;
-  plugin: PluginManager;
+  bus: BusManager;
   display: DisplayContextProvider;
+  plugin: PluginManager;
+  settings: SettingsManager;
+  stylesheets: StylesheetsContextProvider;
+  template: TemplateManager;
 };
 
 /**

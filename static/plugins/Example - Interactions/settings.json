@@ -1,6 +1,6 @@
 {
   "inputType": "group-subschema",
-  "label": "Examples for Plugins",
+  "label": "Example - Interactions",
   "description": "This Plugin shows examples for both Application and Settings Runtimes, so be sure to check out the implementation!<br /><br />Some Chat commands exist (requires `Twitch - Chat` Plugin) to demonstrate various Error handling, Eventing, and Middleware Chain flows:<br />* skipCurrent - Skips the current Link, continues with the rest of the chain.<br />* skipChain1 - Silently fails Chain with a Custom Error type (passes to `next()`).<br />* skipChain2 - Silently fails Chain by <i>throwing</i> a Custom Erorr type.<br />* nextError - Passes a standard Error into `next()`, which fails the entire Chain.<br />* throwError - Throws a standard Error, which fails the entire Chain.",
   "subSchema": [
     {
@@ -10,19 +10,30 @@
       "description": "This examples how a plugin can handle interaction on the Settings page",
       "subSchema": [
         {
-          "name": "example--settingsonly-settingsUI-2",
-          "label": "Interact Below",
+          "name": "example--settingsonly-ReplaceText",
           "inputType": "grouparray",
           "subSchema": [
             {
-              "name": "example--txtExample",
+              "name": "example--txtReplaceText",
               "label": "Changed by Plugin",
               "inputType": "text",
               "tooltip": "This text will populate when the button is clicked."
             },
             {
-              "name": "example--btnExample",
-              "label": "Perform Example",
+              "name": "example--btnReplaceText",
+              "label": "Replace Text",
+              "inputType": "button"
+            }
+          ]
+        },
+
+        {
+          "name": "example--settingsonly-ReplaceSchema",
+          "inputType": "grouparray",
+          "subSchema": [
+            {
+              "name": "example--btnReplaceSchema",
+              "label": "Replace Schema",
               "inputType": "button"
             }
           ]

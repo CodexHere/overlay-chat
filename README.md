@@ -1,17 +1,15 @@
 # HangoutHere Overlay: Chat
 
+* [Lifecycle Diagram](.github/docs/app_lifecycle.drawio.svg)
+* [Events](.github/docs/events.md)
+
 ## TODO
 
-### Default Settings
+### Default Settings Thinkery
 
-* Need `RendererInstanceEvents.SETTINGS_STALE` to re-init settings
-  * Necessary for when a Plugin/etc changes settings/schema
-  * Should this trigger an entire re-`init` of the `SettingsRenderer` or can we get away with re-Deserializing the Form Data?
 * All Inputs
   * Needs REQUIRED set
   * Needs READONLY set
-* Single Inputs
-  * Default Value - Should be working
 * Multi Inputs
   * Needs per-value constraints 
     * Default Value - I don't think exists
@@ -30,40 +28,30 @@
 
 ### General TODO
 
-#### Lifecycle Events:
-  * Do they all have common namespace? I.E., `Core::EventName`
-
-| Event Name                       | Note                                                                                                                                                                                                                                                                                                                                                                                                      |
-| -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `PluginManager::PluginsLoaded`   | Called after all plugins are loaded, should re-mask settings<br />* But *why* do we want to re-mask settings *THEN*?                                                                                                                                                                                                                                                                                      |
-| `PluginManager::PluginsUnloaded` | Called after all plugins are unloaded, which resets the environment (mostly Bus).                                                                                                                                                                                                                                                                                                                         |
-| `Renderer::PluginsChanged`       | Called when Configuring, when the settings have changed to add/remove Plugins. Ideally, should never occur at app/run-time.<br />* Replaces the `RendererInstanceEvents.PLUGINS_STALE` event.                                                                                                                                                                                                             |
-| `Renderer::SyncCache`            | Called when the state of the Form is out of sync with the `ProcessedFormSchema` cache and needs to be re-processed against the current Form Settings. Generally, this is called when a `FormSchemaGroupingList` adds a new Entry through user interaction.<br />* I think this might need to be re-broadcasted on the Renderer for the `LifecycleManager` to listen to and then reprocess plugin schemas. |
-| `AppBootstrapper::RendererStart` | `'app' \| 'configure'` - The Renderer has started in some <mode>. Plugins should listen to this and do their kick offs. Currently, we're explicitly calling a `render*` functions.                                                                                                                                                                                                                        |
-| `Plugin::SyncSettings`           | Called when something (generally a plugin, but could be `Form::Interactions`) updates the state of the Form/Settings/Schema and needs everything to come into sync.                                                                                                                                                                                                                                       |
+#### TODO
 
 * Refactor:
-  * REVIEW ALL DOCUMENTATION NOW!!!!
   * Forms:
     * For multi-select items, need separation between value/label
     * See info above
-    * Default/Required/Readonly Values for both single/multi/group Entries
+    * Default/Required/Readonly Values for both ~~single~~/multi/group Entries
+    * Need <textarea>
+    * Needs to properly support `<datalist>` - https://developer.mozilla.org/en-US/docs/Web/HTML/Element/datalist
     * Form schema processors should have validation for required properties, just because
+    * How should we handle errors? I think atm it just bombs? Maybe we need to just skip the Entry and go to the next? Plugins might fail at that point, but it's on the plugin to check and have sane defaults if applicable.
+    * Make sure Groupings (Array/List) only allow valid inputs (ie, no sub groupings)
+    * Make sure registrations enforce subschema
+    * Find out why this is breaking appload/plugin changes:
+      * http://localhost:5173/?fontFamily[0]=0%3AFont&fontFamily[1]=blah
+      * Don't let it break startup/run, find a way to gracefully fail
   * Thought Experiment: Accessor Function `setSetting('settingName', someValue)`
     * Used to set individual setting
-    * Possibly consider `mergeSettings({ settingName1: 'someValue', settingName2: 'some checked value' })` to merge an entire tree of values at once
-      * Quite likely can iteratively call `setSetting`?
     * Would use the Schema to derive how to inject/select setting
       * i.e., `FormSchemaCheckedMultiInput` would iterate through values and build the expected `selectedIndex:value` setting.
       * i.e., Groupings will probably need some recursion to this?
-    * Interface for `RendererInstanceOptions` is getting a bit fat for almost no reason... Another reason to inject Context objects? This already pretty much IS that, but we can group functionality by access (ie, settings vs plugins vs stylesheets, etc).
   * Thought Experiement: Refactor to Contexts:
-    * Most Managers need to wrap a `ContextProvider`
-      * A `ContextProvider` implements a specific `Context`, such as `SettingsContext`, which houses the primary accessor functionality
-      * Accessors will likely need massive renaming.
-      * This means make new types for `SettingsContext`, `TemplateContext` etc, make the associative Managers implement them, and build an interface to inject these into the Plugins as a `PluginContext`.
+    * Should we refactor to be simple proxies? Feels wrong, but might be more sane from a code perspective... We're already manually proxying other elements.
     * On top of all that, we need to probably separate the `Manager` from `Context`. This means `Manager` does App Lifecycle like `init` and such, but `Context` handles Plugin integration points (ie, `ctx.template.register(...)`)
-      * All `Context`s should extend EventEmitter but most probably wont emit
       * `TemplateManager`
         * Remove array of URLs and load/build new sub template map, and `merge()` into cache.
         * Context: Need Accessor for individual template!
@@ -73,7 +61,7 @@
           * Maybe another `SCHEMA_STALE` for schema changes?
         * Current Registering of settings injects meta, but assumes meta derives from a registration object that returns a mapping of Middleware Chains and Events, making it easy to dump this stuff as metadata... This may not be as plain and simple if plugins do self-registration.
           * Need to think how to properly list/get middleware chain names and event names
-        * I believe ProcessedSchema stays a thing of the SettingsManager, but still needs accessor for `SettingsRenderer` to render the form data, etc.
+        * I believe ProcessedSchema stays a thing of the SettingsManager, but still needs accessor for `ConfigurationRenderer` to render the form data, etc.
         * Consider making `getSettings` take in an `encrypt: boolean` and getting rid of `getMaskedSettings`
       * `DisplayManager`: Rename `DisplayAccessor` to `DisplayContext` for the type
       * `PluginManager`: No Changes - Not Context material, just a Manager.
@@ -88,7 +76,6 @@
       * Consider building `LifecycleManager` which then houses the event handlers for various manager events. Keeps it tidy and isolated.
     * Ensure registration functions are blocked during runtime!
       * `busManager.disableAddingListeners` should be renamed to just `toggle(enable?:boolean)`
-  * Plugins store Context on `register`, but should be actually done on event starting.
   * Context Finalizing:
     * Make sure Contexts don't expose anything they shouldn't!
       * Double check during JS-runtime we can't access private members/methods!
@@ -110,33 +97,41 @@
       * if matches in the supplied list, needs to be enabled rather than added
     * Consider a way to just combine built-in and remote plugins
   * Settings:
+    * Settings as it relates to masking/encoding are all jacked up!!!!!
+      * Seems to be encoding new password List items ok, BUT...
+      * When loading a new plugin the encoding gets all jacked up and shows you the encrypted value, which double encrypts for the URL
+      * When loading an existing URL the encoding gets all jacked up and shows you the encrypted value, which double encrypts for the URL
     * Really need to consider how we handle settings atm.
       * Should assuming raw settings are MASKED!
       * This means settings values should be MASKED on SET
         * But not wholesale sets, just set-by-name and merging.
         * Of course, should have ability to disable masking on "set" value.
-      * Will likely need a refactor of `SettingsRenderer` integration with `SettingsManager` and associative `Context`.
+      * Will likely need a refactor of `ConfigurationRenderer` integration with `SettingsManager` and associative `Context`.
   * Consider adding `debug` and replace `console.log`
     * https://bundlephobia.com/package/debug@4.3.4
     * If we don't add it, remove `console.log`
   * Consider creating a new bg style, or various themes:
     * https://www.joshwcomeau.com/gradient-generator/
-  * Events should be evaluated:
-    * Lifecycle events should be either cleanly separated, or aggregated into a single group:
-        * PluginManagerEvents.LOADED
-        * BusManagerEvents.MIDDLEWARE_EXECUTE
-        * etc
-        * Make sure they have clean/nice/unique string values, and not jus "middleware-execute" as a lame value!
+* Check Plugin Lifecycle:
+  * Errors on Import
+  * Errors on RendererStarted (from `LifecycleManager`)
 * Core Plugin needs to require Twitch-Chat
   * Need to make sure we have `Twitch - Chat` enabled
   * Maybe this is unnecessary if the process enforces enabling as mentioned in `Refactor > Bootstrapper`
 * All Plugins' settings names need prefixes to avoid collissions, as well as updates within their code! This *could* spread to other plugins for a name, so consider a string search before replacing. IE, EmoteSwap checking for Chat options.
+* Styles/Stylesheet/CSS Fixes/Cleanup:
+  * Invalid focused items are impossible to read
+  * Disabled items are indistinguishable
+* Example Plugin:
+  * Needs to mention in description, and add advanced `isConfigured` check for `enabled` items missing a `message`.
+  * Convert `Show Error at Runtime?` to Enabled/Message like others.
+    * Can we combine them all into one `grouparray`?
 * Work on Forms Validator Input types, make sure regexes are REALLY good!
 * Add About/FAQ/ETC links on Settings Page
   * How to use it, etc.
   * or should it be a github wiki?
 * Create some cool examples:
-  * renderSettings
+  * renderConfiguration
     * Hello plugin should re-enable button if text is not `"Hello from the Plugin!"`
     * listen to click of button, show error
       * ?? This could replace the timeout errors
@@ -158,6 +153,13 @@
 		* TTS on eventsub redeem
 * Consider making `compressed` the default URL format instead of `uri`.
   * More plugins might expose how large this URL can really get
+* Document:
+  * Utils::URI
+  * Application Overview/Lifecycle
+  * Event Overview/Lifecycle
+  * Plugin Overview/Lifecycle
+  * Verify Utils::Forms docs
+  * Generally check rest of Utils
 * Librarify:
   * https://vitejs.dev/guide/build#library-mode
   * Overlay Architecture

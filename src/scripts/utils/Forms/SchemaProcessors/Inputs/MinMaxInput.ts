@@ -5,7 +5,7 @@
  */
 
 import { FormSchemaMinMax } from '../../types.js';
-import { SimpleInput } from './SimpleInput.js';
+import { BaseFormSchemaProcessor } from '../BaseFormSchemaProcessor.js';
 
 /**
  * {@link FormSchemaMinMax | `FormSchemaMinMax`} Processor.
@@ -14,7 +14,7 @@ import { SimpleInput } from './SimpleInput.js';
  *
  * @typeDev MinMaxSchema - Scheme Type that extends {@link FormSchemaMinMax | `FormSchemaMinMax`}.
  */
-export class MinMaxInput<MinMaxSchema extends FormSchemaMinMax> extends SimpleInput<MinMaxSchema> {
+export class MinMaxInput<MinMaxSchema extends FormSchemaMinMax> extends BaseFormSchemaProcessor<MinMaxSchema> {
   protected override getCleanedEntryValues() {
     const min = this.entry.min ? `min="${this.entry.min}"` : '';
     const max = this.entry.max ? `max="${this.entry.max}"` : '';
@@ -53,7 +53,7 @@ export class RangeInput extends MinMaxInput<FormSchemaMinMax> {
       <div class="range-wrapper">
         ${super.toString()}
 
-        <input type="number" class="range-display" ${min} ${max} ${step}/>
+        <input id="${this.uniqueId}-display" type="number" class="range-display" ${min} ${max} ${step}/>
       </div>
     `;
   }

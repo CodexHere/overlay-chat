@@ -4,9 +4,9 @@
  * @module
  */
 
-import merge from 'lodash.merge';
+import merge from '@fastify/deepmerge';
 import { BuildFormSchema } from '../../Builder.js';
-import { FormSchemaGrouping } from '../../types.js';
+import { FormSchemaGrouping, NameFormSchemaEntryOverrideMap } from '../../types.js';
 import { BaseFormSchemaProcessor } from '../BaseFormSchemaProcessor.js';
 
 /**
@@ -16,23 +16,24 @@ import { BaseFormSchemaProcessor } from '../BaseFormSchemaProcessor.js';
  */
 export class GroupSubSchema extends BaseFormSchemaProcessor<FormSchemaGrouping> {
   constructor(
-    protected entry: FormSchemaGrouping,
-    protected formData: Record<string, any>
+    entry: FormSchemaGrouping,
+    formData: Record<string, any>,
+    schemaOverrides?: NameFormSchemaEntryOverrideMap
   ) {
     if (!entry.subSchema) {
       throw new Error('Missing `subSchema` in Entry!');
     }
 
-    super(entry, formData);
+    super(entry, formData, schemaOverrides);
   }
 
   protected override toString(): string {
     const { nameOrLabelId, tooltip, chosenLabel } = this.getCleanedEntryValues();
     const description =
       this.entry.description ? `<blockquote class="description">${this.entry.description}</blockquote>` : '';
-    const subSchemaResults = BuildFormSchema(this.entry.subSchema, this.formData);
+    const subSchemaResults = BuildFormSchema(this.entry.subSchema, this.formData, this.schemaOverrides);
 
-    merge(this.mappings, subSchemaResults.mappings);
+    this.mappings = merge()(this.mappings, subSchemaResults.mappings);
 
     return `
       <details

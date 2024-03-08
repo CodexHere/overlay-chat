@@ -4,8 +4,9 @@
  * @module
  */
 
-import merge from 'lodash.merge';
+import merge from '@fastify/deepmerge';
 import { TemplatesContextProvider } from '../ContextProviders/TemplatesContextProvider.js';
+import { LockHolder } from '../types/Managers.js';
 import { BuildTemplateMap, TemplateIDsBase, TemplateMap } from '../utils/Templating.js';
 import coreTemplate from './coreTemplates.html?raw';
 
@@ -17,7 +18,14 @@ export class TemplateManager {
   context?: TemplatesContextProvider;
 
   /** {@link TemplateMap | `TemplateMap`}  Cache of all loaded Template Elements */
-  templates: TemplateMap<TemplateIDsBase> = {} as TemplateMap<TemplateIDsBase>;
+  private templates: TemplateMap<TemplateIDsBase> = {} as TemplateMap<TemplateIDsBase>;
+
+  /**
+   * Create a new {@link TemplateManager | `TemplateManager`}.
+   *
+   * @param lockHolder - Instance of {@link LockHolder | `LockHolder`} to evaluate Lock Status.
+   */
+  constructor(private lockHolder: LockHolder) {}
 
   /**
    * Initialize the {@link TemplateManager | `TemplateManager`}.
@@ -26,7 +34,7 @@ export class TemplateManager {
    */
   async init() {
     this.addTemplateData(coreTemplate.replace('%PACKAGE_VERSION%', import.meta.env.PACKAGE_VERSION));
-    this.context = new TemplatesContextProvider(this);
+    this.context = new TemplatesContextProvider(this.lockHolder, this);
   }
 
   /**
@@ -38,18 +46,51 @@ export class TemplateManager {
     // Load all template file url values
     const resp = await fetch(url);
     templateData = await resp.text();
-    templateData = templateData.replace('%PACKAGE_VERSION%', import.meta.env.PACKAGE_VERSION);
 
     return templateData;
   }
 
+  /**
+   * Add Template data to the {@link TemplateMap | `TemplateMap`}.
+   *
+   * @param templateData - Template File data as a string to process.
+   */
   addTemplateData(templateData: string) {
     // Convert to a Template Delegate mapping
     const templateMap = BuildTemplateMap(templateData);
 
     // Merge into overall Templates Map
-    merge(this.templates, templateMap);
+    this.templates = merge()(this.templates, templateMap) as TemplateMap<TemplateIDsBase>;
 
     return templateMap;
+  }
+
+  /**
+   * Remove Template and Delegate from Cache by TemplateID.
+   *
+   * @param id - TemplateID to remove from Cache.
+   */
+  removeTemplate(id: string): void {
+    delete this.templates[id as TemplateIDsBase];
+  }
+
+  /**
+   * Get the Template Map.
+   *
+   * @typeParam TemplateIDs - Union Type of accepted `TemplateIDs`.
+   */
+  get<TemplateIDs extends string>(): TemplateMap<TemplateIDs> {
+    return this.templates as TemplateMap<TemplateIDs>;
+  }
+
+  /**
+   * Get a Template by ID.
+   *
+   * This ID is the one in the `<template>` tag in the loaded file.
+   *
+   * @param id - ID of Template to retrieve.
+   */
+  getId<TemplateIDs extends string>(id: TemplateIDs | TemplateIDsBase): HandlebarsTemplateDelegate<any> {
+    return this.templates[id as TemplateIDsBase];
   }
 }

@@ -5,12 +5,12 @@
  */
 
 import { EventEmitter } from 'events';
-import { PluginInstances, PluginSettingsBase } from '../types/Plugin.js';
+import { PluginSettingsBase } from '../types/Plugin.js';
 import { RendererInstance, RendererInstanceOptions } from '../types/Renderers.js';
 import { RenderTemplate } from '../utils/Templating.js';
 
 /**
- * Elements we know about in this {@link RendererInstance | `RendererInstance`}.
+ * Elements we know about in this `RendererInstance`.
  */
 type ElementMap = {
   'show-settings': HTMLElement;
@@ -39,13 +39,10 @@ export class AppRenderer<PluginSettings extends PluginSettingsBase> extends Even
    * Initialize the Renderer, kicking off the Lifecycle.
    */
   async init() {
-    const plugins = this.options.plugin.get<PluginSettings>();
-
     // this.unbindEvents();
     this.renderApp();
     this.buildElementMap();
     this.subInit();
-    this.renderPluginApp(plugins);
 
     this.bindEvents();
   }
@@ -72,28 +69,6 @@ export class AppRenderer<PluginSettings extends PluginSettingsBase> extends Even
     // Ensure no elements in the Root so we can display the App!
     rootContainer.innerHTML = '';
     RenderTemplate(rootContainer, appTemplate);
-  }
-
-  /**
-   * Iterates over all currently known Registered {@link PluginInstances | `PluginInstances`} and calls `renderApp` to allow it to
-   * do it's own manipulation of the DOM/Settings/etc.
-   *
-   * @param plugins - Currently known Registered {@link PluginInstances | `PluginInstances`}.
-   * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
-   */
-  private renderPluginApp(plugins: PluginInstances<PluginSettings>) {
-    // Iterate over every loaded plugin, and call `renderApp` to manipulate the Application view
-    plugins.forEach(plugin => {
-      try {
-        plugin.renderApp?.();
-      } catch (err) {
-        if (err instanceof Error) {
-          throw new Error(
-            `Failed hook into \`renderApp\` for Plugin: ${plugin.name}<br /><br /><pre>${err.stack}</pre>`
-          );
-        }
-      }
-    });
   }
 
   /**

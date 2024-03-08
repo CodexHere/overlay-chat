@@ -10,8 +10,8 @@
   "hideGenerator": true,
   "sourceLinkExternal": true,
 
-  "plugin": ["@mxssfd/typedoc-theme"],
-  "theme": "my-theme"
-  // "plugin": ["typedoc-material-theme"],
-  // "themeColor": "#cb9820"
+  // "plugin": ["@mxssfd/typedoc-theme"],
+  // "theme": "my-theme"
+  "plugin": ["typedoc-material-theme"],
+  "themeColor": "#cb9820"
 }

@@ -4,8 +4,8 @@
  * @module
  */
 
-import merge from 'lodash.merge';
-import { FormSchemaGrouping } from '../../types.js';
+import merge from '@fastify/deepmerge';
+import { FormSchemaGrouping, NameFormSchemaEntryOverrideMap } from '../../types.js';
 import { BaseFormSchemaProcessor } from '../BaseFormSchemaProcessor.js';
 import { GroupingRow } from './GroupingRow.js';
 
@@ -20,7 +20,7 @@ export class GroupingBase extends BaseFormSchemaProcessor<FormSchemaGrouping> {
    * Evaluates the supplied FormData to determine the number of
    * Entries in our Group.
    */
-  private getNumValues(): number {
+  #getNumValues(): number {
     const rowEntries = this.entry.subSchema;
     // Get all the Entry Names of the Entries in our Row
     const groupParamNames = rowEntries.map(fe => fe.name);
@@ -36,20 +36,28 @@ export class GroupingBase extends BaseFormSchemaProcessor<FormSchemaGrouping> {
   }
 
   constructor(
-    protected entry: FormSchemaGrouping,
-    protected formData: Record<string, any>
+    entry: FormSchemaGrouping,
+    formData: Record<string, any>,
+    schemaOverrides: NameFormSchemaEntryOverrideMap
   ) {
     if (!entry.subSchema) {
       throw new Error('Missing `subSchema` in Entry!');
     }
 
-    super(entry, formData);
+    super(entry, formData, schemaOverrides);
+  }
+
+  protected override getCleanedEntryValues() {
+    return {
+      ...super.getCleanedEntryValues(),
+      chosenLabel: this.entry.label ?? ''
+    };
   }
 
   protected override toString(): string {
     const entry = this.entry;
     const isList = 'grouplist' === entry.inputType;
-    const numValues = this.getNumValues();
+    const numValues = this.#getNumValues();
     const description = entry.description ? `<blockquote class="description">${entry.description}</blockquote>` : '';
 
     // Iterate and build entire Row of FormSchemaEntry's, `numValues`-times
@@ -64,11 +72,12 @@ export class GroupingBase extends BaseFormSchemaProcessor<FormSchemaGrouping> {
             arrayIndex: isList ? settingIdx : undefined,
             subSchema: entry.subSchema
           },
-          this.formData
+          this.formData,
+          this.schemaOverrides
         );
 
         const childResults = childInput.process();
-        merge(this.mappings, childResults.mappings);
+        this.mappings = merge()(this.mappings, childResults.mappings);
         return childResults.html;
       });
 

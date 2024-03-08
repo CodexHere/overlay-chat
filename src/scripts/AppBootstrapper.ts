@@ -7,14 +7,21 @@
 import { DisplayContextProvider } from './ContextProviders/DisplayContextProvider.js';
 import { StylesheetsContextProvider } from './ContextProviders/StylesheetsContextProvider.js';
 import { BusManager } from './Managers/BusManager.js';
+import { LifecycleManager } from './Managers/LifecycleManager.js';
 import { PluginManager } from './Managers/PluginManager.js';
 import { SettingsManager } from './Managers/SettingsManager.js';
 import { TemplateManager } from './Managers/TemplateManager.js';
 import { AppRenderer } from './Renderers/AppRenderer.js';
-import { SettingsRenderer } from './Renderers/SettingsRenderer.js';
-import { AppBootstrapperOptions, PluginManagerEmitter, PluginManagerEvents } from './types/Managers.js';
-import { PluginImportResults, PluginSettingsBase } from './types/Plugin.js';
-import { RendererConstructor, RendererInstance, RendererInstanceEvents } from './types/Renderers.js';
+import { ConfigurationRenderer } from './Renderers/ConfigurationRenderer.js';
+import {
+  AppBootstrapperEmitter,
+  CoreEvents,
+  PluginManagerEmitter,
+  RendererStartedHandlerOptions
+} from './types/Events.js';
+import { AppBootstrapperOptions, LockHolder } from './types/Managers.js';
+import { RenderMode, RendererConstructor, RendererInstance } from './types/Renderers.js';
+import { EnhancedEventEmitter } from './utils/EnhancedEventEmitter.js';
 
 /**
  * Initiates and Maintains the Application Lifecycle.
@@ -27,13 +34,13 @@ import { RendererConstructor, RendererInstance, RendererInstanceEvents } from '.
  * Example Applicatin Kickoff:
  * ```js
  * import { AppBootstrapper } from './AppBootstrapper.js';
- * import Plugin_Core, { AppSettings_Chat } from './Plugin_Core.js';
+ * import Plugin_Core from './Plugin_Core.js';
  *
  * // Start the Application once DOM has loaded
  * document.addEventListener('DOMContentLoaded', () => {
- *   const bootstrapper = new AppBootstrapper<AppSettings_Chat>({
+ *   const bootstrapper = new AppBootstrapper({
  *     needsAppRenderer: true,
- *     needsSettingsRenderer: true,
+ *     needsConfigurationRenderer: true,
  *     defaultPlugin: Plugin_Core
  *   });
  *
@@ -43,21 +50,36 @@ import { RendererConstructor, RendererInstance, RendererInstanceEvents } from '.
  *
  * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
  */
-export class AppBootstrapper<PluginSettings extends PluginSettingsBase> {
+export class AppBootstrapper extends EnhancedEventEmitter implements AppBootstrapperEmitter, LockHolder {
+  /** Semaphore indicating Lock status. When Locked, Registration and Config-only access like manipulating Settings are unavailable. */
+  isLocked: boolean = false;
+
+  /** Which `<mode>` to Render (for Plugins). */
+  renderMode: RenderMode = 'configure';
+
   /** Instance of the {@link Managers/BusManager.BusManager | `BusManager`}. */
   private busManager?: BusManager;
+
   /** Instance of the {@link SettingsManager | `SettingsManager`}. */
   private settingsManager?: SettingsManager;
+
   /** Instance of the {@link PluginManager | `PluginManager`} (as a {@link types/Managers.PluginManagerEmitter | `PluginManagerEmitter`}). */
-  private pluginManager?: PluginManagerEmitter<PluginSettings>;
+  private pluginManager?: PluginManagerEmitter;
+
   /** Instance of the {@link TemplateManager | `TemplateManager`}. */
   private templateManager?: TemplateManager;
+
   /** Instance of the {@link DisplayContextProvider | `DisplayContextProvider`} acting as a `DisplayManager`. */
   private displayContext?: DisplayContextProvider;
+
   /** Instance of the {@link StylesheetsContextProvider | `StylesheetsContextProvider`} acting as a `StyleManager` */
   private stylesheetContext?: StylesheetsContextProvider;
+
   /** Instance of the {@link RendererInstance | `RendererInstance`} chosen to present to the User. */
   private renderer?: RendererInstance;
+
+  /** Instance of the {@link LifecycleManager | `LifecycleManager`} managing Application Lifecycle. */
+  private lifecycleManager?: LifecycleManager;
 
   /**
    * Create a new {@link AppBootstrapper | `AppBootstrapper`}.
@@ -65,7 +87,9 @@ export class AppBootstrapper<PluginSettings extends PluginSettingsBase> {
    * @param bootstrapOptions - Incoming Options for the {@link AppBootstrapper | `AppBootstrapper`}.
    * @typeParam PluginSettings - Shape of the Settings object the Plugin can access.
    */
-  constructor(public bootstrapOptions: AppBootstrapperOptions) {}
+  constructor(public bootstrapOptions: AppBootstrapperOptions) {
+    super();
+  }
 
   /**
    * Kickoff the entire Application's Lifecycle!
@@ -75,8 +99,6 @@ export class AppBootstrapper<PluginSettings extends PluginSettingsBase> {
       this.buildManagers();
       await this.initManagers();
       await this.initRenderer();
-      this.bindManagerEvents();
-      this.bindRendererEvents();
     } catch (err) {
       this.displayContext?.showError(err as Error);
     }
@@ -88,11 +110,11 @@ export class AppBootstrapper<PluginSettings extends PluginSettingsBase> {
    * Also builds any *Global* {@link types/ContextProviders | `ContextProviders`}.
    */
   private async buildManagers() {
-    this.busManager = new BusManager();
-    this.templateManager = new TemplateManager();
-    this.stylesheetContext = new StylesheetsContextProvider();
+    this.busManager = new BusManager(this);
+    this.templateManager = new TemplateManager(this);
+    this.stylesheetContext = new StylesheetsContextProvider(this);
     this.displayContext = new DisplayContextProvider(this.templateManager);
-    this.settingsManager = new SettingsManager(globalThis.location.href);
+    this.settingsManager = new SettingsManager(this, globalThis.location.href);
 
     this.pluginManager = new PluginManager({
       defaultPlugin: this.bootstrapOptions.defaultPlugin,
@@ -105,12 +127,23 @@ export class AppBootstrapper<PluginSettings extends PluginSettingsBase> {
         template: this.templateManager
       }
     });
+
+    this.lifecycleManager = new LifecycleManager({
+      bootstrapper: this,
+      bus: this.busManager,
+      display: this.displayContext,
+      plugin: this.pluginManager,
+      settings: this.settingsManager,
+      stylesheets: this.stylesheetContext,
+      template: this.templateManager
+    });
   }
 
   /**
    * Initialize Managers in appropriate order.
    */
   private async initManagers() {
+    await this.lifecycleManager!.init();
     await this.settingsManager!.init();
     await this.busManager!.init();
     await this.templateManager!.init();
@@ -120,7 +153,7 @@ export class AppBootstrapper<PluginSettings extends PluginSettingsBase> {
   /**
    * Determines and Initializes a {@link RendererInstance | `RendererInstance`} to present to the User.
    *
-   * > NOTE: Possible {@link RendererInstance | `RendererInstance`}s are: {@link AppRenderer | `AppRenderer`}, and {@link SettingsRenderer | `SettingsRenderer`}.
+   * > NOTE: Possible {@link RendererInstance | `RendererInstance`}s are: {@link AppRenderer | `AppRenderer`}, and {@link ConfigurationRenderer | `ConfigurationRenderer`}.
    */
   private async initRenderer() {
     const settings = this.settingsManager!.get();
@@ -128,75 +161,50 @@ export class AppBootstrapper<PluginSettings extends PluginSettingsBase> {
 
     // Force NOT configured if `forceShowSettings` is in Settings, otherwise actually check validity
     const isConfigured = (!settings.forceShowSettings && true === areSettingsValid) || false;
-    const { needsSettingsRenderer, needsAppRenderer } = this.bootstrapOptions;
-    // Wants a `SettingsRenderer`, and `isConfigured` is `false`
-    const shouldRenderSettings = false === isConfigured && needsSettingsRenderer;
+    const { needsConfigurationRenderer, needsAppRenderer } = this.bootstrapOptions;
+    // Wants a `ConfigurationRenderer`, and `isConfigured` is `false`
+    const shouldrenderConfiguration = false === isConfigured && needsConfigurationRenderer;
     // Wants an `AppRenderer`, and `isConfigured` is `true`
     const shouldRenderApp = true === isConfigured && needsAppRenderer;
 
     // Select which Renderer to instantiate...
-    let rendererClass: RendererConstructor | undefined =
-      shouldRenderSettings ? SettingsRenderer
+    const rendererClass: RendererConstructor | undefined =
+      shouldrenderConfiguration ? ConfigurationRenderer
       : shouldRenderApp ? AppRenderer
       : undefined;
+
+    // Store the `renderMode` for future renders.
+    this.renderMode = isConfigured ? 'app' : 'configure';
 
     // If we don't have a `RendererConstructor` selected, the work here is done!
     if (!rendererClass) {
       return;
     }
 
+    // Instantiate our `RendererInstance`
     this.renderer = new rendererClass({
-      template: this.templateManager!,
-      settings: this.settingsManager!,
+      bus: this.busManager!,
+      display: this.displayContext!,
       plugin: this.pluginManager!,
-      display: this.displayContext!
+      settings: this.settingsManager!,
+      stylesheets: this.stylesheetContext!,
+      template: this.templateManager!
     });
 
-    // Init the Renderer
-    await this.renderer.init();
-  }
-
-  /**
-   * Bind Events that are sent from various Managers.
-   *
-   * > These are an IoC approach to managing the Lifecycle without requiring
-   * a lot of injected dependencies.
-   */
-  private bindManagerEvents() {
-    // Upon Plugins being Loaded, we want to re-init the `BusManager`,
-    // and re-cache the Parsed JSON Results.
-    // Show Errors if there were any failed imports of Plugins.
-    this.pluginManager!.addListener(PluginManagerEvents.LOADED, (importResults: PluginImportResults) => {
-      this.busManager!.init();
-      this.busManager!.disableAddingListeners();
-      this.settingsManager!.updateProcessedSchema(importResults.good);
-
-      if (importResults.bad && 0 !== importResults.bad.length) {
-        this.displayContext?.showError(importResults.bad);
+    // Emit the `RendererStart` Event on the "Internal" Scope.
+    // This will also:
+    // * "Lock" the Application.
+    // * Re-emit the event to the "Plugin" Scope.
+    (this as AppBootstrapperEmitter).emit(CoreEvents.RendererStarted, {
+      renderer: this.renderer,
+      renderMode: this.renderMode,
+      ctx: {
+        bus: this.busManager?.context,
+        display: this.displayContext,
+        settings: this.settingsManager?.context,
+        stylesheets: this.stylesheetContext,
+        template: this.templateManager?.context
       }
-    });
-
-    // Upon Plugins being Unloaded, reset the `BusManager`, and the Settings Schema.
-    this.pluginManager!.addListener(PluginManagerEvents.UNLOADED, () => {
-      this.busManager!.reset();
-    });
-  }
-
-  /**
-   * Bind Events that are sent from the active {@link RendererInstance | `RendererInstance`}.
-   *
-   * > These are an IoC approach to managing the Lifecycle without requiring
-   * a lot of injected dependencies.
-   */
-  private bindRendererEvents() {
-    // Upon Plugin List being changed, we want to reload all Plugins
-    // and restart the `RendererInstance`.
-    this.renderer?.addListener(RendererInstanceEvents.PLUGINS_STALE, async () => {
-      // Reloads all plugins (first unloads)
-      await this.pluginManager?.registerAllPlugins();
-      // Re-init the active `RendererInstance`, which should effectively
-      // restart the portion of the Application the User is presented.
-      await this.renderer?.init();
-    });
+    } as RendererStartedHandlerOptions);
   }
 }

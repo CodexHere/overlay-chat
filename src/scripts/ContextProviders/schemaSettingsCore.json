@@ -2,7 +2,7 @@
   "name": "globalSettings",
   "inputType": "group-subschema",
   "label": "Global Settings",
-  "tooltip": "These are settings that generally apply to the entire App.",
+  "tooltip": "These are Settings that generally apply to the entire App.",
   "subSchema": [
     {
       "name": "globalFontSettings",
@@ -61,7 +61,13 @@
               "name": "plugins",
               "label": "",
               "inputType": "switch-multiple",
-              "values": ["Example", "Twitch - Chat", "Twitch - EmoteSwap", "HangoutHere"]
+              "values": [
+                "Example - Schemas",
+                "Example - Interactions",
+                "Twitch - Chat",
+                "Twitch - EmoteSwap",
+                "HangoutHere"
+              ]
             }
           ]
         },

@@ -4,9 +4,15 @@
  * @module
  */
 
-import merge from 'lodash.merge';
+import merge from '@fastify/deepmerge';
 import { BuildFormSchema } from '../Builder.js';
-import { FormSchema, FormSchemaEntryProcessor, ProcessedFormSchema, ProcessedFormSchemaMappings } from '../types.js';
+import {
+  FormSchema,
+  FormSchemaEntryProcessor,
+  NameFormSchemaEntryOverrideMap,
+  ProcessedFormSchema,
+  ProcessedFormSchemaMappings
+} from '../types.js';
 
 /**
  * {@link FormSchema | `FormSchema`} Processor.
@@ -31,21 +37,23 @@ export class Form implements FormSchemaEntryProcessor {
    * Creates new {@link Form | `Form`}.
    *
    * @param entries - Collection of {@link FormSchemaEntry | `FormSchemaEntry`}s to build as an entire {@link FormSchema | `FormSchema`}.
+   * @param schemaOverrides - A {@link NameFormSchemaEntryOverrideMap | `NameFormSchemaEntryOverrideMap`} for overriding FormSchemaEntry's at Build-time.
    * @param formData - Form Data to evaluate for {@link utils/Forms/types.FormSchemaGrouping | Grouping} Schema Entries.
    * @typeParam FormSchema - Subclass of {@link utils/Forms/types.FormSchemaEntry | `FormSchemaEntry`}.
    */
   constructor(
     protected entries: Readonly<FormSchema>,
     protected formData: Record<string, any>,
-    private formId: string
+    private formId: string,
+    protected schemaOverrides?: NameFormSchemaEntryOverrideMap
   ) {}
 
   /**
    * Process the HTML Output for the {@link utils/Forms/types.FormSchemaEntry | `FormSchemaEntry`}.
    */
   protected toString(): string {
-    const subSchemaResults = BuildFormSchema(this.entries, this.formData);
-    merge(this.mappings, subSchemaResults.mappings);
+    const subSchemaResults = BuildFormSchema(this.entries, this.formData, this.schemaOverrides);
+    this.mappings = merge()(this.mappings, subSchemaResults.mappings);
 
     return `
       <form id="#${this.formId}">

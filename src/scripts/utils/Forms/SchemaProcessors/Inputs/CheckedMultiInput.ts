@@ -4,11 +4,11 @@
  * @module
  */
 
-import merge from 'lodash.merge';
+import merge from '@fastify/deepmerge';
 import { FormSchemaCheckedMultiInput } from '../../types.js';
+import { BaseFormSchemaProcessor } from '../BaseFormSchemaProcessor.js';
 import { InputWrapper } from '../InputWrapper.js';
 import { CheckedInput } from './CheckedInput.js';
-import { SimpleInput } from './SimpleInput.js';
 
 type ChildrenTypes = CheckedInput['entry']['inputType'];
 
@@ -17,7 +17,7 @@ type ChildrenTypes = CheckedInput['entry']['inputType'];
  *
  * Outputs collection of {@link CheckedInput | `CheckedInput`}s.
  */
-export class CheckedMultiInput extends SimpleInput<FormSchemaCheckedMultiInput> {
+export class CheckedMultiInput extends BaseFormSchemaProcessor<FormSchemaCheckedMultiInput> {
   override toString(): string {
     let outString = '';
 
@@ -37,15 +37,15 @@ export class CheckedMultiInput extends SimpleInput<FormSchemaCheckedMultiInput> 
       };
 
       // Create individual `CheckedInput` and Wrap it!
-      const childInput = new CheckedInput(childSchema, this.formData);
+      const childInput = new CheckedInput(childSchema, this.formData, this.schemaOverrides);
       const childResults = childInput.process();
 
-      const wrapper = new InputWrapper(childSchema, this.formData, childResults.html, childInput);
+      const wrapper = new InputWrapper(childSchema, childResults, childInput);
       childResults.html = wrapper.process().html; // Update with new wrapped result
 
       // Accumulate recursive/iterative results
       outString += childResults.html;
-      merge(this.mappings, childResults.mappings);
+      this.mappings = merge()(this.mappings, childResults.mappings);
     });
 
     return `
