@@ -4,7 +4,7 @@
  * @module
  */
 
-import { ToId } from '../../Primitives.js';
+import { IsValidValue, ToId } from '../../Primitives.js';
 import { FormSchemaEntryBase, FormSchemaEntryProcessor, ProcessedFormSchema } from '../types.js';
 
 /**
@@ -45,9 +45,11 @@ export class InputWrapper implements FormSchemaEntryProcessor {
     const skipForAttr = ['checkbox-multiple', 'switch-multiple', 'radio'];
     const forAttr = skipForAttr.includes(this.entry.inputType!) ? '' : `for="${this.processor.uniqueId}"`;
 
+    const labelElem = false === IsValidValue(chosenLabel) ? '' : `<label ${forAttr} ${tooltip}>${chosenLabel}</label>`;
+
     return `
         <div data-input-type="${this.entry.inputType}">
-          <label ${forAttr} ${tooltip}>${chosenLabel}</label>
+          ${labelElem}
           ${this.processedFormSchema.html}
         </div>
       `;

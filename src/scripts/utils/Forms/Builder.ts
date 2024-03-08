@@ -140,6 +140,7 @@ export const BuildFormSchemaEntry = <FormData extends {}>(
    */
   switch (entry.inputType) {
     case 'button':
+    case 'hidden':
     case 'group-subschema':
     case 'grouplist':
     case 'grouparray':

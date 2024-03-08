@@ -158,6 +158,8 @@ export const Serialize = <Data extends {}>(formElement: HTMLFormElement): Data =
           return opt.checked ? `${idx}:${opt.value}` : null;
         })
         .filter(item => !!item);
+    } else if (input instanceof HTMLTextAreaElement) {
+      newValues = value;
     } else {
       // TODO: Is this a valid use-case? If we're not an Input/Select or RadioNodeList then what are we!?!?!?
       newValues = value;

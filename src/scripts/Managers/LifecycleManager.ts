@@ -25,7 +25,8 @@ export class LifecycleManager {
    * Accessor Function for setting whether the Application is Locked or not.
    */
   private set isLocked(isLocked: boolean) {
-    this.actors.bootstrapper.isLocked = this.actors.bus.emitter.disableAddingListeners = isLocked;
+    this.actors.bootstrapper.isLocked = isLocked;
+    this.actors.bus.emitter.disableAddingListeners = isLocked;
   }
 
   /**
@@ -145,9 +146,6 @@ export class LifecycleManager {
     // Re-init the active `RendererInstance`, which should effectively
     // restart the portion of the Application the User is presented.
     await options.renderer?.init();
-
-    // Lock it back down!
-    this.isLocked = true;
   };
 
   /**

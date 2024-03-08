@@ -5,10 +5,6 @@
 
 ## TODO
 
----------CURRENT---------
-Merge Mode for overriding schema settings needs replace/merge
-
-
 ### Default Settings Thinkery
 
 * All Inputs
@@ -39,6 +35,7 @@ Merge Mode for overriding schema settings needs replace/merge
     * For multi-select items, need separation between value/label
     * See info above
     * Default/Required/Readonly Values for both ~~single~~/multi/group Entries
+    * Need <textarea>
     * Needs to properly support `<datalist>` - https://developer.mozilla.org/en-US/docs/Web/HTML/Element/datalist
     * Form schema processors should have validation for required properties, just because
     * How should we handle errors? I think atm it just bombs? Maybe we need to just skip the Entry and go to the next? Plugins might fail at that point, but it's on the plugin to check and have sane defaults if applicable.

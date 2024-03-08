@@ -99,7 +99,7 @@ export default class Plugin_Core<PluginSettings extends AppSettings_Chat> implem
     //   'plugins',
     //   {
     //     inputType: 'switch-multiple',
-    //     values: ['Twitch - Chat 1']
+    //     values: ['Twitch - Chat', 'Twitch - Sound Noti']
     //   },
     //   MergeMode.ArrayUpdate
     // );

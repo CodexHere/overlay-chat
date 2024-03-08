@@ -20,14 +20,14 @@ import {
  *
  * @param options - deepmerge Options
  */
-const replaceArray: Options['mergeArray'] = options => (_target, source) => options.clone(source);
+const ArrayReplaceStrategy: Options['mergeArray'] = options => (_target, source) => options.clone(source);
 
 /**
  * Adds Source entries to the Target Array if they don't exist.
  *
  * @param options - deepmerge Options
  */
-const updateArray: Options['mergeArray'] = options => (target, source) => {
+const ArrayUpdateStrategy: Options['mergeArray'] = options => (target, source) => {
   source.forEach(item => {
     if (false === target.includes(item)) {
       target.push(options.clone(item));
@@ -132,8 +132,8 @@ export abstract class AbstractFormSchemaProcessor<SchemaEntryType extends FormSc
       );
     } else {
       const mergeOpts = {
-        [MergeMode.ArrayUpdate]: { mergeArray: updateArray },
-        [MergeMode.ArrayReplace]: { mergeArray: replaceArray },
+        [MergeMode.ArrayUpdate]: { mergeArray: ArrayUpdateStrategy },
+        [MergeMode.ArrayReplace]: { mergeArray: ArrayReplaceStrategy },
         [MergeMode.ArrayConcat]: {}
       }[overrideMapping?.mergeMode ?? MergeMode.ArrayConcat];
 

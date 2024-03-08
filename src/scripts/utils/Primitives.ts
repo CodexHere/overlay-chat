@@ -2,6 +2,7 @@ export type DebounceResult = {
   handler: (...args: any) => void;
   cancel: () => void;
 };
+
 /**
  * Simple Debounce wrapper.
  *
@@ -33,13 +34,7 @@ export function debounce<T extends (...args: any[]) => any>(callback: T, wait: n
  * @param input - Input String to generate a Hash
  */
 export const HashCode = (input: string) =>
-  input.split('').reduce((s, c) => (Math.imul(31, s) + c.charCodeAt(0)) | 0, 0); /**
- * Exhaustive evaluation on a value to determine if the value truly is "valid" for use.
- *
- * Essentially, we don't consider undefined or empty values, nor empty arrays as "valid."
- *
- * @param value - Value to test if "Valid."
- */
+  input.split('').reduce((s, c) => (Math.imul(31, s) + c.charCodeAt(0)) | 0, 0);
 
 /**
  * Determines whether a value is "Valid."

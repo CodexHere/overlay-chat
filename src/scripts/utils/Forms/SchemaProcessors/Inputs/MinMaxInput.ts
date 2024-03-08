@@ -53,7 +53,7 @@ export class RangeInput extends MinMaxInput<FormSchemaMinMax> {
       <div class="range-wrapper">
         ${super.toString()}
 
-        <input type="number" class="range-display" ${min} ${max} ${step}/>
+        <input id="${this.uniqueId}-display" type="number" class="range-display" ${min} ${max} ${step}/>
       </div>
     `;
   }
