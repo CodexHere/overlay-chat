@@ -86,6 +86,8 @@ export default class Plugin_Core<PluginSettings extends AppSettings_Chat> implem
     ctx.bus.registerEvents(this, this.getEvents());
     await ctx.template.register(this, new URL(`${BaseUrl()}/templates/twitch-chat.html`));
 
+    // ctx.settings.set('plugins', 'Twitch - Chat')
+
     // ctx.settings.overrideSettingSchema<PluginSettings>('fontSize', {
     //   inputType: 'number',
     //   defaultValue: 69,
@@ -93,10 +95,14 @@ export default class Plugin_Core<PluginSettings extends AppSettings_Chat> implem
     //   isDisabled: true
     // });
 
-    // ctx.settings.overrideSettingSchema('plugins', {
-    //   inputType: 'switch-multiple',
-    //   values: ['Test 1', 'Test 2']
-    // });
+    // ctx.settings.overrideSettingSchema(
+    //   'plugins',
+    //   {
+    //     inputType: 'switch-multiple',
+    //     values: ['Twitch - Chat 1']
+    //   },
+    //   MergeMode.ArrayUpdate
+    // );
 
     this.ctx = ctx;
   };

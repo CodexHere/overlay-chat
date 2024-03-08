@@ -9,19 +9,40 @@ import { IsValidValue, ToId } from '../../Primitives.js';
 import {
   FormSchemaEntryBase,
   FormSchemaEntryProcessor,
+  MergeMode,
   NameFormSchemaEntryOverrideMap,
   ProcessedFormSchema,
   ProcessedFormSchemaMappings
 } from '../types.js';
 
-const mergeArray: Options['mergeArray'] = options => (_target, source) => options.clone(source);
+/**
+ * Replaces Target Array with a Clone of the Source Array.
+ *
+ * @param options - deepmerge Options
+ */
+const replaceArray: Options['mergeArray'] = options => (_target, source) => options.clone(source);
+
+/**
+ * Adds Source entries to the Target Array if they don't exist.
+ *
+ * @param options - deepmerge Options
+ */
+const updateArray: Options['mergeArray'] = options => (target, source) => {
+  source.forEach(item => {
+    if (false === target.includes(item)) {
+      target.push(options.clone(item));
+    }
+  });
+
+  return target;
+};
 
 /**
  * Abstract FormSchema Processor Definition.
  *
  * @typeParam SchemaEntryType - Subclass of {@link utils/Forms/types.FormSchemaEntry | `FormSchemaEntry`}.
  */
-export class AbstractFormSchemaProcessor<SchemaEntryType extends FormSchemaEntryBase>
+export abstract class AbstractFormSchemaProcessor<SchemaEntryType extends FormSchemaEntryBase>
   implements FormSchemaEntryProcessor
 {
   /** Static tracking of unique label ID. */
@@ -29,6 +50,7 @@ export class AbstractFormSchemaProcessor<SchemaEntryType extends FormSchemaEntry
 
   /** Instance tracking of unique label ID. */
   protected labelId: number;
+
   /** Running {@link ProcessedFormSchemaMappings | `ProcessedFormSchemaMappings`} for this Processor. Recursive/Iterative calls need to properly aggregate this value. */
   protected mappings: ProcessedFormSchemaMappings = { byName: {}, byType: {} };
 
@@ -61,30 +83,11 @@ export class AbstractFormSchemaProcessor<SchemaEntryType extends FormSchemaEntry
     // Store localized unique label ID
     this.labelId = AbstractFormSchemaProcessor.labelId++;
 
-    // Merge our partial Override with our original Entry
-    if (schemaOverrides && schemaOverrides[entry.name]) {
-      const overrideEntry = schemaOverrides[entry.name];
+    // Normalize the Entry's name, to be safe!
+    entry.name = ToId(entry.name);
 
-      // Our Entry is a subItem of the Override, meaning we are likely iterating on the subItem itself.
-      // We want to ensure we don't falsly capture when the names are identical.
-      const entryIsSubItem =
-        overrideEntry?.inputType?.includes(entry.inputType ?? 'shouldneverbefound') &&
-        overrideEntry?.inputType !== entry.inputType;
-
-      // Override `inputType` doesn't match original `inputType`
-      // Also, we want to make sure this isn't a "multiple" item, as the way naming
-      // works there is funky, and will give false errors here when rendering sub-items.
-      if (overrideEntry!.inputType !== entry.inputType && false === entryIsSubItem) {
-        console.warn(
-          `FormSchemaEntry Override for ${entry.name} have mismatched inputTypes (${overrideEntry!.inputType} != ${entry.inputType}). Cannot use the Override!`,
-          entry,
-          overrideEntry
-        );
-      } else {
-        // `inputType` does match, merge them
-        this.entry = merge({ mergeArray })(entry, overrideEntry) as SchemaEntryType;
-      }
-    }
+    // Apply overrides for the schema
+    this.applySchemaOverride();
 
     // Initiate the Mapping with ourself and the associative entries.
     this.mappings = merge()(this.mappings, {
@@ -98,6 +101,45 @@ export class AbstractFormSchemaProcessor<SchemaEntryType extends FormSchemaEntry
         [this.entry.name]: this.entry
       }
     }) as ProcessedFormSchemaMappings;
+  }
+
+  /**
+   * Determines whether or not, and how, to apply merging logic to Schema overrides.
+   */
+  protected applySchemaOverride() {
+    // Merge our partial Override with our original Entry
+    if (!this.schemaOverrides || !this.schemaOverrides[this.entry.name]) {
+      return;
+    }
+
+    const overrideMapping = this.schemaOverrides[this.entry.name];
+    const overrideEntry = overrideMapping?.schema;
+
+    // Our Entry is a subItem of the Override, meaning we are likely iterating on the subItem itself.
+    // We want to ensure we don't falsly capture when the names are identical.
+    const entryIsSubItem =
+      overrideEntry?.inputType?.includes(this.entry.inputType ?? 'shouldneverbefound') &&
+      overrideEntry?.inputType !== this.entry.inputType;
+
+    // Override `inputType` doesn't match original `inputType`
+    // Also, we want to make sure this isn't a "multiple" item, as the way naming
+    // works there is funky, and will give false errors here when rendering sub-items.
+    if (overrideEntry!.inputType !== this.entry.inputType && false === entryIsSubItem) {
+      console.warn(
+        `FormSchemaEntry Override for ${this.entry.name} have mismatched inputTypes (${overrideEntry!.inputType} != ${this.entry.inputType}). Cannot use the Override!`,
+        this.entry,
+        overrideEntry
+      );
+    } else {
+      const mergeOpts = {
+        [MergeMode.ArrayUpdate]: { mergeArray: updateArray },
+        [MergeMode.ArrayReplace]: { mergeArray: replaceArray },
+        [MergeMode.ArrayConcat]: {}
+      }[overrideMapping?.mergeMode ?? MergeMode.ArrayConcat];
+
+      // `inputType` does match, merge them
+      this.entry = merge(mergeOpts)(this.entry, overrideEntry) as SchemaEntryType;
+    }
   }
 
   /**

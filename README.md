@@ -5,6 +5,10 @@
 
 ## TODO
 
+---------CURRENT---------
+Merge Mode for overriding schema settings needs replace/merge
+
+
 ### Default Settings Thinkery
 
 * All Inputs
@@ -38,6 +42,11 @@
     * Needs to properly support `<datalist>` - https://developer.mozilla.org/en-US/docs/Web/HTML/Element/datalist
     * Form schema processors should have validation for required properties, just because
     * How should we handle errors? I think atm it just bombs? Maybe we need to just skip the Entry and go to the next? Plugins might fail at that point, but it's on the plugin to check and have sane defaults if applicable.
+    * Make sure Groupings (Array/List) only allow valid inputs (ie, no sub groupings)
+    * Make sure registrations enforce subschema
+    * Find out why this is breaking appload/plugin changes:
+      * http://localhost:5173/?fontFamily[0]=0%3AFont&fontFamily[1]=blah
+      * Don't let it break startup/run, find a way to gracefully fail
   * Thought Experiment: Accessor Function `setSetting('settingName', someValue)`
     * Used to set individual setting
     * Would use the Schema to derive how to inject/select setting

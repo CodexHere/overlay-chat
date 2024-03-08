@@ -5,6 +5,7 @@
  */
 
 import merge from '@fastify/deepmerge';
+import { BaseFormSchemaProcessor } from './SchemaProcessors/BaseFormSchemaProcessor.js';
 import { Form } from './SchemaProcessors/Form.js';
 import { GroupArray } from './SchemaProcessors/Grouping/GroupArray.js';
 import { GroupList } from './SchemaProcessors/Grouping/GroupList.js';
@@ -16,7 +17,6 @@ import { CheckedMultiInput } from './SchemaProcessors/Inputs/CheckedMultiInput.j
 import { MinMaxInput, RangeInput } from './SchemaProcessors/Inputs/MinMaxInput.js';
 import { PasswordInput } from './SchemaProcessors/Inputs/PasswordInput.js';
 import { SelectInput } from './SchemaProcessors/Inputs/SelectInput.js';
-import { SimpleInput } from './SchemaProcessors/Inputs/SimpleInput.js';
 import { ValidatedInput } from './SchemaProcessors/Inputs/ValidatedInput.js';
 import {
   FormSchema,
@@ -27,14 +27,14 @@ import {
 } from './types.js';
 
 /**
- * Builds a single Input from a single {@link FormSchemaEntry | `FormSchemaEntry`}.
+ * Builds a single {@link FormSchemaEntry | `FormSchemaEntry`} into a processed object.
  *
  * @param entry - Supply a single {@link FormSchemaEntry | `FormSchemaEntry`} as the original from the Plugin that Registered it.
  * @param formData - Form Data to evaluate for {@link utils/Forms/types.FormSchemaGrouping | Grouping} Schema Entries.
  * @param schemaOverrides - A {@link NameFormSchemaEntryOverrideMap | `NameFormSchemaEntryOverrideMap`} for overriding FormSchemaEntry's at Build-time.
  * @typeParam FormData - Shape of the Data that can populate the Form.
  */
-export const BuildInput = <FormData extends {}>(
+export const BuildFormSchemaEntry = <FormData extends {}>(
   entry: FormSchemaEntry,
   formData: FormData,
   schemaOverrides?: NameFormSchemaEntryOverrideMap
@@ -63,7 +63,7 @@ export const BuildInput = <FormData extends {}>(
     case 'hidden':
     case 'search':
     case 'text':
-      processorCtor = SimpleInput as FormSchemaEntryProcessorConstructor;
+      processorCtor = BaseFormSchemaProcessor as FormSchemaEntryProcessorConstructor;
       break;
 
     // CheckedInput
@@ -107,15 +107,13 @@ export const BuildInput = <FormData extends {}>(
 
     // Grouping
     case 'group-subschema':
+      processorCtor = GroupSubSchema as unknown as FormSchemaEntryProcessorConstructor;
+      break;
     case 'grouplist':
+      processorCtor = GroupList as unknown as FormSchemaEntryProcessorConstructor;
+      break;
     case 'grouparray':
-      const groupCtor = {
-        grouparray: GroupArray,
-        grouplist: GroupList,
-        'group-subschema': GroupSubSchema
-      }[entry.inputType];
-
-      processorCtor = groupCtor as unknown as FormSchemaEntryProcessorConstructor;
+      processorCtor = GroupArray as unknown as FormSchemaEntryProcessorConstructor;
       break;
 
     // noop - This is required or Typescript complains about the case in the
@@ -180,11 +178,11 @@ export const BuildFormSchema = <FormData extends {}>(
   // Build every `entry` in `entries`
   for (let entryIdx = 0; entryIdx < entries.length; entryIdx++) {
     const entryOriginal = entries[entryIdx];
-    const newInput = BuildInput(entryOriginal, formData, schemaOverrides);
+    const processed = BuildFormSchemaEntry(entryOriginal, formData, schemaOverrides);
 
     // Accumulate iterative results
-    results = merge({ all: true })(results, newInput, {
-      html: results.html + newInput.html
+    results = merge({ all: true })(results, processed, {
+      html: results.html + processed.html
     });
   }
 

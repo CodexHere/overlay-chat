@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const bootstrapper = new AppBootstrapper({
     needsAppRenderer: true,
     needsConfigurationRenderer: true,
-    defaultPlugin: Plugin_Core
+    defaultPlugin: Plugin_Core,
   });
 
   bootstrapper.init();

@@ -5,16 +5,16 @@
  */
 
 import merge from '@fastify/deepmerge';
-import { BuildInput } from '../../Builder.js';
+import { BuildFormSchemaEntry } from '../../Builder.js';
 import { FormSchemaGroupingRow, NameFormSchemaEntryOverrideMap } from '../../types.js';
-import { SimpleInput } from '../Inputs/SimpleInput.js';
+import { BaseFormSchemaProcessor } from '../BaseFormSchemaProcessor.js';
 
 /**
  * {@link utils/Forms/types.FormSchemaGrouping | `FormSchemaGrouping`} Row Processor Definition.
  *
  * A {@link utils/Forms/types.FormSchemaGrouping | `FormSchemaGrouping`} Processing a simple {@link utils/Forms/SchemaProcessors/Grouping/GroupingRow.GroupingRow | `GroupingRow`} of associated {@link utils/Forms/types.FormSchemaEntry | `FormSchemaEntry`}s by iteratively calling {@link utils/Forms/Builder.BuildInput | `FormBuilder::BuildInput`}.
  */
-export class GroupingRow extends SimpleInput<FormSchemaGroupingRow> {
+export class GroupingRow extends BaseFormSchemaProcessor<FormSchemaGroupingRow> {
   constructor(
     entry: FormSchemaGroupingRow,
     formData: Record<string, any>,
@@ -36,7 +36,7 @@ export class GroupingRow extends SimpleInput<FormSchemaGroupingRow> {
 
     // For each rowEntry, Build an Input, setting the name to a potential suffix'd value.
     const rowResults = rowEntries.map(rowEntry => {
-      const childResults = BuildInput(
+      const childResults = BuildFormSchemaEntry(
         {
           ...rowEntry,
           name: `${rowEntry.name}${suffix}`

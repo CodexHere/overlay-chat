@@ -79,6 +79,7 @@ export type FormSchemaButton = {
  * Password Input.
  */
 export type FormSchemaPasswordInput = FormSchemaEntryBase & {
+  // ! FIXME: Can this be merged into Simple
   /** Password Type. */
   inputType: 'password';
 };
@@ -89,6 +90,7 @@ export type FormSchemaPasswordInput = FormSchemaEntryBase & {
  * These Input Types have a `boolean` value.
  */
 export type FormSchemaCheckedInput = FormSchemaEntryBase & {
+  // ! FIXME: Can this be merged into Simple
   /** Checked Element Type. */
   inputType: 'checkbox' | 'switch' | 'radio-option';
 };
@@ -113,6 +115,48 @@ export type FormSchemaValidated = FormSchemaEntryBase & {
   inputType: 'email' | 'tel' | 'url';
   /** RegEx Pattern for Input Validation. */
   pattern?: string;
+};
+
+/**
+ * Checked Multi Inputs.
+ *
+ * These Inputs are similar to {@link FormSchemaCheckedInput | `FormSchemaCheckedInput`}, however there are multiple that can be selected per parameter name.
+ *
+ */
+export type FormSchemaCheckedMultiInput = FormSchemaEntryBase & {
+  /** Checked Multi Input Types. */
+  inputType: 'radio' | 'checkbox-multiple' | 'switch-multiple';
+  /** Option Values to add as a list of {@link FormSchemaCheckedInput | `FormSchemaCheckedInput`}s. */
+  values: string[];
+};
+
+/**
+ * Select Input Types.
+ *
+ * These are near identical to {@link FormSchemaCheckedMultiInput | `FormSchemaCheckedMultiInput`}, with the exception of how the HTML is rendered as a `<select>` Element rather than an `<input>` Element.
+ */
+export type FormSchemaSelect = FormSchemaEntryBase & {
+  // ! FIXME: Can this be merged into FormSchemaCheckedMultiInput
+  /** Select Input Types. */
+  inputType: 'select' | 'select-multiple';
+  /** Option Values to add to the `<select>` Element. */
+  values: string[];
+};
+
+/**
+ * MinMax Input Types.
+ *
+ * These Input Types have bounds they can be constrained to.
+ */
+export type FormSchemaMinMax = FormSchemaEntryBase & {
+  /** MinMax Input Types. */
+  inputType: 'number' | 'range' | 'date' | 'datetime-local' | 'month' | 'time' | 'week';
+  /** Maximum Value to keep Input Value in-bounds. */
+  max?: string;
+  /** Minimum Value to keep Input Value in-bounds. */
+  min?: string;
+  /** Step Value to increment/decrement the Input Value. */
+  step?: number;
 };
 
 /**
@@ -143,47 +187,6 @@ export type FormSchemaGroupingRow = FormSchemaEntryBase & {
   subSchema: FormSchema;
   /** Array Index to apply as a suffix (i.e., `1` as an Index will apply suffix of `[1]`) for the `name` of every {@link FormSchemaEntry | `FormSchemaEntry`} in the `values` collection. */
   arrayIndex?: number;
-};
-
-/**
- * Checked Multi Inputs.
- *
- * These Inputs are similar to {@link FormSchemaCheckedInput | `FormSchemaCheckedInput`}, however there are multiple that can be selected per parameter name.
- *
- */
-export type FormSchemaCheckedMultiInput = FormSchemaEntryBase & {
-  /** Checked Multi Input Types. */
-  inputType: 'radio' | 'checkbox-multiple' | 'switch-multiple';
-  /** Option Values to add as a list of {@link FormSchemaCheckedInput | `FormSchemaCheckedInput`}s. */
-  values: string[];
-};
-
-/**
- * Select Input Types.
- *
- * These are near identical to {@link FormSchemaCheckedMultiInput | `FormSchemaCheckedMultiInput`}, with the exception of how the HTML is rendered as a `<select>` Element rather than an `<input>` Element.
- */
-export type FormSchemaSelect = FormSchemaEntryBase & {
-  /** Select Input Types. */
-  inputType: 'select' | 'select-multiple';
-  /** Option Values to add to the `<select>` Element. */
-  values: string[];
-};
-
-/**
- * MinMax Input Types.
- *
- * These Input Types have bounds they can be constrained to.
- */
-export type FormSchemaMinMax = FormSchemaEntryBase & {
-  /** MinMax Input Types. */
-  inputType: 'number' | 'range' | 'date' | 'datetime-local' | 'month' | 'time' | 'week';
-  /** Maximum Value to keep Input Value in-bounds. */
-  max?: number;
-  /** Minimum Value to keep Input Value in-bounds. */
-  min?: number;
-  /** Step Value to increment/decrement the Input Value. */
-  step?: number;
 };
 
 /**
@@ -219,13 +222,30 @@ export type InputTypeEntryMap = Partial<Record<FormSchemaEntry['inputType'], Rec
 export type NameFormSchemaEntryMap = Partial<Record<FormSchemaEntry['name'], FormSchemaEntry>>;
 
 /**
+ * Methodology to use when Merging Schema Overrides.
+ */
+export enum MergeMode {
+  ArrayUpdate,
+  ArrayConcat,
+  ArrayReplace
+}
+
+/**
  * Mapping that represents the overrides of construction of a Form.
  *
  * The output maps the `name` -> `FormSchemaEntry` for possible evaluation later on.
  *
  * It's very similar to `NameFormSchemaEntryMap`, with the exception that the value is also a `Partial<>`
  */
-export type NameFormSchemaEntryOverrideMap = Partial<Record<FormSchemaEntry['name'], Partial<FormSchemaEntry>>>;
+export type NameFormSchemaEntryOverrideMap = Partial<
+  Record<
+    FormSchemaEntry['name'],
+    {
+      schema: Partial<FormSchemaEntry>;
+      mergeMode: MergeMode;
+    }
+  >
+>;
 
 /**
  * Different Mappings used for custom evaluation/processing.

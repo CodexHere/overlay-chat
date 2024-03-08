@@ -5,7 +5,7 @@
  */
 
 import { FormSchemaValidated } from '../../types.js';
-import { SimpleInput } from './SimpleInput.js';
+import { BaseFormSchemaProcessor } from '../BaseFormSchemaProcessor.js';
 
 // TODO: Need to validate these regex patterns are "fool-proof"
 const PATTERN_DEFAULTS = {
@@ -19,7 +19,7 @@ const PATTERN_DEFAULTS = {
  *
  * Outputs an Input Type that supports the `pattern` attribute (i.e., Email, Telephone, URL, etc).
  */
-export class ValidatedInput extends SimpleInput<FormSchemaValidated> {
+export class ValidatedInput extends BaseFormSchemaProcessor<FormSchemaValidated> {
   protected override getCleanedEntryValues() {
     const chosenPattern = this.entry.pattern ?? PATTERN_DEFAULTS[this.entry.inputType];
 

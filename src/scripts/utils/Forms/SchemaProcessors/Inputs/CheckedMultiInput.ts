@@ -6,9 +6,9 @@
 
 import merge from '@fastify/deepmerge';
 import { FormSchemaCheckedMultiInput } from '../../types.js';
+import { BaseFormSchemaProcessor } from '../BaseFormSchemaProcessor.js';
 import { InputWrapper } from '../InputWrapper.js';
 import { CheckedInput } from './CheckedInput.js';
-import { SimpleInput } from './SimpleInput.js';
 
 type ChildrenTypes = CheckedInput['entry']['inputType'];
 
@@ -17,7 +17,7 @@ type ChildrenTypes = CheckedInput['entry']['inputType'];
  *
  * Outputs collection of {@link CheckedInput | `CheckedInput`}s.
  */
-export class CheckedMultiInput extends SimpleInput<FormSchemaCheckedMultiInput> {
+export class CheckedMultiInput extends BaseFormSchemaProcessor<FormSchemaCheckedMultiInput> {
   override toString(): string {
     let outString = '';
 

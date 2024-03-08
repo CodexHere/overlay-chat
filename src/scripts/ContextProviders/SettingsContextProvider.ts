@@ -13,10 +13,10 @@ import { GroupSubSchema } from '../utils/Forms/SchemaProcessors/Grouping/GroupSu
 import {
   FormSchemaEntry,
   FormSchemaGrouping,
+  MergeMode,
   NameFormSchemaEntryOverrideMap,
   ProcessedFormSchema
 } from '../utils/Forms/types.js';
-import { ToId } from '../utils/Primitives.js';
 import { ApplicationIsLockedError } from './index.js';
 import SettingsSubSchemaDefault from './schemaSettingsCore.json';
 
@@ -175,9 +175,8 @@ export class SettingsContextProvider implements ContextProvider_Settings {
 
     const schemaGrouping: FormSchemaGrouping = await this.#manager.loadSchemaData(plugin, schemaUrl.href);
 
-    // Force the Name/Label for the Plugin's `FormSchemaGrouping`
+    // Force the Label for the Plugin's `FormSchemaGrouping`
     // to be based on the Plugin's Name.
-    schemaGrouping.name = ToId(plugin.name);
     schemaGrouping.label = plugin.name;
 
     // Store original Schema Data for updating process cache if ever necessary
@@ -198,12 +197,16 @@ export class SettingsContextProvider implements ContextProvider_Settings {
    */
   overrideSettingSchema<PluginSettings extends PluginSettingsBase>(
     settingName: keyof PluginSettings,
-    newSchema: Partial<FormSchemaEntry>
+    newSchema: Partial<FormSchemaEntry>,
+    mergeMode: MergeMode = MergeMode.ArrayConcat
   ): void {
     this.#processedSchemaCache = undefined;
 
     newSchema.name = settingName as string;
-    this.#schemaOverrides[settingName as string] = newSchema;
+    this.#schemaOverrides[settingName as string] = {
+      schema: newSchema,
+      mergeMode: mergeMode
+    };
 
     this.#manager.emit(CoreEvents.SchemaChanged);
   }

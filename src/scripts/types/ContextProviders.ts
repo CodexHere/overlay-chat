@@ -5,7 +5,7 @@
  */
 
 import { Listener } from 'events';
-import { FormSchemaEntry, ProcessedFormSchema } from '../utils/Forms/types.js';
+import { FormSchemaEntry, MergeMode, ProcessedFormSchema } from '../utils/Forms/types.js';
 import { TemplateIDsBase, TemplateMap } from '../utils/Templating.js';
 import { CoreEvents } from './Events.js';
 import { BusManagerContext_Init } from './Managers.js';
@@ -102,13 +102,16 @@ export type ContextProvider_Settings = {
   merge<PluginSettings extends PluginSettingsBase>(settings: PluginSettings): void;
 
   /**
+   * Override a {@link FormSchemaEntry | `FormSchemaEntry`} for a particular Settings Name.
    *
    * @param settingName - Name of the Setting to supply an overridden {@link FormSchemaEntry | `FormSchemaEntry`}.
    * @param newSchema - New {@link FormSchemaEntry | `FormSchemaEntry`} for the `settingName`.
+   * @param mergeMode - Methodology to use when Merging Schema Overrides
    */
   overrideSettingSchema<PluginSettings extends PluginSettingsBase>(
     settingName: keyof PluginSettings,
-    newSchema: Partial<FormSchemaEntry>
+    newSchema: Partial<FormSchemaEntry>,
+    mergeMode?: MergeMode
   ): void;
 };
 
@@ -131,7 +134,7 @@ export type ContextProvider_Template = {
    *
    * > The file should be a collection of `<template>` tags with IDs set.
    * > They will be processed to be mapped as ID -> Template Delegate Function.
-   * 
+   *
    * > NOTE: This is only available during the Plugin Registration phase of the Application,
    * > and cannot be accessed during the Runtime phase.
    *

@@ -5,14 +5,14 @@
  */
 
 import { FormSchemaSelect, NameFormSchemaEntryOverrideMap } from '../../types.js';
-import { SimpleInput } from './SimpleInput.js';
+import { BaseFormSchemaProcessor } from '../BaseFormSchemaProcessor.js';
 
 /**
  * {@link FormSchemaSelect | `FormSchemaSelect`} Processor.
  *
  * Outputs HTML Select Tag with capability of including the `multiple` attribute.
  */
-export class SelectInput extends SimpleInput<FormSchemaSelect> {
+export class SelectInput extends BaseFormSchemaProcessor<FormSchemaSelect> {
   constructor(
     entry: FormSchemaSelect,
     formData: Record<string, any>,

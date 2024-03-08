@@ -5,7 +5,7 @@
  */
 
 import { FormSchemaCheckedInput } from '../../types.js';
-import { SimpleInput } from './SimpleInput.js';
+import { BaseFormSchemaProcessor } from '../BaseFormSchemaProcessor.js';
 
 const SWITCH_TYPES = ['switch', 'switch-multiple'];
 
@@ -14,7 +14,7 @@ const SWITCH_TYPES = ['switch', 'switch-multiple'];
  *
  * Outputs HTML Input Tag with Checkbox/Radio Type, and `role=switch` for Switch type.
  */
-export class CheckedInput extends SimpleInput<FormSchemaCheckedInput> {
+export class CheckedInput extends BaseFormSchemaProcessor<FormSchemaCheckedInput> {
   // > NOTE: We don't call `super()` and use our own evaluation of the `inputType` value.
   protected override getExtraAttributes() {
     const { defaultData, chosenLabel } = this.getCleanedEntryValues();

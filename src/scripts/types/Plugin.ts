@@ -79,8 +79,6 @@ export type PluginEventRegistration = {
 
 /**
  * Static Typing of a Plugin Class.
- *
- * > NOTE: A Plugin should have a `constructor` that matches this signature!
  */
 export type PluginConstructor = {
   new (): PluginInstance;

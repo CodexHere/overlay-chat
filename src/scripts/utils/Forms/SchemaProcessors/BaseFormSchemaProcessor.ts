@@ -38,13 +38,12 @@ export class BaseFormSchemaProcessor<
   }
 
   protected override getCleanedEntryValues() {
-    const base = super.getCleanedEntryValues();
     const defaultData = this.entry.defaultValue ?? '';
     const required = this.entry.isRequired ? 'required' : '';
     const tooltip = this.entry.tooltip ? `title="${this.entry.tooltip}"` : '';
 
     return {
-      ...base,
+      ...super.getCleanedEntryValues(),
       defaultData,
       required,
       tooltip
@@ -57,11 +56,13 @@ export class BaseFormSchemaProcessor<
    */
   protected getExtraAttributes() {
     const { defaultData, required } = this.getCleanedEntryValues();
+    const type = `type="${this.entry.inputType}"`;
     const value = defaultData ? `value="${defaultData}"` : '';
     const readonly = true === this.entry.isReadOnly ? 'readonly' : '';
     const disabled = true === this.entry.isDisabled ? 'disabled' : '';
 
     return `
+      ${type}
       ${value}
       ${required}
       ${readonly}

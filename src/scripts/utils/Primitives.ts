@@ -56,7 +56,7 @@ export const IsValidValue = (value: any) =>
  *
  * @param input - String to ID-ify.
  */
-export const ToId = (input: string) => input.toLocaleLowerCase().replaceAll(/\W/g, '');
+export const ToId = (input: string) => input.toLocaleLowerCase().replaceAll(/\W/g, '_');
 
 /**
  * Get an Array of strings represeting the path.
@@ -137,10 +137,22 @@ export const PathSet = <ScanType extends Record<string, any>, SetType extends Sc
 ) => {
   const pathArray = getPathArray(path);
 
-  pathArray.reduce((acc, key, idx) => {
-    if (acc[key as keyof ScanType] === undefined) acc[key as keyof ScanType] = {} as ScanType[keyof ScanType];
-    if (idx === pathArray.length - 1) acc[key as keyof ScanType] = value;
-    return acc[key as keyof ScanType];
+  pathArray.reduce((acc, _key, idx) => {
+    const key = _key as keyof ScanType;
+    const lastIter = idx === pathArray.length - 1;
+
+    // Create nested `key` if `undefined`
+    if (acc[key] === undefined) {
+      // If the `key` is a Number, set as an Array, otherwise as an object.
+      acc[key] = (isNaN(Number(key)) ? [] : {}) as SetType;
+    }
+
+    // If we're on the last of the path, set the value.
+    if (lastIter) {
+      acc[key] = value;
+    }
+
+    return acc[key];
   }, scanObj);
 };
 
@@ -159,8 +171,14 @@ export const PathUnset = <ScanType extends Record<string, any>>(scanObj: ScanTyp
   const pathArray = getPathArray(path);
 
   pathArray.reduce((acc, key, i) => {
-    if (!acc[key]) return acc;
-    if (i === pathArray.length - 1) delete acc[key];
+    if (!acc[key]) {
+      return acc;
+    }
+
+    if (i === pathArray.length - 1) {
+      delete acc[key];
+    }
+
     return acc[key];
   }, scanObj);
 };

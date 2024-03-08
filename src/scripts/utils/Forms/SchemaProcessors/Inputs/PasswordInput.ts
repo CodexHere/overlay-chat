@@ -5,15 +5,15 @@
  */
 
 import { FormSchemaPasswordInput } from '../../types.js';
+import { BaseFormSchemaProcessor } from '../BaseFormSchemaProcessor.js';
 import { Button } from './Button.js';
-import { SimpleInput } from './SimpleInput.js';
 
 /**
  * {@link FormSchemaPasswordInput | `FormSchemaPasswordInput`} Processor.
  *
  * Outputs HTML Input Tag with Password/Text Toggle Button for UX interactions.
  */
-export class PasswordInput extends SimpleInput<FormSchemaPasswordInput> {
+export class PasswordInput extends BaseFormSchemaProcessor<FormSchemaPasswordInput> {
   override toString(): string {
     const btnPasswdToggle = new Button(
       {
